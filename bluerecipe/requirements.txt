@@ -1,0 +1,4 @@
+equation>=1.2
+lxml>=3.7
+
+bluepy>=0.9.4,<0.10
