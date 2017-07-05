@@ -14,7 +14,7 @@ def execute(circuit, bio_data):
     # pylint: disable=missing-docstring
     assert os.path.exists(bio_data)
     data = pd.read_csv(bio_data, sep=r'\s+')
-    mtypes = circuit.v2.stats.mtypes
+    mtypes = circuit.v2.cells.mtypes
     return {
         (row['from'], row['to']): {
             MEAN_SYNS_CONNECTION: row['mean']

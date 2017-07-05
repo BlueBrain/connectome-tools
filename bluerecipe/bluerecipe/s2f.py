@@ -42,7 +42,7 @@ DISPATCH = {
 def generate_recipe(circuit, strategies):
     """ Generate S2F recipe for `circuit` using `strategies`. """
     result = {}
-    mtypes = circuit.v2.stats.mtypes
+    mtypes = circuit.v2.cells.mtypes
     for entry in strategies:
         assert len(entry) == 1
         strategy, kwargs = entry.items()[0]
@@ -87,7 +87,7 @@ def verify_recipe(circuit, recipe):
                 )
             )
 
-    mtypes = circuit.v2.stats.mtypes
+    mtypes = circuit.v2.cells.mtypes
     missing_pathways = set(itertools.product(mtypes, mtypes)) - set(recipe.keys())
     if missing_pathways:
         L.warning("Undefined pathways: %s", ", ".join(map(str, missing_pathways)))

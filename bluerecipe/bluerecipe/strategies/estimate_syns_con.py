@@ -20,7 +20,7 @@ L = logging.getLogger('s2f_recipe')
 def execute(circuit, formula, sample_size=100, sample_target=None, max_value=None):
     # pylint: disable=missing-docstring
     formula = Expression(formula)
-    mtypes = sorted(circuit.v2.stats.mtypes)
+    mtypes = sorted(circuit.v2.cells.mtypes)
 
     result = {}
     for pathway in itertools.product(mtypes, mtypes):

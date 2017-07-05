@@ -20,7 +20,7 @@ L = logging.getLogger('s2f_recipe')
 
 def execute(circuit, bio_data, sample_size=100, sample_target=None, assume_syns_bouton=1.0):
     # pylint: disable=missing-docstring
-    mtypes = circuit.v2.stats.mtypes
+    mtypes = circuit.v2.cells.mtypes
     if isinstance(bio_data, float):
         values = {mtype: bio_data for mtype in mtypes}
     else:
