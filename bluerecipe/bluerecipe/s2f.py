@@ -18,6 +18,7 @@ from bluerecipe.strategies import (
     existing_recipe,
     experimental_syns_con,
     generalized_cv,
+    override_mtype,
 )
 
 
@@ -36,6 +37,7 @@ DISPATCH = {
     'experimental_syns_con': experimental_syns_con,
     'existing_recipe': existing_recipe,
     'generalized_cv': generalized_cv,
+    'override_mtype': override_mtype,
 }
 
 
