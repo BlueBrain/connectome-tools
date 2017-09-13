@@ -4,7 +4,7 @@
 - experimental_syns_con:
     bio_data: /gpfs/bbp.cscs.ch/project/proj42/CircuitRelease/r2017.06/rat/CA1/bionames/nsyns_per_conn_20160609.csv
 - estimate_bouton_reduction:
-    bio_data: 0.257
+    bio_data: /gpfs/bbp.cscs.ch/project/proj42/CircuitRelease/r2017.06/rat/CA1/bionames/bouton_density_20161102.csv
     assume_syns_bouton: 1.15
     sample_size: 100
     sample_target: cylinder
