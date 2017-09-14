@@ -1,0 +1,82 @@
+#!/usr/bin/env python2
+
+""" Connectome statistics. """
+
+import click
+import itertools
+import logging
+import numpy as np
+
+import bluepy
+from bluepy.v2.enums import Cell
+
+
+L = logging.getLogger(__name__)
+
+NA_VALUE = "N/A"
+
+
+def _format_values(values):
+    """ Get string representation for values and their mean / std. """
+    ftoa = lambda x: "%.3g" % x
+    if len(values) > 0:
+        return ftoa(np.mean(values)), ftoa(np.std(values)), ",".join(map(ftoa, np.sort(values)))
+    else:
+        return NA_VALUE, NA_VALUE, NA_VALUE
+
+
+@click.group()
+@click.option("--seed", type=int, default=None, help="Random generator seed")
+def app(seed):
+    """ Calculate some connectome statistics. """
+    logging.basicConfig(level=logging.WARN)
+    if seed is not None:
+        np.random.seed(seed)
+
+
+@app.command("synapse-count")
+@click.argument("circuit")
+@click.option("-n", "--sample-size", type=int, default=100, help="Sample size", show_default=True)
+def synapse_count(circuit, sample_size):
+    """Mean synapse count per pathway"""
+    circuit = bluepy.Circuit(circuit).v2
+    mtypes = sorted(circuit.cells.mtypes)
+
+    click.echo("\t".join(['from', 'to', 'mean', 'std', 'values']))
+
+    for pre, post in itertools.product(mtypes, mtypes):
+        pre_group = {Cell.MTYPE: pre}
+        post_group = {Cell.MTYPE: post}
+        sample = circuit.stats.sample_pathway_synapse_count(
+            n=sample_size, pre=pre_group, post=post_group
+        )
+        mean, std, values = _format_values(sample)
+        click.echo("\t".join([pre, post, mean, std, values]))
+
+
+@app.command("bouton-density")
+@click.argument("circuit")
+@click.option("-n", "--sample-size", type=int, default=100, help="Sample size", show_default=True)
+@click.option("-t", "--sample-target", default=None, help="Sample target", show_default=True)
+@click.option("--assume-syns-bouton", type=float, default=1.0, help="Synapse count per bouton",
+                                      show_default=True)
+def bouton_density(circuit, sample_size, sample_target, assume_syns_bouton):
+    """ Mean bouton density per mtype """
+    circuit = bluepy.Circuit(circuit).v2
+    mtypes = sorted(circuit.cells.mtypes)
+
+    click.echo("\t".join(['mtype', 'mean', 'std', 'values']))
+
+    for mtype in mtypes:
+        group = {Cell.MTYPE: mtype}
+        if sample_target is not None:
+            group['$target'] = sample_target
+        sample = circuit.stats.sample_bouton_density(
+            n=sample_size, group=group, synapses_per_bouton=assume_syns_bouton
+        )
+        mean, std, values = _format_values(sample)
+        click.echo("\t".join([mtype, mean, std, values]))
+
+
+if __name__ == '__main__':
+    app(None)
