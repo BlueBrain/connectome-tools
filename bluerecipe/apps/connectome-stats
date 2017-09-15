@@ -16,13 +16,18 @@ L = logging.getLogger(__name__)
 NA_VALUE = "N/A"
 
 
-def _format_values(values):
-    """ Get string representation for values and their mean / std. """
+def _format_sample(sample, short=False):
+    """ Get string representation for sample and its mean / std / size. """
     ftoa = lambda x: "%.3g" % x
-    if len(values) > 0:
-        return ftoa(np.mean(values)), ftoa(np.std(values)), ",".join(map(ftoa, np.sort(values)))
+    size = len(sample)
+    if size > 0:
+        if short:
+            values = NA_VALUE
+        else:
+            values = ",".join(map(ftoa, np.sort(sample)))
+        return ftoa(np.mean(sample)), ftoa(np.std(sample)), str(size), values
     else:
-        return NA_VALUE, NA_VALUE, NA_VALUE
+        return NA_VALUE, NA_VALUE, NA_VALUE, NA_VALUE
 
 
 @click.group()
@@ -37,12 +42,13 @@ def app(seed):
 @app.command("synapse-count")
 @click.argument("circuit")
 @click.option("-n", "--sample-size", type=int, default=100, help="Sample size", show_default=True)
-def synapse_count(circuit, sample_size):
+@click.option("--short", is_flag=True, default=False, help="Omit sampled values", show_default=True)
+def synapse_count(circuit, sample_size, short):
     """Mean synapse count per pathway"""
     circuit = bluepy.Circuit(circuit).v2
     mtypes = sorted(circuit.cells.mtypes)
 
-    click.echo("\t".join(['from', 'to', 'mean', 'std', 'values']))
+    click.echo("\t".join(['from', 'to', 'mean', 'std', 'size', 'sample']))
 
     for pre, post in itertools.product(mtypes, mtypes):
         pre_group = {Cell.MTYPE: pre}
@@ -50,22 +56,23 @@ def synapse_count(circuit, sample_size):
         sample = circuit.stats.sample_pathway_synapse_count(
             n=sample_size, pre=pre_group, post=post_group
         )
-        mean, std, values = _format_values(sample)
-        click.echo("\t".join([pre, post, mean, std, values]))
+        mean, std, size, values = _format_sample(sample, short)
+        click.echo("\t".join([pre, post, mean, std, size, values]))
 
 
 @app.command("bouton-density")
 @click.argument("circuit")
 @click.option("-n", "--sample-size", type=int, default=100, help="Sample size", show_default=True)
 @click.option("-t", "--sample-target", default=None, help="Sample target", show_default=True)
-@click.option("--assume-syns-bouton", type=float, default=1.0, help="Synapse count per bouton",
-                                      show_default=True)
-def bouton_density(circuit, sample_size, sample_target, assume_syns_bouton):
+@click.option("--assume-syns-bouton", type=float, default=1.0,
+                help="Synapse count per bouton", show_default=True)
+@click.option("--short", is_flag=True, default=False, help="Omit sampled values", show_default=True)
+def bouton_density(circuit, sample_size, sample_target, assume_syns_bouton, short):
     """ Mean bouton density per mtype """
     circuit = bluepy.Circuit(circuit).v2
     mtypes = sorted(circuit.cells.mtypes)
 
-    click.echo("\t".join(['mtype', 'mean', 'std', 'values']))
+    click.echo("\t".join(['mtype', 'mean', 'std', 'size', 'sample']))
 
     for mtype in mtypes:
         group = {Cell.MTYPE: mtype}
@@ -74,8 +81,8 @@ def bouton_density(circuit, sample_size, sample_target, assume_syns_bouton):
         sample = circuit.stats.sample_bouton_density(
             n=sample_size, group=group, synapses_per_bouton=assume_syns_bouton
         )
-        mean, std, values = _format_values(sample)
-        click.echo("\t".join([mtype, mean, std, values]))
+        mean, std, size, values = _format_sample(sample, short)
+        click.echo("\t".join([mtype, mean, std, size, values]))
 
 
 if __name__ == '__main__':
