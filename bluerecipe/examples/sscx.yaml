@@ -1,0 +1,19 @@
+- estimate_syns_con:
+    formula: 9 * ((n-1) ** 0.5) - 2
+    formula_ee: 1.5 * n
+    max_value: 25.0
+    sample: /gpfs/bbp.cscs.ch/project/proj64/circuits/v5.r2/20170918/ncsStructural/synapse_count_1000@42.tsv
+- experimental_syns_con:
+    bio_data: /gpfs/bbp.cscs.ch/project/proj64/entities/dev/datasets/nsyn_per_connection_20141010.tsv
+- estimate_bouton_reduction:
+    bio_data: /gpfs/bbp.cscs.ch/project/proj64/entities/dev/datasets/bouton_density_20141010.tsv
+    sample: /gpfs/bbp.cscs.ch/project/proj64/circuits/v5.r2/20170918/ncsStructural/bouton_density_mc2_Column_1.2_1000@42.tsv
+- estimate_individual_bouton_reduction:
+    bio_data: /gpfs/bbp.cscs.ch/project/proj64/entities/dev/datasets/bouton_density_20141010.tsv
+    sample: /gpfs/bbp.cscs.ch/project/proj64/circuits/v5.r2/20170918/ncsStructural/bouton_density_mc2_Column_1.2_1000@42.tsv
+- generalized_cv:
+    cv: 0.32
+- override_mtype:
+    mtype_pattern: ChC
+    mean_syns_connection: 1.0
+    cv_syns_connection: 1.0

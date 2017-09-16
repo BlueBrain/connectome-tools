@@ -38,5 +38,5 @@ def test_2():
     expected = {
         ('L23_MC', '*'): {'bouton_reduction_factor': 15.0},
     }
-    actual = test_module.execute(circuit, bio_data=os.path.join(TEST_DATA_DIR, "bouton_density.txt"))
+    actual = test_module.execute(circuit, bio_data=os.path.join(TEST_DATA_DIR, "bouton_density.tsv"))
     nt.assert_equal(actual, expected)

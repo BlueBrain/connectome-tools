@@ -1,4 +1,0 @@
- mtype   mean  std  len
- L1_DAC  10.0  0.0  1
- L23_MC  30.0  0.0  1
- SO_OLM  50.0  0.0  1

@@ -1,17 +1,20 @@
 - estimate_syns_con:
     formula: 1.0 * n
-    sample_size: 100
+    sample:
+        size: 100
 - experimental_syns_con:
     bio_data: /gpfs/bbp.cscs.ch/project/proj42/CircuitRelease/r2017.06/rat/CA1/bionames/nsyns_per_conn_20160609.csv
 - estimate_bouton_reduction:
     bio_data: /gpfs/bbp.cscs.ch/project/proj42/CircuitRelease/r2017.06/rat/CA1/bionames/bouton_density_20161102.csv
-    assume_syns_bouton: 1.15
-    sample_size: 100
-    sample_target: cylinder
+    sample:
+        size: 100
+        target: cylinder
+        assume_syns_bouton: 1.15
 - estimate_individual_bouton_reduction:
     bio_data: /gpfs/bbp.cscs.ch/project/proj42/CircuitRelease/r2017.06/rat/CA1/bionames/bouton_density_20161102.csv
-    assume_syns_bouton: 1.15
-    sample_size: 100
-    sample_target: cylinder
+    sample:
+        size: 100
+        target: cylinder
+        assume_syns_bouton: 1.15
 - generalized_cv:
     cv: 0.348
