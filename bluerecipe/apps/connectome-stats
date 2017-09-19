@@ -74,8 +74,11 @@ def bouton_density(circuit, sample_size, sample_target, assume_syns_bouton, shor
 
     click.echo("\t".join(['mtype', 'mean', 'std', 'size', 'sample']))
 
-    for mtype in mtypes:
-        group = {Cell.MTYPE: mtype}
+    for mtype in itertools.chain(['*'], mtypes):
+        if mtype == '*':
+            group = {}
+        else:
+            group = {Cell.MTYPE: mtype}
         if sample_target is not None:
             group['$target'] = sample_target
         sample = circuit.stats.sample_bouton_density(
