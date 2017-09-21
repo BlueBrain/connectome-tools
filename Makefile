@@ -1,14 +1,11 @@
 #modules that have tests
-TEST_MODULES=bluerecipe
+TEST_MODULES=.
 
 #modules that are installable (ie: ones w/ setup.py)
-INSTALL_MODULES=bluerecipe
-
-# Ignore directories for pep8 and pylint (on top of tests and doc)
-IGNORE_LINT=
+INSTALL_MODULES=.
 
 #packages to cover
-COVER_PACKAGES=bluerecipe
+COVER_PACKAGES=connectome_tools
 
 PYTHON_PIP_VERSION=pip==9.0.1
 

@@ -4,7 +4,7 @@ import nose.tools as nt
 
 from mock import Mock
 
-import bluerecipe.strategies.estimate_bouton_reduction as test_module
+import connectome_tools.s2f_recipe.estimate_bouton_reduction as test_module
 
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")

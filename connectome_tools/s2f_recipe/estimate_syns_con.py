@@ -13,8 +13,8 @@ from functools import partial
 from Equation import Expression
 from bluepy.v2.enums import Cell
 
-from bluerecipe.dataset import read_nsyn
-from bluerecipe.params import MEAN_SYNS_CONNECTION
+from connectome_tools.dataset import read_nsyn
+from connectome_tools.s2f_recipe import MEAN_SYNS_CONNECTION
 
 
 L = logging.getLogger(__name__)

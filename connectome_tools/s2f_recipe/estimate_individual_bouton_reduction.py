@@ -14,8 +14,8 @@ from functools import partial
 
 from bluepy.v2.enums import Cell
 
-from bluerecipe.dataset import read_bouton_density
-from bluerecipe.params import BOUTON_REDUCTION_FACTOR
+from connectome_tools.dataset import read_bouton_density
+from connectome_tools.s2f_recipe import BOUTON_REDUCTION_FACTOR
 
 
 L = logging.getLogger(__name__)

@@ -4,8 +4,8 @@ synapses per connection for a number of pathways where it
 has been experimentally determined.
 """
 
-from bluerecipe.dataset import read_nsyn
-from bluerecipe.params import MEAN_SYNS_CONNECTION
+from connectome_tools.dataset import read_nsyn
+from connectome_tools.s2f_recipe import MEAN_SYNS_CONNECTION
 
 
 def execute(circuit, bio_data):

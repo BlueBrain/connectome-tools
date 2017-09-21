@@ -1,13 +1,13 @@
 #!/usr/bin/env python
-""" bluerecipe setup """
+# pylint: disable=missing-docstring
 
 from setuptools import setup
 
-from bluerecipe.version import __version__
+from connectome_tools.version import __version__
 
 
 setup(
-    name="bluerecipe",
+    name="connectome_tools",
     version=__version__,
     install_requires=[
         'click>=6.7',
@@ -16,16 +16,16 @@ setup(
         'bluepy>=0.11,<0.12',
     ],
     packages=[
-        'bluerecipe',
-        'bluerecipe.strategies',
+        'connectome_tools',
+        'connectome_tools.s2f_recipe',
     ],
-    author="Michael Reimann, Arseny V. Povolotsky",
+    author="Arseny V. Povolotsky, Michael Reimann",
     author_email="arseny.povolotsky@epfl.ch",
-    description="bluerecipe generation",
+    description="Connectome statistics; S2F recipe generation",
     license="BBP-internal-confidential",
     scripts=[
-        'apps/s2f-recipe',
         'apps/connectome-stats',
+        'apps/s2f-recipe',
     ],
     url="http://bluebrain.epfl.ch",
     include_package_data=True
