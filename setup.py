@@ -19,7 +19,7 @@ setup(
         'connectome_tools',
         'connectome_tools.s2f_recipe',
     ],
-    author="Arseny V. Povolotsky, Michael Reimann",
+    author="Michael Reimann, Arseny V. Povolotsky",
     author_email="arseny.povolotsky@epfl.ch",
     description="Connectome statistics; S2F recipe generation",
     license="BBP-internal-confidential",
@@ -27,6 +27,7 @@ setup(
         'apps/connectome-stats',
         'apps/s2f-recipe',
     ],
-    url="http://bluebrain.epfl.ch",
+    url="https://bbpteam.epfl.ch/project/issues/projects/NSETM/issues",
+    download_url="ssh://bbpcode.epfl.ch/nse/connectome-tools",
     include_package_data=True
 )

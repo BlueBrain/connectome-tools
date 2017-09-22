@@ -9,6 +9,8 @@ COVER_PACKAGES=connectome_tools
 
 PYTHON_PIP_VERSION=pip==9.0.1
 
+DOC_REPO=--doc-repo ssh://bbpcode.epfl.ch/infra/jekylltest
+
 ##### DO NOT MODIFY BELOW #####################
 
 CI_REPO?=ssh://bbpcode.epfl.ch/platform/ContinuousIntegration.git
