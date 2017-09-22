@@ -28,7 +28,7 @@ def test_2():
     circuit.v2.stats.sample_bouton_density.return_value = np.array([1., 3.])
     expected = {
         ('*', '*'): {
-            'bouton_reduction_factor': 10.0
+            'bouton_reduction_factor': 21.0
         }
     }
     actual = test_module.execute(circuit, bio_data=os.path.join(TEST_DATA_DIR, "bouton_density.tsv"))

@@ -19,12 +19,12 @@ def execute(circuit, bio_data, sample=None):
     if isinstance(bio_data, float):
         ref_value = bio_data
     else:
-        bio_data = read_bouton_density(bio_data, mtypes=circuit.v2.cells.mtypes)
-        ref_value = bio_data['mean'].mean()
+        bio_data = read_bouton_density(bio_data).set_index('mtype')
+        ref_value = bio_data.loc['*']['mean']
 
     if isinstance(sample, str):
-        dset = read_bouton_density(sample)
-        value = dset['mean'].mean()
+        dset = read_bouton_density(sample).set_index('mtype')
+        value = dset.loc['*']['mean']
     else:
         if sample is None:
             sample = {}

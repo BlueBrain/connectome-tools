@@ -2,7 +2,7 @@
     formula: 9 * ((n-1) ** 0.5) - 2
     formula_ee: 1.5 * n
     max_value: 25.0
-    sample: /gpfs/bbp.cscs.ch/project/proj64/circuits/v5.r2/20170918/ncsStructural/synapse_count_1000@42.tsv
+    sample: /gpfs/bbp.cscs.ch/project/proj64/circuits/v5.r2/20170918/ncsStructural/nsyn_per_connection_1000@42.tsv
 - experimental_syns_con:
     bio_data: /gpfs/bbp.cscs.ch/project/proj64/entities/dev/datasets/nsyn_per_connection_20141010.tsv
 - estimate_bouton_reduction:

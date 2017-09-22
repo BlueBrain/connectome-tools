@@ -1,4 +1,5 @@
 mtype	mean	std	size	sample
+*	42.0	N/A	N/A	N/A
 L1_DAC	10.0	0.0	1	N/A
 L23_MC	30.0	0.0	1	N/A
 SO_OLM	50.0	0.0	1	N/A
