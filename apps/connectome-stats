@@ -39,12 +39,12 @@ def app(seed):
         np.random.seed(seed)
 
 
-@app.command("synapse-count")
+@app.command()
 @click.argument("circuit")
 @click.option("-n", "--sample-size", type=int, default=100, help="Sample size", show_default=True)
 @click.option("--short", is_flag=True, default=False, help="Omit sampled values", show_default=True)
-def synapse_count(circuit, sample_size, short):
-    """Mean synapse count per pathway"""
+def nsyn_per_connection(circuit, sample_size, short):
+    """Mean connection synapse count per pathway"""
     circuit = bluepy.Circuit(circuit).v2
     mtypes = sorted(circuit.cells.mtypes)
 
@@ -60,7 +60,7 @@ def synapse_count(circuit, sample_size, short):
         click.echo("\t".join([pre, post, mean, std, size, values]))
 
 
-@app.command("bouton-density")
+@app.command()
 @click.argument("circuit")
 @click.option("-n", "--sample-size", type=int, default=100, help="Sample size", show_default=True)
 @click.option("-t", "--sample-target", default=None, help="Sample target", show_default=True)

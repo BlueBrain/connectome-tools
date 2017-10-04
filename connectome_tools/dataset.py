@@ -11,7 +11,7 @@ L = logging.getLogger(__name__)
 
 def read_bouton_density(filepath, mtypes=None):
     """ Read bouton density data from .tsv file. """
-    result = pd.read_csv(filepath, sep="\t")
+    result = pd.read_csv(filepath, sep=r"\s+")
     if mtypes is not None:
         mask = result['mtype'].isin(mtypes)
         if np.any(~mask):
@@ -23,7 +23,7 @@ def read_bouton_density(filepath, mtypes=None):
 
 def read_nsyn(filepath, mtypes=None):
     """ Read nsyn data from .tsv file. """
-    result = pd.read_csv(filepath, sep="\t")
+    result = pd.read_csv(filepath, sep=r"\s+")
     if mtypes is not None:
         mask1 = result['from'].isin(mtypes)
         mask2 = result['to'].isin(mtypes)
