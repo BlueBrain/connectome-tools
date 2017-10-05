@@ -85,6 +85,7 @@ def execute(
             continue
         L.debug("nsyn estimate for pathway %s: %.3g", pathway, value)
         value = choose_formula(formulae, pathway, syn_class_map)(value)
+        value = max(value, 1.0)
         if max_value is not None:
             value = min(value, max_value)
         result[pathway] = {

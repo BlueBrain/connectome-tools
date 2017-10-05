@@ -56,7 +56,8 @@ def load_yaml(filepath):
 def generate_recipe(circuit, strategies):
     """ Generate S2F recipe for `circuit` using `strategies`. """
     result = {}
-    mtypes = circuit.v2.cells.mtypes
+    mtypes = sorted(circuit.v2.cells.mtypes)
+
     for entry in strategies:
         assert len(entry) == 1
         strategy, kwargs = entry.items()[0]
@@ -69,6 +70,19 @@ def generate_recipe(circuit, strategies):
             )
             for pathway in pathways:
                 result.setdefault(pathway, {}).update(params)
+
+    for pathway in itertools.product(mtypes, mtypes):
+        if pathway not in result:
+            L.warning("Undefined pathway: %s", pathway)
+            continue
+        undefined_params = set(REQUIRED_PARAMS) - set(result[pathway])
+        if undefined_params:
+            L.warning(
+                "pathway %s has undefined parameters: %s; skipping",
+                pathway, ", ".join(undefined_params)
+            )
+            del result[pathway]
+
     return result
 
 
@@ -88,23 +102,6 @@ def write_recipe(output_path, recipe, comment=None):
     tree = ET.ElementTree(root)
     with open(output_path, 'w') as f:
         tree.write(f, pretty_print=True, xml_declaration=True, encoding='utf-8')
-
-
-def verify_recipe(circuit, recipe):
-    """ Check that all the entries in the recipe have all required parameters. """
-    for pathway, params in recipe.iteritems():
-        undefined_params = set(REQUIRED_PARAMS) - set(params)
-        if undefined_params:
-            raise RuntimeError(
-                "pathway {} has undefined parameters: {}".format(
-                    pathway, ", ".join(undefined_params)
-                )
-            )
-
-    mtypes = circuit.v2.cells.mtypes
-    missing_pathways = set(itertools.product(mtypes, mtypes)) - set(recipe.keys())
-    if missing_pathways:
-        L.warning("Undefined pathways: %s", ", ".join(map(str, missing_pathways)))
 
 
 def main(args):
@@ -131,8 +128,6 @@ def main(args):
         comment += "seed=%d\n" % args.seed
 
     recipe = generate_recipe(circuit, strategies)
-    if args.strict:
-        verify_recipe(circuit, recipe)
     write_recipe(args.output, recipe, comment=comment)
 
 
@@ -147,12 +142,6 @@ if __name__ == '__main__':
         "-o", "--output",
         help="Path to output file",
         required=True
-    )
-    parser.add_argument(
-        "--strict",
-        action="store_true",
-        help="Fail if recipe is incomplete",
-        default=False
     )
     parser.add_argument(
         "--seed",
