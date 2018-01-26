@@ -13,6 +13,8 @@ setup(
         'click>=6.7',
         'equation>=1.2',
         'lxml>=3.3',
+        'numpy>=1.9',
+        'pandas>=0.17',
         'bluepy>=0.11,<0.12',
     ],
     packages=[

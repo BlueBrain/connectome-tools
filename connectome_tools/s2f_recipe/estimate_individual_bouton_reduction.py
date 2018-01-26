@@ -7,10 +7,11 @@ will be used for all m-types.
 """
 
 import logging
-import numpy as np
-import pandas as pd
 
 from functools import partial
+
+import numpy as np
+import pandas as pd
 
 from bluepy.v2.enums import Cell
 

@@ -7,8 +7,10 @@ appositions) can be specified as a string (see below).
 
 import itertools
 import logging
-import numpy as np
+
 from functools import partial
+
+import numpy as np
 
 from Equation import Expression
 from bluepy.v2.enums import Cell
