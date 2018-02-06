@@ -7,7 +7,7 @@ from connectome_tools.version import __version__
 
 
 setup(
-    name="connectome_tools",
+    name="connectome-tools",
     version=__version__,
     install_requires=[
         'click>=6.7',
@@ -31,5 +31,4 @@ setup(
     ],
     url="https://bbpteam.epfl.ch/project/issues/projects/NSETM/issues",
     download_url="ssh://bbpcode.epfl.ch/nse/connectome-tools",
-    include_package_data=True
 )
