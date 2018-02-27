@@ -21,8 +21,8 @@ setup(
         'connectome_tools',
         'connectome_tools.s2f_recipe',
     ],
-    author="Michael Reimann, Arseny V. Povolotsky",
-    author_email="arseny.povolotsky@epfl.ch",
+    author="BlueBrain NSE",
+    author_email="bbp-ou-nse@groupes.epfl.ch",
     description="Connectome statistics; S2F recipe generation",
     license="BBP-internal-confidential",
     scripts=[
