@@ -426,3 +426,17 @@ Example:
         bouton_reduction_factor: 1.0
         mean_syns_connection: 1.0
         cv_syns_connection: 1.0
+
+
+Acknowledgments
+===============
+
+``connectome-tools`` is a refactored subset of ``bluerecipe`` toolset originally developed by `Michael Reimann <mailto:michael.reimann@epfl.ch>`_.
+
+
+Reporting issues
+================
+
+``connectome-tools`` is maintained by BlueBrain NSE team at the moment.
+
+Should you face any issue with using it, please submit a ticket to our `issue tracker <https://bbpteam.epfl.ch/project/issues/browse/NSETM>`_; or drop us an `email <mailto: bbp-ou-nse@groupes.epfl.ch>`_.
