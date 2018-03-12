@@ -31,12 +31,11 @@ def _format_sample(sample, short=False):
 
 
 @click.group()
-@click.option("--seed", type=int, default=None, help="Random generator seed")
+@click.option("--seed", type=int, default=0, help="Random generator seed", show_default=True)
 def app(seed):
     """ Calculate some connectome statistics. """
     logging.basicConfig(level=logging.WARN)
-    if seed is not None:
-        np.random.seed(seed)
+    np.random.seed(seed)
 
 
 @app.command()
