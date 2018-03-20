@@ -15,7 +15,7 @@ setup(
         'lxml>=3.3',
         'numpy>=1.9',
         'pandas>=0.17',
-        'bluepy>=0.11,<0.12',
+        'bluepy>=0.11',
     ],
     packages=[
         'connectome_tools',
