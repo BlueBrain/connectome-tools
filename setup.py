@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # pylint: disable=missing-docstring
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 from connectome_tools.version import __version__
 
@@ -15,12 +15,9 @@ setup(
         'lxml>=3.3',
         'numpy>=1.9',
         'pandas>=0.17',
-        'bluepy>=0.11',
+        'bluepy[nexus]>=0.12.4',
     ],
-    packages=[
-        'connectome_tools',
-        'connectome_tools.s2f_recipe',
-    ],
+    packages=find_packages(),
     author="BlueBrain NSE",
     author_email="bbp-ou-nse@groupes.epfl.ch",
     description="Connectome statistics; S2F recipe generation",

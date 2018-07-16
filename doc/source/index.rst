@@ -151,10 +151,16 @@ Options:
 
     -n, --sample-size INTEGER   Sample size  [default: ``100``]
     -t, --sample-target TEXT    Sample target [default: ``None``]
+    --region TEXT               Region of interest [default: ``None``]
     --assume-syns-bouton FLOAT  Synapse count per bouton  [default: ``1.0``]
     --short                     Omit sampled values from the output [default: ``False``]
 
-It is generally recommended to limit sample target to circuit "center" to minimize border effects (for instance, using central hypercolumn in O1 mosaic circuit, as in the example above).
+Optional ``--region`` parameter specifies acronym of the region of interest.
+If provided, only axonal segments within this region would be considered for each sampled cell (otherwise whole axon is considered, without any filtering).
+Circuit model source atlas defined in CircuitConfig is used for filtering segments. If VoxelBrain URL is provided there, please set ``BLUEPY_ATLAS_CACHE_DIR`` environment variable to define the folder for storing data fetched from VoxelBrain.
+Please note also that using region filtering might affect the performance.
+
+It is generally recommended to limit sample target and / or region to circuit "center" to minimize border effects (for instance, using central hypercolumn in O1 mosaic circuit, as in the example above).
 
 If there are only ``K`` < ``SAMPLE_SIZE`` samples available, ``K`` samples will be used.
 
@@ -231,14 +237,16 @@ The sequence of strategies applied along with their arguments is defined by YAML
     - estimate_bouton_reduction:
         bio_data: /gpfs/bbp.cscs.ch/project/proj64/entities/dev/datasets/bouton_density_20161102.tsv
         sample:
+            size: 100
             target: mc2_Column
-            size: 1000
+            region: mc2_Column
             assume_syns_bouton: 1.2
     - estimate_individual_bouton_reduction:
         bio_data: /gpfs/bbp.cscs.ch/project/proj64/entities/dev/datasets/bouton_density_20161102.tsv
         sample:
+            size: 100
             target: mc2_Column
-            size: 1000
+            region: mc2_Column
             assume_syns_bouton: 1.2
     - generalized_cv:
         cv: 0.32
@@ -270,11 +278,15 @@ Parameters:
 
 If **sample** is a set of parameters for sampling, it can include any of the following keys:
 
+**size**
+    Sample size [default: ``100``]
+
 **target**
     Sample target [default: ``None``]
 
-**size**
-    Sample size [default: ``100``]
+**region**
+    | Region of interest [default: ``None``].
+    | If provided, only axonal segments within this region would be considered.
 
 **assume_syns_bouton**
     Assumed synapse count per bouton [default: ``1.0``]
@@ -288,8 +300,9 @@ Example 1:
     - estimate_bouton_reduction:
         bio_data: 0.432
         sample:
-            target: mc2_Column
             size: 100
+            target: mc2_Column
+            region: mc2_Column
             assume_syns_bouton: 1.2
 
 Example 2:

@@ -22,15 +22,15 @@ from connectome_tools.s2f_recipe import BOUTON_REDUCTION_FACTOR
 L = logging.getLogger(__name__)
 
 
-def estimate_bouton_density(circuit, mtype, sample_size, sample_target, assume_syns_bouton):
+def estimate_bouton_density(circuit, mtype, sample_size, sample_target, region, assume_syns_bouton):
     """ Mean bouton density for given mtype. """
     group = {Cell.MTYPE: mtype}
     if sample_target is not None:
         group['$target'] = sample_target
     values = circuit.v2.stats.sample_bouton_density(
-        n=sample_size, group=group, synapses_per_bouton=assume_syns_bouton
+        n=sample_size, group=group, region=region, synapses_per_bouton=assume_syns_bouton
     )
-    return values.mean()
+    return np.nanmean(values)
 
 
 def execute(circuit, bio_data, sample=None):
@@ -55,6 +55,7 @@ def execute(circuit, bio_data, sample=None):
             circuit=circuit,
             sample_size=sample.get('size', 100),
             sample_target=sample.get('target', None),
+            region=sample.get('region', None),
             assume_syns_bouton=sample.get('assume_syns_bouton', 1.0)
         )
 

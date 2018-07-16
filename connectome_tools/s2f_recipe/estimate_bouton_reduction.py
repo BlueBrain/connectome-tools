@@ -7,6 +7,8 @@ between m-types (e.g. pyramidal cells have lower density)
 
 import logging
 
+import numpy as np
+
 from connectome_tools.dataset import read_bouton_density
 from connectome_tools.s2f_recipe import BOUTON_REDUCTION_FACTOR
 
@@ -31,9 +33,10 @@ def execute(circuit, bio_data, sample=None):
         values = circuit.v2.stats.sample_bouton_density(
             n=sample.get('size', 100),
             group=sample.get('target', None),
+            region=sample.get('region', None),
             synapses_per_bouton=sample.get('assume_syns_bouton', 1.0)
         )
-        value = values.mean()
+        value = np.nanmean(values)
 
     L.debug("Bouton density estimate: %.3g", value)
 
