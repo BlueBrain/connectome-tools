@@ -27,7 +27,7 @@ def read_nsyn(filepath, mtypes=None):
     if mtypes is not None:
         mask1 = result['from'].isin(mtypes)
         mask2 = result['to'].isin(mtypes)
-        mask = np.logical_and(mask1, mask2)
+        mask = np.logical_and(mask1, mask2)  # pylint: disable=assignment-from-no-return
         if np.any(~mask):
             unused_mtypes = result[~mask1]['from'].tolist() + result[~mask2]['to'].tolist()
             L.warn("Unused mtypes: %s", ",".join(unused_mtypes))

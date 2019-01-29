@@ -47,11 +47,11 @@ Only Python 2.7 / Python 3.5+ is supported at the moment.
 Datasets
 ========
 
-``connectome-tools`` utilities are built around *datasets* with connectome statistics, represented as text tabular files (tab-separated). At the moment there are two of those: bouton density per mtype (`bouton_density`), and synapse count per connection per pathway (`nsyn_per_connection`).
+``connectome-tools`` utilities are built around *datasets* with connectome statistics, represented as text tabular files (tab-separated). At the moment there are two of those: bouton density per mtype (`bouton-density`), and synapse count per connection per pathway (`nsyn-per-connection`).
 
 .. _ref-dataset-bouton-density:
 
-bouton_density
+bouton-density
 --------------
 
 Stores bouton density samples per mtype, along with mean / std / size for each sample.
@@ -85,7 +85,7 @@ Alternatively, one can use a helper method from ``connectome_tools`` package its
 
 .. _ref-dataset-nsyn-per-connection:
 
-nsyn_per_connection
+nsyn-per-connection
 -------------------
 
 Stores synapse count per connection sample per pathway, along with mean / std / size for each sample.
@@ -134,16 +134,16 @@ Options:
 
 Commands:
 
-    - ``bouton_density``
-    - ``nsyn_per_connection``
+    - ``bouton-density``
+    - ``nsyn-per-connection``
 
 
-connectome-stats bouton_density
+connectome-stats bouton-density
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: console
 
-    $ connectome-stats --seed 0 bouton_density -t mc2_Column -n 5 --assume-syns-bouton 1.15 <CircuitConfig>
+    $ connectome-stats --seed 0 bouton-density -t mc2_Column -n 5 --assume-syns-bouton 1.15 <CircuitConfig>
 
 would produce a :ref:`ref-dataset-bouton-density` dataset for a given circuit.
 
@@ -164,12 +164,12 @@ It is generally recommended to limit sample target and / or region to circuit "c
 
 If there are only ``K`` < ``SAMPLE_SIZE`` samples available, ``K`` samples will be used.
 
-connectome-stats nsyn_per_connection
+connectome-stats nsyn-per-connection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: console
 
-    $ connectome-stats --seed 0 nsyn_per_connection -n 5 <CircuitConfig>
+    $ connectome-stats --seed 0 nsyn-per-connection -n 5 <CircuitConfig>
 
 would produce a :ref:`ref-dataset-nsyn-per-connection` dataset for a given circuit.
 

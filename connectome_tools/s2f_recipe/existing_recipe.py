@@ -3,8 +3,8 @@
 import lxml.etree as ET
 
 
-def execute(circuit, recipe_path):
-    # pylint: disable=missing-docstring,unused-argument
+def execute(_, recipe_path):
+    # pylint: disable=missing-docstring
     result = {}
     tree = ET.parse(recipe_path)
     for elem in tree.findall('mTypeRule'):

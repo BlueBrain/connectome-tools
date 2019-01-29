@@ -2,7 +2,7 @@ import os
 import numpy as np
 import nose.tools as nt
 
-from mock import Mock
+from mock import Mock, patch
 
 import connectome_tools.s2f_recipe.estimate_individual_bouton_reduction as test_module
 
@@ -10,7 +10,7 @@ import connectome_tools.s2f_recipe.estimate_individual_bouton_reduction as test_
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 
-def mock_sample_bouton_density(**kwargs):
+def mock_sample_bouton_density(circuit, **kwargs):
     mtype = kwargs['group']['mtype']
     return {
         'L1_DAC': np.empty(0),
@@ -19,10 +19,10 @@ def mock_sample_bouton_density(**kwargs):
     }[mtype]
 
 
-def test_1():
+@patch(test_module.__name__ + '.sample_bouton_density', side_effect=mock_sample_bouton_density)
+def test_1(_):
     circuit = Mock()
-    circuit.v2.cells.mtypes = ['L1_DAC', 'L23_MC', 'L5_TPC']
-    circuit.v2.stats.sample_bouton_density = mock_sample_bouton_density
+    circuit.cells.mtypes = ['L1_DAC', 'L23_MC', 'L5_TPC']
     expected = {
         ('L23_MC', '*'): {'bouton_reduction_factor': 5.0},
         ('L5_TPC', '*'): {'bouton_reduction_factor': 10.0},
@@ -31,10 +31,10 @@ def test_1():
     nt.assert_equal(actual, expected)
 
 
-def test_2():
+@patch(test_module.__name__ + '.sample_bouton_density', side_effect=mock_sample_bouton_density)
+def test_2(_):
     circuit = Mock()
-    circuit.v2.cells.mtypes = ['L1_DAC', 'L23_MC', 'L5_TPC']
-    circuit.v2.stats.sample_bouton_density = mock_sample_bouton_density
+    circuit.cells.mtypes = ['L1_DAC', 'L23_MC', 'L5_TPC']
     expected = {
         ('L23_MC', '*'): {'bouton_reduction_factor': 15.0},
     }

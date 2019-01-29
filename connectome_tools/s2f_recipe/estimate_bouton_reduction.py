@@ -11,6 +11,7 @@ import numpy as np
 
 from connectome_tools.dataset import read_bouton_density
 from connectome_tools.s2f_recipe import BOUTON_REDUCTION_FACTOR
+from connectome_tools.stats import sample_bouton_density
 
 
 L = logging.getLogger(__name__)
@@ -30,7 +31,8 @@ def execute(circuit, bio_data, sample=None):
     else:
         if sample is None:
             sample = {}
-        values = circuit.v2.stats.sample_bouton_density(
+        values = sample_bouton_density(
+            circuit,
             n=sample.get('size', 100),
             group=sample.get('target', None),
             region=sample.get('region', None),

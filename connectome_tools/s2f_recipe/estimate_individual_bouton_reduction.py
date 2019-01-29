@@ -13,10 +13,11 @@ from functools import partial
 import numpy as np
 import pandas as pd
 
-from bluepy.v2.enums import Cell
+from bluepy.v2 import Cell
 
 from connectome_tools.dataset import read_bouton_density
 from connectome_tools.s2f_recipe import BOUTON_REDUCTION_FACTOR
+from connectome_tools.stats import sample_bouton_density
 
 
 L = logging.getLogger(__name__)
@@ -27,7 +28,8 @@ def estimate_bouton_density(circuit, mtype, sample_size, sample_target, region, 
     group = {Cell.MTYPE: mtype}
     if sample_target is not None:
         group['$target'] = sample_target
-    values = circuit.v2.stats.sample_bouton_density(
+    values = sample_bouton_density(
+        circuit,
         n=sample_size, group=group, region=region, synapses_per_bouton=assume_syns_bouton
     )
     return np.nanmean(values)
@@ -35,7 +37,7 @@ def estimate_bouton_density(circuit, mtype, sample_size, sample_target, region, 
 
 def execute(circuit, bio_data, sample=None):
     # pylint: disable=missing-docstring
-    mtypes = circuit.v2.cells.mtypes
+    mtypes = circuit.cells.mtypes
     if isinstance(bio_data, float):
         bio_data = pd.DataFrame({
             'mtype': mtypes,

@@ -11,6 +11,6 @@ def execute(circuit, mtype_pattern, **kwargs):
     # pylint: disable=missing-docstring
     return {
         (mtype, '*'): kwargs
-        for mtype in circuit.v2.cells.mtypes
+        for mtype in circuit.cells.mtypes
         if mtype_pattern in mtype
     }

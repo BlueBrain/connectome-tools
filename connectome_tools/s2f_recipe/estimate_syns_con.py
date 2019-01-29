@@ -13,10 +13,11 @@ from functools import partial
 import numpy as np
 
 from Equation import Expression
-from bluepy.v2.enums import Cell
+from bluepy.v2 import Cell
 
 from connectome_tools.dataset import read_nsyn
 from connectome_tools.s2f_recipe import MEAN_SYNS_CONNECTION
+from connectome_tools.stats import sample_pathway_synapse_count
 
 
 L = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ def estimate_nsyn(circuit, pathway, sample_size, sample_target):
     if sample_target is not None:
         pre['$target'] = sample_target
         post['$target'] = sample_target
-    values = circuit.v2.stats.sample_pathway_synapse_count(n=sample_size, pre=pre, post=post)
+    values = sample_pathway_synapse_count(circuit, n=sample_size, pre=pre, post=post)
     return values.mean()
 
 
@@ -59,7 +60,7 @@ def execute(
     if formula_ii is not None:
         formulae[('INH', 'INH')] = Expression(formula_ii)
 
-    mtypes = sorted(circuit.v2.cells.mtypes)
+    mtypes = sorted(circuit.cells.mtypes)
 
     if isinstance(sample, str):
         dset = read_nsyn(sample).set_index(['from', 'to'])
@@ -76,7 +77,7 @@ def execute(
 
     # TODO: a better way to get mtype -> synapse_class mapping (from the recipe directly?)
     syn_class_map = dict(
-        circuit.v2.cells.get(properties=[Cell.MTYPE, Cell.SYNAPSE_CLASS]).drop_duplicates().values
+        circuit.cells.get(properties=[Cell.MTYPE, Cell.SYNAPSE_CLASS]).drop_duplicates().values
     )
 
     result = {}
