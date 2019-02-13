@@ -151,11 +151,11 @@ Options:
 
     -n, --sample-size INTEGER   Sample size  [default: ``100``]
     -t, --sample-target TEXT    Sample target [default: ``None``]
-    --region TEXT               Region of interest [default: ``None``]
+    --mask TEXT                 Region of interest [default: ``None``]
     --assume-syns-bouton FLOAT  Synapse count per bouton  [default: ``1.0``]
     --short                     Omit sampled values from the output [default: ``False``]
 
-Optional ``--region`` parameter specifies acronym of the region of interest.
+Optional ``--mask`` parameter references atlas dataset with volumetric mask defining region of interest.
 If provided, only axonal segments within this region would be considered for each sampled cell (otherwise whole axon is considered, without any filtering).
 Circuit model source atlas defined in CircuitConfig is used for filtering segments. If VoxelBrain URL is provided there, please set ``BLUEPY_ATLAS_CACHE_DIR`` environment variable to define the folder for storing data fetched from VoxelBrain.
 Please note also that using region filtering might affect the performance.
@@ -239,14 +239,14 @@ The sequence of strategies applied along with their arguments is defined by YAML
         sample:
             size: 100
             target: mc2_Column
-            region: mc2_Column
+            mask: mc2_Column
             assume_syns_bouton: 1.2
     - estimate_individual_bouton_reduction:
         bio_data: /gpfs/bbp.cscs.ch/project/proj64/entities/dev/datasets/bouton_density_20161102.tsv
         sample:
             size: 100
             target: mc2_Column
-            region: mc2_Column
+            mask: mc2_Column
             assume_syns_bouton: 1.2
     - generalized_cv:
         cv: 0.32
@@ -284,7 +284,7 @@ If **sample** is a set of parameters for sampling, it can include any of the fol
 **target**
     Sample target [default: ``None``]
 
-**region**
+**mask**
     | Region of interest [default: ``None``].
     | If provided, only axonal segments within this region would be considered.
 
@@ -301,8 +301,8 @@ Example 1:
         bio_data: 0.432
         sample:
             size: 100
-            target: mc2_Column
-            region: mc2_Column
+            target: 'mc2_Column'
+            mask: 'center'
             assume_syns_bouton: 1.2
 
 Example 2:

@@ -35,7 +35,7 @@ def execute(circuit, bio_data, sample=None):
             circuit,
             n=sample.get('size', 100),
             group=sample.get('target', None),
-            region=sample.get('region', None),
+            mask=sample.get('mask', None),
             synapses_per_bouton=sample.get('assume_syns_bouton', 1.0)
         )
         value = np.nanmean(values)

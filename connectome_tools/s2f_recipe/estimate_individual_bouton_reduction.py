@@ -23,14 +23,14 @@ from connectome_tools.stats import sample_bouton_density
 L = logging.getLogger(__name__)
 
 
-def estimate_bouton_density(circuit, mtype, sample_size, sample_target, region, assume_syns_bouton):
+def estimate_bouton_density(circuit, mtype, sample_size, sample_target, mask, assume_syns_bouton):
     """ Mean bouton density for given mtype. """
     group = {Cell.MTYPE: mtype}
     if sample_target is not None:
         group['$target'] = sample_target
     values = sample_bouton_density(
         circuit,
-        n=sample_size, group=group, region=region, synapses_per_bouton=assume_syns_bouton
+        n=sample_size, group=group, mask=mask, synapses_per_bouton=assume_syns_bouton
     )
     return np.nanmean(values)
 
@@ -57,7 +57,7 @@ def execute(circuit, bio_data, sample=None):
             circuit=circuit,
             sample_size=sample.get('size', 100),
             sample_target=sample.get('target', None),
-            region=sample.get('region', None),
+            mask=sample.get('mask', None),
             assume_syns_bouton=sample.get('assume_syns_bouton', 1.0)
         )
 
@@ -66,7 +66,7 @@ def execute(circuit, bio_data, sample=None):
         mtype, ref_value = row['mtype'], row['mean']
         value = estimate(mtype=mtype)
         if np.isnan(value):
-            L.warn("Could not estimate '%s' bouton density, skipping", mtype)
+            L.warning("Could not estimate '%s' bouton density, skipping", mtype)
             continue
         L.debug("Bouton density estimate for '%s': %.3g", mtype, value)
         result[(mtype, '*')] = {

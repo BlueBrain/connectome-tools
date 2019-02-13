@@ -16,7 +16,7 @@ def read_bouton_density(filepath, mtypes=None):
         mask = result['mtype'].isin(mtypes)
         if np.any(~mask):
             unused_mtypes = result[~mask]['mtype']
-            L.warn("Unused mtypes: %s", ",".join(unused_mtypes))
+            L.warning("Unused mtypes: %s", ",".join(unused_mtypes))
         result = result[mask]
     return pd.DataFrame(result)  # supressing pylint 'maybe-no-member' warning
 
@@ -30,6 +30,6 @@ def read_nsyn(filepath, mtypes=None):
         mask = np.logical_and(mask1, mask2)  # pylint: disable=assignment-from-no-return
         if np.any(~mask):
             unused_mtypes = result[~mask1]['from'].tolist() + result[~mask2]['to'].tolist()
-            L.warn("Unused mtypes: %s", ",".join(unused_mtypes))
+            L.warning("Unused mtypes: %s", ",".join(unused_mtypes))
         result = result[mask]
     return pd.DataFrame(result)  # supressing pylint 'maybe-no-member' warning

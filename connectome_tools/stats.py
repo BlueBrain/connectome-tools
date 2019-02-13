@@ -21,36 +21,38 @@ def _segment_lengths(segments):
     )
 
 
-def _get_region_mask(circuit, region):
-    if region is None:
+def _load_mask(circuit, mask):
+    if mask is None:
         return None
     else:
-        return circuit.atlas.get_region_mask(region)
+        result = circuit.atlas.load_data(mask)
+        result.raw = result.raw.astype(bool)
+        return result
 
 
-def _calc_bouton_density(circuit, gid, synapses_per_bouton, region_mask):
+def _calc_bouton_density(circuit, gid, synapses_per_bouton, mask):
     """ Calculate bouton density for a given `gid`. """
-    if region_mask is None:
+    if mask is None:
         # count all efferent synapses and total axon length
         synapse_count = len(circuit.connectome.efferent_synapses(gid))
         axon_length = nm.get(
             'neurite_lengths', circuit.morph.get(gid, False), neurite_type=nm.AXON
         )[0]
     else:
-        # find all segments which endpoints fall into the target region
+        # find all segments which endpoints fall into the region of interest
         all_pts = circuit.morph.segment_points(
             gid, transform=True, neurite_type=nm.AXON
         )
-        mask1 = region_mask.lookup(
+        mask1 = mask.lookup(
             all_pts[[Segment.X1, Segment.Y1, Segment.Z1]].values, outer_value=False
         )
-        mask2 = region_mask.lookup(
+        mask2 = mask.lookup(
             all_pts[[Segment.X2, Segment.Y2, Segment.Z2]].values, outer_value=False
         )
         filtered = all_pts[mask1 & mask2]
 
         if filtered.empty:
-            L.warning("No axon segments found inside target region for GID %d", gid)
+            L.warning("No axon segments found inside region of interest for GID %d", gid)
             return np.nan
 
         # total length for those filtered segments
@@ -68,13 +70,13 @@ def _calc_bouton_density(circuit, gid, synapses_per_bouton, region_mask):
     return (1.0 * synapse_count / synapses_per_bouton) / axon_length
 
 
-def bouton_density(circuit, gid, synapses_per_bouton=1.0, region=None):
+def bouton_density(circuit, gid, synapses_per_bouton=1.0, mask=None):
     """ Calculate bouton density for a given `gid`. """
-    region_mask = _get_region_mask(circuit, region)
-    return _calc_bouton_density(circuit, gid, synapses_per_bouton, region_mask)
+    mask = _load_mask(circuit, mask)
+    return _calc_bouton_density(circuit, gid, synapses_per_bouton, mask)
 
 
-def sample_bouton_density(circuit, n, group=None, synapses_per_bouton=1.0, region=None):
+def sample_bouton_density(circuit, n, group=None, synapses_per_bouton=1.0, mask=None):
     """
     Sample bouton density.
 
@@ -90,9 +92,9 @@ def sample_bouton_density(circuit, n, group=None, synapses_per_bouton=1.0, regio
     gids = circuit.cells.ids(group)
     if len(gids) > n:
         gids = np.random.choice(gids, size=n, replace=False)
-    region_mask = _get_region_mask(circuit, region)
+    mask = _load_mask(circuit, mask)
     return np.array([
-        _calc_bouton_density(circuit, gid, synapses_per_bouton, region_mask) for gid in gids
+        _calc_bouton_density(circuit, gid, synapses_per_bouton, mask) for gid in gids
     ])
 
 

@@ -84,7 +84,7 @@ def execute(
     for pathway in itertools.product(mtypes, mtypes):
         value = estimate(pathway=pathway)
         if np.isnan(value):
-            L.warn("Could not estimate '%s' nsyn, skipping", pathway)
+            L.warning("Could not estimate '%s' nsyn, skipping", pathway)
             continue
         L.debug("nsyn estimate for pathway %s: %.3g", pathway, value)
         value = choose_formula(formulae, pathway, syn_class_map)(value)
