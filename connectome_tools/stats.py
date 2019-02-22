@@ -7,6 +7,7 @@ import neurom as nm
 import numpy as np
 
 from bluepy.v2 import Segment, Synapse
+from voxcell import ROIMask
 
 
 L = logging.getLogger(__name__)
@@ -25,9 +26,7 @@ def _load_mask(circuit, mask):
     if mask is None:
         return None
     else:
-        result = circuit.atlas.load_data(mask)
-        result.raw = result.raw.astype(bool)
-        return result
+        return circuit.atlas.load_data(mask, cls=ROIMask)
 
 
 def _calc_bouton_density(circuit, gid, synapses_per_bouton, mask):
@@ -89,10 +88,15 @@ def sample_bouton_density(circuit, n, group=None, synapses_per_bouton=1.0, mask=
         numpy array of length min(n, N) with bouton density per cell,
         where N is the total number cells in the specified cell group.
     """
+    mask = _load_mask(circuit, mask)
     gids = circuit.cells.ids(group)
+    if mask is not None:
+        xyz = circuit.cells.positions(gids).values
+        gids = gids[mask.lookup(xyz)]
     if len(gids) > n:
         gids = np.random.choice(gids, size=n, replace=False)
-    mask = _load_mask(circuit, mask)
+    elif len(gids) == 0:
+        L.warning("No GID matching selection for group '%s'", group)
     return np.array([
         _calc_bouton_density(circuit, gid, synapses_per_bouton, mask) for gid in gids
     ])

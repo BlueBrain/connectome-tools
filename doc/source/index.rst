@@ -156,7 +156,7 @@ Options:
     --short                     Omit sampled values from the output [default: ``False``]
 
 Optional ``--mask`` parameter references atlas dataset with volumetric mask defining region of interest.
-If provided, only axonal segments within this region would be considered for each sampled cell (otherwise whole axon is considered, without any filtering).
+If provided, only cells within this region would be sampled; and only axonal segments within this region would be considered for each sampled cell (otherwise whole axon is considered, without any filtering).
 Circuit model source atlas defined in CircuitConfig is used for filtering segments. If VoxelBrain URL is provided there, please set ``BLUEPY_ATLAS_CACHE_DIR`` environment variable to define the folder for storing data fetched from VoxelBrain.
 Please note also that using region filtering might affect the performance.
 
