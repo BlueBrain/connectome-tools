@@ -176,6 +176,8 @@ would produce a :ref:`ref-dataset-nsyn-per-connection` dataset for a given circu
 Options:
 
   -n, --sample-size INTEGER  Sample size  [default: ``100``]
+  --pre TEXT                 Presynaptic target [default: ``None``]
+  --post TEXT                Postsynaptic target [default: ``None``]
   --short                    Omit sampled values  [default: ``False``]
 
 If there are only ``K`` < ``SAMPLE_SIZE`` samples available, ``K`` samples will be used.
@@ -356,6 +358,12 @@ Parameters:
     Parameters for sampling nsyn per connection OR path to :ref:`ref-dataset-nsyn-per-connection` dataset already sampled from the circuit
 
 If **sample** is a set of parameters for sampling, it can include any of the following keys:
+
+**pre**
+    Presynaptic target [default: ``None``]
+
+**post**
+    Postsynaptic target [default: ``None``]
 
 **size**
     Sample size [default: ``100``]

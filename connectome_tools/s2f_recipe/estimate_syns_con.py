@@ -32,14 +32,22 @@ def choose_formula(formulae, pathway, syn_class_map):
         return formulae[('*', '*')]
 
 
-def estimate_nsyn(circuit, pathway, sample_size, sample_target):
+def _cell_group(mtype, target=None):
+    result = {Cell.MTYPE: mtype}
+    if target is not None:
+        result['$target'] = target
+    return result
+
+
+def estimate_nsyn(circuit, pathway, sample_size, pre, post):
     """ Mean nsyn for given mtype. """
-    pre = {Cell.MTYPE: pathway[0]}
-    post = {Cell.MTYPE: pathway[1]}
-    if sample_target is not None:
-        pre['$target'] = sample_target
-        post['$target'] = sample_target
-    values = sample_pathway_synapse_count(circuit, n=sample_size, pre=pre, post=post)
+    pre_mtype, post_mtype = pathway
+    values = sample_pathway_synapse_count(
+        circuit,
+        n=sample_size,
+        pre=_cell_group(pre_mtype, target=pre),
+        post=_cell_group(post_mtype, target=post)
+    )
     return values.mean()
 
 
@@ -72,7 +80,8 @@ def execute(
             estimate_nsyn,
             circuit=circuit,
             sample_size=sample.get('size', 100),
-            sample_target=sample.get('target', None)
+            pre=sample.get('pre', None),
+            post=sample.get('post', None)
         )
 
     # TODO: a better way to get mtype -> synapse_class mapping (from the recipe directly?)

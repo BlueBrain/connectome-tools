@@ -2,9 +2,10 @@
 
 """ Connectome statistics. """
 
-import click
 import itertools
 import logging
+
+import click
 import numpy as np
 
 import bluepy
@@ -32,6 +33,13 @@ def _format_sample(sample, short=False):
         return NA_VALUE, NA_VALUE, NA_VALUE, NA_VALUE
 
 
+def _cell_group(mtype, target=None):
+    result = {Cell.MTYPE: mtype}
+    if target is not None:
+        result['$target'] = target
+    return result
+
+
 @click.group()
 @click.option("--seed", type=int, default=0, help="Random generator seed", show_default=True)
 def app(seed):
@@ -43,23 +51,25 @@ def app(seed):
 @app.command()
 @click.argument("circuit")
 @click.option("-n", "--sample-size", type=int, default=100, help="Sample size", show_default=True)
+@click.option("--pre", default=None, help="Presynaptic target", show_default=True)
+@click.option("--post", default=None, help="Postsynaptic target", show_default=True)
 @click.option("--short", is_flag=True, default=False, help="Omit sampled values", show_default=True)
-def nsyn_per_connection(circuit, sample_size, short):
+def nsyn_per_connection(circuit, sample_size, pre, post, short):
     """Mean connection synapse count per pathway"""
     circuit = bluepy.Circuit(circuit).v2
     mtypes = sorted(circuit.cells.mtypes)
 
     click.echo("\t".join(['from', 'to', 'mean', 'std', 'size', 'sample']))
 
-    for pre, post in itertools.product(mtypes, mtypes):
-        pre_group = {Cell.MTYPE: pre}
-        post_group = {Cell.MTYPE: post}
+    for pre_mtype, post_mtype in itertools.product(mtypes, mtypes):
         sample = stats.sample_pathway_synapse_count(
             circuit,
-            n=sample_size, pre=pre_group, post=post_group
+            n=sample_size,
+            pre=_cell_group(pre_mtype, target=pre),
+            post=_cell_group(post_mtype, target=post)
         )
         mean, std, size, values = _format_sample(sample, short)
-        click.echo("\t".join([pre, post, mean, std, size, values]))
+        click.echo("\t".join([pre_mtype, post_mtype, mean, std, size, values]))
 
 
 @app.command()
@@ -81,11 +91,9 @@ def bouton_density(circuit, sample_size, sample_target, mask, assume_syns_bouton
 
     for mtype in itertools.chain(['*'], mtypes):
         if mtype == '*':
-            group = {}
+            group = sample_target
         else:
-            group = {Cell.MTYPE: mtype}
-        if sample_target is not None:
-            group['$target'] = sample_target
+            group = _cell_group(mtype, target=sample_target)
         sample = stats.sample_bouton_density(
             circuit,
             n=sample_size, group=group, mask=mask, synapses_per_bouton=assume_syns_bouton
@@ -95,4 +103,4 @@ def bouton_density(circuit, sample_size, sample_target, mask, assume_syns_bouton
 
 
 if __name__ == '__main__':
-    app(None)
+    app()  # pylint: disable=no-value-for-parameter
