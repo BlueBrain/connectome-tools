@@ -88,15 +88,12 @@ def sample_bouton_density(circuit, n, group=None, synapses_per_bouton=1.0, mask=
         numpy array of length min(n, N) with bouton density per cell,
         where N is the total number cells in the specified cell group.
     """
-    mask = _load_mask(circuit, mask)
     gids = circuit.cells.ids(group)
-    if mask is not None:
-        xyz = circuit.cells.positions(gids).values
-        gids = gids[mask.lookup(xyz)]
     if len(gids) > n:
         gids = np.random.choice(gids, size=n, replace=False)
     elif len(gids) == 0:
         L.warning("No GID matching selection for group '%s'", group)
+    mask = _load_mask(circuit, mask)
     return np.array([
         _calc_bouton_density(circuit, gid, synapses_per_bouton, mask) for gid in gids
     ])

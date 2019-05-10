@@ -102,23 +102,6 @@ def test_sample_bouton_density_1(mock_get):
 @patch(test_module.__name__ + '._calc_bouton_density', side_effect=[42., 43.])
 def test_sample_bouton_density_2(mock_get):
     circuit = Mock()
-    circuit.cells.ids.return_value = np.array([1, 2, 3])
-    mock_mask = Mock()
-    mock_mask.lookup.return_value = np.array([True, False, True])
-    circuit.atlas.load_data.return_value = mock_mask
-    npt.assert_equal(
-        test_module.sample_bouton_density(circuit, n=4, mask='mask'),
-        [42., 43.]
-    )
-    mock_get.assert_has_calls([
-        mock.call(circuit, 1, mock.ANY, mock.ANY),
-        mock.call(circuit, 3, mock.ANY, mock.ANY),
-    ])
-
-
-@patch(test_module.__name__ + '._calc_bouton_density', side_effect=[42., 43.])
-def test_sample_bouton_density_3(mock_get):
-    circuit = Mock()
     circuit.cells.ids.return_value = []
     npt.assert_equal(
         test_module.sample_bouton_density(circuit, n=2),

@@ -155,12 +155,14 @@ Options:
     --assume-syns-bouton FLOAT  Synapse count per bouton  [default: ``1.0``]
     --short                     Omit sampled values from the output [default: ``False``]
 
-Optional ``--mask`` parameter references atlas dataset with volumetric mask defining region of interest.
-If provided, only cells within this region would be sampled; and only axonal segments within this region would be considered for each sampled cell (otherwise whole axon is considered, without any filtering).
+Optional ``--mask`` parameter references atlas dataset with volumetric mask defining axon region of interest.
+If provided, only axonal segments within this region would be considered for each sampled cell (otherwise whole axon is considered, without any filtering). Please note that this parameter does *not* affect cell sampling (i.e., the choice of cell somata is affected only by ``--sample-target``).
+
 Circuit model source atlas defined in CircuitConfig is used for filtering segments. If VoxelBrain URL is provided there, please set ``BLUEPY_ATLAS_CACHE_DIR`` environment variable to define the folder for storing data fetched from VoxelBrain.
+
 Please note also that using region filtering might affect the performance.
 
-It is generally recommended to limit sample target and / or region to circuit "center" to minimize border effects (for instance, using central hypercolumn in O1 mosaic circuit, as in the example above).
+It is generally recommended to limit sample target and / or region mask to circuit "center" to minimize border effects (for instance, using central hypercolumn in O1 mosaic circuit, as in the example above).
 
 If there are only ``K`` < ``SAMPLE_SIZE`` samples available, ``K`` samples will be used.
 
