@@ -24,14 +24,14 @@ Installation
 module load
 -----------
 
-The easiest way to get ``connectome-tools`` package might be with a *module*:
+The easiest way to get ``connectome-tools`` package might be with a Spack *module*:
 
 .. code-block:: console
 
-    $ module load nix/nse/connectome-tools
+    $ module load connectome-tools
 
 
-To ensure the result obtained with the tools is reproducible, please consider using a specific `BBP archive S/W module <https://bbpteam.epfl.ch/project/spaces/display/BBPHPC/BBP+ARCHIVE+SOFTWARE+MODULES>`_.
+To ensure the result obtained with the tools is reproducible, please consider using some specific `BBP archive S/W release <https://bbpteam.epfl.ch/project/spaces/display/BBPHPC/BBP+ARCHIVE+SOFTWARE+MODULES>`_.
 
 pip install
 -----------
@@ -42,7 +42,7 @@ Alternatively, ``connectome-tools`` is also distributed as a Python package avai
 
     $ pip install -i https://bbpteam.epfl.ch/repository/devpi/simple/ connectome-tools
 
-Only Python 2.7 / Python 3.5+ is supported at the moment.
+Only Python 2.7 / Python 3.6+ is supported at the moment.
 
 Datasets
 ========
