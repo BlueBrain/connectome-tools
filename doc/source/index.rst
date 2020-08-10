@@ -432,23 +432,39 @@ Parameters:
     Substring to look for in mtype.
 
 **bouton_reduction_factor**
-    ``bouton_reduction_factor`` value to use
+    ``bouton_reduction_factor`` value to use.
 
 **mean_syns_connection**
-    ``mean_syns_connection`` value to use
+    ``mean_syns_connection`` value to use.
 
 **cv_syns_connection**
-    ``cv_syns_connection`` value to use
+    ``cv_syns_connection`` value to use.
 
-Example:
+**p_A**
+    ``p_A`` value to use. It can be specified together with ``pMu_A``
+    as an alternative to ``mean_syns_connection`` and ``cv_syns_connection``.
+
+**pMu_A**
+    ``pMu_A`` value to use.  It can be specified together with ``p_A``
+    as an alternative to ``mean_syns_connection`` and ``cv_syns_connection``.
+
+Examples:
 
 ::
 
-    - override_mtype
+    - override_mtype:
         mtype_pattern: CHC
         bouton_reduction_factor: 1.0
         mean_syns_connection: 1.0
         cv_syns_connection: 1.0
+
+::
+
+    - override_mtype:
+        mtype_pattern: CHC
+        bouton_reduction_factor: 1.0
+        p_A: 1.0
+        pMu_A: 0.0
 
 
 Acknowledgments

@@ -19,6 +19,8 @@ from connectome_tools.s2f_recipe import (
     BOUTON_REDUCTION_FACTOR,
     CV_SYNS_CONNECTION,
     MEAN_SYNS_CONNECTION,
+    P_A,
+    PMU_A,
     estimate_bouton_reduction,
     estimate_individual_bouton_reduction,
     estimate_syns_con,
@@ -32,11 +34,19 @@ from connectome_tools.version import __version__
 
 L = logging.getLogger('s2f-recipe')
 
-REQUIRED_PARAMS = [
+REQUIRED_PARAMS = {
     BOUTON_REDUCTION_FACTOR,
+}
+# other required params (first choice)
+ALTERNATIVE_PARAMS_1 = {
+    P_A,
+    PMU_A,
+}
+# other required params (second choice)
+ALTERNATIVE_PARAMS_2 = {
     CV_SYNS_CONNECTION,
     MEAN_SYNS_CONNECTION,
-]
+}
 
 DISPATCH = {
     'estimate_bouton_reduction': estimate_bouton_reduction,
@@ -52,7 +62,38 @@ DISPATCH = {
 def load_yaml(filepath):
     """ Load YAML file. """
     with open(filepath) as f:
-        return yaml.load(f)
+        return yaml.safe_load(f)
+
+
+def validate_params(pathway_dict):
+    """Validate and potentially remove unwanted parameters for a given pathway dict.
+
+    Args:
+        pathway_dict (dict): dictionary of parameters.
+
+    Returns:
+        (bool, set):
+            True if successful, False otherwise.
+            Set of missing parameters, or None if no required parameters are missing.
+    """
+    if not REQUIRED_PARAMS.issubset(pathway_dict):
+        # required parameters are incomplete
+        return False, REQUIRED_PARAMS.difference(pathway_dict)
+    elif ALTERNATIVE_PARAMS_1.issubset(pathway_dict):
+        # alternative_1 parameters are complete
+        for k in ALTERNATIVE_PARAMS_2:
+            # remove the unwanted alternative_2 parameters if they exist
+            pathway_dict.pop(k, None)
+        return True, None
+    elif ALTERNATIVE_PARAMS_1.intersection(pathway_dict):
+        # alternative_1 parameters are present but incomplete
+        return False, ALTERNATIVE_PARAMS_1.difference(pathway_dict)
+    elif ALTERNATIVE_PARAMS_2.issubset(pathway_dict):
+        # alternative_2 parameters are complete
+        return True, None
+    else:
+        # alternative_2 parameters are incomplete
+        return False, ALTERNATIVE_PARAMS_2.difference(pathway_dict)
 
 
 def generate_recipe(circuit, strategies):
@@ -77,11 +118,11 @@ def generate_recipe(circuit, strategies):
         if pathway not in result:
             L.warning("Undefined pathway: %s", pathway)
             continue
-        undefined_params = set(REQUIRED_PARAMS) - set(result[pathway])
-        if undefined_params:
+        is_valid, missing_params = validate_params(result[pathway])
+        if not is_valid:
             L.warning(
                 "pathway %s has undefined parameters: %s; skipping",
-                pathway, ", ".join(undefined_params)
+                pathway, ", ".join(missing_params)
             )
             del result[pathway]
 

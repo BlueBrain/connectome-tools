@@ -14,6 +14,7 @@
 - generalized_cv:
     cv: 0.32
 - override_mtype:
-    mtype_pattern: ChC
-    mean_syns_connection: 1.0
-    cv_syns_connection: 1.0
+    mtype_pattern: CHC
+    bouton_reduction_factor: 1.0
+    p_A: 1.0
+    pMu_A: 0.0
