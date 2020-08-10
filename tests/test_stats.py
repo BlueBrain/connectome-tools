@@ -1,13 +1,8 @@
-import nose.tools as nt
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
-import neurom as nm
-
-import mock
-from mock import Mock, patch
-
 from bluepy.v2.enums import Segment, Synapse
+from mock import Mock, patch
 
 import connectome_tools.stats as test_module
 
@@ -18,7 +13,8 @@ def test_bouton_density_1(nm_get):
     circuit.connectome.efferent_synapses.return_value = [(1, 0), (2, 0), (2, 1)]
     nm_get.return_value = [10.0]
     actual = test_module.bouton_density(circuit, 42, synapses_per_bouton=1.5)
-    nt.assert_almost_equal(actual, 0.2)
+    npt.assert_almost_equal(actual, 0.2)
+
 
 def test_bouton_density_2():
     mock_mask = Mock()
@@ -35,7 +31,8 @@ def test_bouton_density_2():
         ]
     )
     actual = test_module.bouton_density(circuit, 42, mask='Foo')
-    nt.assert_true(np.isnan(actual))
+    npt.assert_equal(actual, np.nan)
+
 
 def test_bouton_density_3():
     def _mock_lookup(points, outer_value):

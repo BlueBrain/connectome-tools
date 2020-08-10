@@ -64,7 +64,9 @@ def _calc_bouton_density(circuit, gid, synapses_per_bouton, mask):
         ).groupby(INDEX_COLS).size()
 
         # count synapses on filtered segments
-        synapse_count = syn_per_segment[filtered.index].dropna().sum()
+        synapse_count = syn_per_segment.loc[
+            syn_per_segment.index.intersection(filtered.index)
+        ].sum()
 
     return (1.0 * synapse_count / synapses_per_bouton) / axon_length
 
