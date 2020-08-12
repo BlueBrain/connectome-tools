@@ -6,7 +6,7 @@ from mock import patch
 
 import connectome_tools.s2f_recipe.estimate_bouton_reduction as test_module
 
-TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "../data")
 
 
 @patch(test_module.__name__ + '.sample_bouton_density', return_value=np.array([1., 3.]))

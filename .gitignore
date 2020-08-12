@@ -1,6 +1,7 @@
 *.pyc
 *.swp
 coverage.xml
+htmlcov
 *.egg-info
 .coverage
 doc/build

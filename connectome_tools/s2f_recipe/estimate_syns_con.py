@@ -48,7 +48,8 @@ def estimate_nsyn(circuit, pathway, sample_size, pre, post):
         pre=_cell_group(pre_mtype, target=pre),
         post=_cell_group(post_mtype, target=post)
     )
-    return values.mean()
+    # avoid RuntimeWarning: Mean of empty slice.
+    return values.mean() if values.size else np.nan
 
 
 def execute(

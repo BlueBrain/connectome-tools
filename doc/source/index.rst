@@ -211,10 +211,15 @@ The output is an XML file of form:
     <ConnectionRules>
         <mTypeRule from="from_1" to="to_1" cv_syns_connection="0.348" bouton_reduction_factor="0.459" mean_syns_connection="4.341" />
         <mTypeRule from="from_2" to="to_2" cv_syns_connection="0.348" bouton_reduction_factor="0.184" mean_syns_connection="3.470" />
+        <mTypeRule from="from_3" to="to_3" bouton_reduction_factor="1.000" p_A="1.000" pMu_A="0.000"/>
         ...
     </ConnectionRules>
 
-`strategies` define how ``cv_syns_connection``, ``bouton_reduction_factor``, ``mean_syns_connection`` values are defined for each ``(from_K, to_K)`` pathway.
+For each ``(from_K, to_K)`` pathway, `strategies` define the values of one of the two
+possible sets of resulting parameters:
+
+    - ``bouton_reduction_factor``, ``cv_syns_connection``, ``mean_syns_connection``
+    - ``bouton_reduction_factor``, ``p_A``, ``pMu_A``
 
 Available strategies:
 
@@ -441,14 +446,14 @@ Parameters:
     ``cv_syns_connection`` value to use.
 
 **p_A**
-    ``p_A`` value to use. It can be specified together with ``pMu_A``
+    ``p_A`` value to use as reduction factor. It can be specified together with ``pMu_A``
     as an alternative to ``mean_syns_connection`` and ``cv_syns_connection``.
 
 **pMu_A**
-    ``pMu_A`` value to use.  It can be specified together with ``p_A``
+    ``pMu_A`` value to use as input to the survival rate. It can be specified together with ``p_A``
     as an alternative to ``mean_syns_connection`` and ``cv_syns_connection``.
 
-Examples:
+Example 1:
 
 ::
 
@@ -457,6 +462,8 @@ Examples:
         bouton_reduction_factor: 1.0
         mean_syns_connection: 1.0
         cv_syns_connection: 1.0
+
+Example 2:
 
 ::
 

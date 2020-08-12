@@ -1,0 +1,4 @@
+from	to	mean	std	size	sample
+SLM_PPA	SLM_PPA	16.2	8.77	5	1,16,16,20,28
+SLM_PPA	SO_BP	N/A	N/A	N/A	N/A
+SLM_PPA	SP_AA	3	1.63	3	1,3,5

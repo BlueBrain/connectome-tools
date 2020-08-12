@@ -2,11 +2,12 @@ import os
 
 import numpy as np
 import numpy.testing as npt
-from mock import Mock, patch
+from bluepy.v2 import Circuit
+from mock import MagicMock, patch
 
 import connectome_tools.s2f_recipe.estimate_individual_bouton_reduction as test_module
 
-TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "../data")
 
 
 def mock_sample_bouton_density(circuit, **kwargs):
@@ -20,7 +21,7 @@ def mock_sample_bouton_density(circuit, **kwargs):
 
 @patch(test_module.__name__ + '.sample_bouton_density', side_effect=mock_sample_bouton_density)
 def test_1(_):
-    circuit = Mock()
+    circuit = MagicMock(Circuit)
     circuit.cells.mtypes = ['L1_DAC', 'L23_MC', 'L5_TPC']
     expected = {
         ('L23_MC', '*'): {'bouton_reduction_factor': 5.0},
@@ -32,7 +33,7 @@ def test_1(_):
 
 @patch(test_module.__name__ + '.sample_bouton_density', side_effect=mock_sample_bouton_density)
 def test_2(_):
-    circuit = Mock()
+    circuit = MagicMock(Circuit)
     circuit.cells.mtypes = ['L1_DAC', 'L23_MC', 'L5_TPC']
     expected = {
         ('L23_MC', '*'): {'bouton_reduction_factor': 15.0},
