@@ -5,7 +5,6 @@
 import itertools
 import logging
 import time
-
 from collections import OrderedDict
 from contextlib import contextmanager
 from functools import partial
@@ -13,9 +12,8 @@ from functools import partial
 import click
 import lxml.etree as ET
 import numpy as np
-import yaml
 import six
-
+import yaml
 from bluepy.v2 import Circuit
 from joblib import Parallel, delayed
 
@@ -35,7 +33,7 @@ from connectome_tools.s2f_recipe import (
 )
 from connectome_tools.version import __version__
 
-L = logging.getLogger('s2f-recipe')
+L = logging.getLogger("s2f-recipe")
 
 REQUIRED_PARAMS = {
     BOUTON_REDUCTION_FACTOR,
@@ -56,13 +54,13 @@ ALTERNATIVE_PARAMS_2 = {
 # The generator function `prepare` should yield one or more functions that will be
 # executed in separate processes.
 DISPATCH = {
-    'estimate_bouton_reduction': estimate_bouton_reduction,
-    'estimate_individual_bouton_reduction': estimate_individual_bouton_reduction,
-    'estimate_syns_con': estimate_syns_con,
-    'experimental_syns_con': experimental_syns_con,
-    'existing_recipe': existing_recipe,
-    'generalized_cv': generalized_cv,
-    'override_mtype': override_mtype,
+    "estimate_bouton_reduction": estimate_bouton_reduction,
+    "estimate_individual_bouton_reduction": estimate_individual_bouton_reduction,
+    "estimate_syns_con": estimate_syns_con,
+    "experimental_syns_con": experimental_syns_con,
+    "existing_recipe": existing_recipe,
+    "generalized_cv": generalized_cv,
+    "override_mtype": override_mtype,
 }
 
 
@@ -152,8 +150,8 @@ def init_recipe(task_results, mtypes):
         # that are assembled in order (latter parameters can override former parameters)
         for pathway_wildcard, params in task_result.value:
             pathways = itertools.product(
-                mtypes if pathway_wildcard[0] == '*' else [pathway_wildcard[0]],
-                mtypes if pathway_wildcard[1] == '*' else [pathway_wildcard[1]]
+                mtypes if pathway_wildcard[0] == "*" else [pathway_wildcard[0]],
+                mtypes if pathway_wildcard[1] == "*" else [pathway_wildcard[1]],
             )
             for pathway in pathways:
                 recipe.setdefault(pathway, {}).update(params)
@@ -170,13 +168,14 @@ def clean_recipe(recipe, mtypes):
         if not is_valid:
             L.warning(
                 "pathway %s has undefined parameters: %s; skipping",
-                pathway, ", ".join(missing_params)
+                pathway,
+                ", ".join(missing_params),
             )
             del recipe[pathway]
 
 
 def generate_recipe(circuit, strategies, jobs, base_seed, verbose):
-    """ Generate S2F recipe for `circuit` using `strategies`.
+    """Generate S2F recipe for `circuit` using `strategies`.
 
     Args:
         circuit: BluePy Circuit
@@ -221,34 +220,34 @@ def generate_recipe(circuit, strategies, jobs, base_seed, verbose):
 
 def write_recipe(output_path, recipe, comment=None):
     """ Dump `recipe` as XML to `output_path`. """
-    root = ET.Element('ConnectionRules')
+    root = ET.Element("ConnectionRules")
     if comment is not None:
         root.addprevious(ET.Comment(comment))
     for pathway, params in sorted(recipe.items()):
         attr = OrderedDict()
-        attr['from'] = pathway[0]
-        attr['to'] = pathway[1]
+        attr["from"] = pathway[0]
+        attr["to"] = pathway[1]
         for param, value in six.iteritems(params):
             attr[param] = "{:.3f}".format(value)
-        ET.SubElement(root, 'mTypeRule', attr)
+        ET.SubElement(root, "mTypeRule", attr)
 
     tree = ET.ElementTree(root)
-    with open(output_path, 'wb') as f:
-        tree.write(f, pretty_print=True, xml_declaration=True, encoding='utf-8')
+    with open(output_path, "wb") as f:
+        tree.write(f, pretty_print=True, xml_declaration=True, encoding="utf-8")
 
 
 def setup_logging(verbose):
     """ Setup logging. """
     logformat = "%(asctime)s %(levelname)s %(name)s: %(message)s"
-    loglevel = {
+    loglevels = {
         0: logging.WARN,
         1: logging.INFO,
         2: logging.DEBUG,
-    }[verbose]
+    }
     # Because this function can be called in a task executed in a subprocess,
     # it should not reconfigure logging if it has been already configured
     # in the same process.
-    logging.basicConfig(format=logformat, level=loglevel)
+    logging.basicConfig(format=logformat, level=loglevels[verbose])
 
 
 @contextmanager
@@ -297,5 +296,5 @@ def app(circuit, strategies, verbose, seed, output, jobs):
         write_recipe(output, recipe, comment=comment)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app()  # pylint: disable=no-value-for-parameter

@@ -14,4 +14,4 @@ def prepare(_, cv):
 
 def _execute(cv):
     # pylint: disable=missing-docstring
-    return [(('*', '*'), {CV_SYNS_CONNECTION: cv})]
+    return [(("*", "*"), {CV_SYNS_CONNECTION: cv})]

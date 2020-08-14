@@ -5,10 +5,8 @@ import logging
 
 import neurom as nm
 import numpy as np
-
 from bluepy.v2 import Segment, Synapse
 from voxcell import ROIMask
-
 
 L = logging.getLogger(__name__)
 
@@ -16,9 +14,9 @@ L = logging.getLogger(__name__)
 def _segment_lengths(segments):
     """ Find segment lengths given a DataFrame returned by morph.spatial_index() query. """
     return np.linalg.norm(
-        segments[[Segment.X1, Segment.Y1, Segment.Z1]].values -
-        segments[[Segment.X2, Segment.Y2, Segment.Z2]].values,
-        axis=1
+        segments[[Segment.X1, Segment.Y1, Segment.Z1]].values
+        - segments[[Segment.X2, Segment.Y2, Segment.Z2]].values,
+        axis=1,
     )
 
 
@@ -35,19 +33,13 @@ def _calc_bouton_density(circuit, gid, synapses_per_bouton, mask):
         # count all efferent synapses and total axon length
         synapse_count = len(circuit.connectome.efferent_synapses(gid))
         axon_length = nm.get(
-            'neurite_lengths', circuit.morph.get(gid, False), neurite_type=nm.AXON
+            "neurite_lengths", circuit.morph.get(gid, False), neurite_type=nm.AXON
         )[0]
     else:
         # find all segments which endpoints fall into the region of interest
-        all_pts = circuit.morph.segment_points(
-            gid, transform=True, neurite_type=nm.AXON
-        )
-        mask1 = mask.lookup(
-            all_pts[[Segment.X1, Segment.Y1, Segment.Z1]].values, outer_value=False
-        )
-        mask2 = mask.lookup(
-            all_pts[[Segment.X2, Segment.Y2, Segment.Z2]].values, outer_value=False
-        )
+        all_pts = circuit.morph.segment_points(gid, transform=True, neurite_type=nm.AXON)
+        mask1 = mask.lookup(all_pts[[Segment.X1, Segment.Y1, Segment.Z1]].values, outer_value=False)
+        mask2 = mask.lookup(all_pts[[Segment.X2, Segment.Y2, Segment.Z2]].values, outer_value=False)
         filtered = all_pts[mask1 & mask2]
 
         if filtered.empty:
@@ -58,10 +50,12 @@ def _calc_bouton_density(circuit, gid, synapses_per_bouton, mask):
         axon_length = _segment_lengths(filtered).sum()
 
         # find axon segments with synapses; count synapses per each such segment
-        INDEX_COLS = [Synapse.PRE_SECTION_ID, '_PRE_SEGMENT_ID']
-        syn_per_segment = circuit.connectome.efferent_synapses(
-            gid, properties=INDEX_COLS
-        ).groupby(INDEX_COLS).size()
+        INDEX_COLS = [Synapse.PRE_SECTION_ID, "_PRE_SEGMENT_ID"]
+        syn_per_segment = (
+            circuit.connectome.efferent_synapses(gid, properties=INDEX_COLS)
+            .groupby(INDEX_COLS)
+            .size()
+        )
 
         # count synapses on filtered segments
         synapse_count = syn_per_segment.loc[
@@ -96,9 +90,7 @@ def sample_bouton_density(circuit, n, group=None, synapses_per_bouton=1.0, mask=
     elif len(gids) == 0:
         L.warning("No GID matching selection for group '%s'", group)
     mask = _load_mask(circuit, mask)
-    return np.array([
-        _calc_bouton_density(circuit, gid, synapses_per_bouton, mask) for gid in gids
-    ])
+    return np.array([_calc_bouton_density(circuit, gid, synapses_per_bouton, mask) for gid in gids])
 
 
 def sample_pathway_synapse_count(circuit, n, pre=None, post=None, unique_gids=False):

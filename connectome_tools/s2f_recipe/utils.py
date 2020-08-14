@@ -7,7 +7,6 @@ from functools import partial
 
 import numpy as np
 
-
 TaskResult = namedtuple("TaskResult", ["id", "group", "value", "elapsed"])
 
 
@@ -15,7 +14,7 @@ class Task:
     """ Callable task class. """
 
     def __init__(self, func, *args, task_group=None, **kwargs):
-        """ Initialize the task.
+        """Initialize the task.
 
         Args:
             func: Function that will be called when calling the object.
@@ -27,7 +26,7 @@ class Task:
         self.group = task_group
 
     def __call__(self, task_id=None, seed=None, setup_logging=None):
-        """ Execute the task.
+        """Execute the task.
 
         Args:
             task_id: Task id, should be unique.

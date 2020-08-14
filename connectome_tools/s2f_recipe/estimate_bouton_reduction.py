@@ -15,7 +15,6 @@ from connectome_tools.s2f_recipe import BOUTON_REDUCTION_FACTOR
 from connectome_tools.s2f_recipe.utils import Task
 from connectome_tools.stats import sample_bouton_density
 
-
 L = logging.getLogger(__name__)
 
 
@@ -29,24 +28,24 @@ def _execute(circuit_config, bio_data, sample):
     if isinstance(bio_data, float):
         ref_value = bio_data
     else:
-        bio_data = read_bouton_density(bio_data).set_index('mtype')
-        ref_value = bio_data.loc['*']['mean']
+        bio_data = read_bouton_density(bio_data).set_index("mtype")
+        ref_value = bio_data.loc["*"]["mean"]
 
     if isinstance(sample, str):
-        dset = read_bouton_density(sample).set_index('mtype')
-        value = dset.loc['*']['mean']
+        dset = read_bouton_density(sample).set_index("mtype")
+        value = dset.loc["*"]["mean"]
     else:
         if sample is None:
             sample = {}
         circuit = Circuit(circuit_config)
         values = sample_bouton_density(
             circuit,
-            n=sample.get('size', 100),
-            group=sample.get('target', None),
-            mask=sample.get('mask', None),
-            synapses_per_bouton=sample.get('assume_syns_bouton', 1.0)
+            n=sample.get("size", 100),
+            group=sample.get("target", None),
+            mask=sample.get("mask", None),
+            synapses_per_bouton=sample.get("assume_syns_bouton", 1.0),
         )
         value = np.nanmean(values)
 
     L.debug("Bouton density estimate: %.3g", value)
-    return [(('*', '*'), {BOUTON_REDUCTION_FACTOR: ref_value / value})]
+    return [(("*", "*"), {BOUTON_REDUCTION_FACTOR: ref_value / value})]
