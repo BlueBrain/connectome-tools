@@ -1,4 +1,5 @@
 import os
+from functools import partial
 
 import lxml.etree as ET
 from bluepy.v2 import Circuit
@@ -27,6 +28,14 @@ def canonicalize_xml(xml_data=None, from_file=None):
     """
     etree = ET.fromstring(xml_data) if xml_data is not None else ET.parse(from_file)
     return ET.tostring(etree, method="c14n2", with_comments=False, strip_text=True)
+
+
+def worker_generator(data):
+    def _worker(items):
+        return items
+
+    for worker_data in data:
+        yield partial(_worker, worker_data)
 
 
 def test_app_help():
@@ -104,9 +113,7 @@ def test_app_help():
         ),
     ]
 )
-def test_validate_params(
-    _, pathways_dict, expected_is_valid, expected_missing, expected_dict
-):
+def test_validate_params(_, pathways_dict, expected_is_valid, expected_missing, expected_dict):
     # if expected_dict is SAME, then we expect that pathways_dict will not be modified
     if expected_dict == SAME:
         expected_dict = pathways_dict.copy()
@@ -120,13 +127,13 @@ def test_validate_params(
 
 @patch(test_module.__name__ + ".open")
 @patch(test_module.__name__ + ".Circuit")
-@patch(test_module.__name__ + ".override_mtype.execute")
-@patch(test_module.__name__ + ".generalized_cv.execute")
-@patch(test_module.__name__ + ".experimental_syns_con.execute")
-@patch(test_module.__name__ + ".existing_recipe.execute")
-@patch(test_module.__name__ + ".estimate_syns_con.execute")
-@patch(test_module.__name__ + ".estimate_individual_bouton_reduction.execute")
-@patch(test_module.__name__ + ".estimate_bouton_reduction.execute")
+@patch(test_module.__name__ + ".override_mtype.prepare")
+@patch(test_module.__name__ + ".generalized_cv.prepare")
+@patch(test_module.__name__ + ".experimental_syns_con.prepare")
+@patch(test_module.__name__ + ".existing_recipe.prepare")
+@patch(test_module.__name__ + ".estimate_syns_con.prepare")
+@patch(test_module.__name__ + ".estimate_individual_bouton_reduction.prepare")
+@patch(test_module.__name__ + ".estimate_bouton_reduction.prepare")
 def test_app(
     estimate_bouton_reduction,
     estimate_individual_bouton_reduction,
@@ -139,34 +146,38 @@ def test_app(
     mock_file,
 ):
     # mock strategies
-    estimate_bouton_reduction.return_value = {
-        ("*", "*"): {"bouton_reduction_factor": 5.0},
-    }
-    estimate_individual_bouton_reduction.return_value = {
-        ("SO_OLM", "*"): {"bouton_reduction_factor": 11.0},
-    }
-    estimate_syns_con.return_value = {
-        ("L1_DAC", "L1_DAC"): {"mean_syns_connection": 6.0},
-        ("L1_DAC", "SO_OLM"): {"mean_syns_connection": 7.0},
-        ("L1_DAC", "L4_CHC"): {"mean_syns_connection": 8.0},
-        ("SO_OLM", "L1_DAC"): {"mean_syns_connection": 6.5},
-        ("SO_OLM", "SO_OLM"): {"mean_syns_connection": 4.5},
-        ("SO_OLM", "L4_CHC"): {"mean_syns_connection": 3.5},
-        ("L4_CHC", "L1_DAC"): {"mean_syns_connection": 3.0},
-        ("L4_CHC", "SO_OLM"): {"mean_syns_connection": 4.0},
-        ("L4_CHC", "L4_CHC"): {"mean_syns_connection": 5.0},
-    }
-    existing_recipe.return_value = {}
-    experimental_syns_con.return_value = {
-        ("L1_DAC", "L1_DAC"): {"mean_syns_connection": 7.5},
-        ("SO_OLM", "L4_CHC"): {"mean_syns_connection": 2.0},
-    }
-    generalized_cv.return_value = {
-        ("*", "*"): {"cv_syns_connection": 0.32},
-    }
-    override_mtype.return_value = {
-        ("L4_CHC", "*"): {"bouton_reduction_factor": 1.0, "p_A": 1.0, "pMu_A": 0.0},
-    }
+    estimate_bouton_reduction.return_value = worker_generator(
+        [[(("*", "*"), {"bouton_reduction_factor": 5.0})]]
+    )
+    estimate_individual_bouton_reduction.return_value = worker_generator(
+        [[(("SO_OLM", "*"), {"bouton_reduction_factor": 11.0})]]
+    )
+    estimate_syns_con.return_value = worker_generator(
+        [
+            [(("L1_DAC", "L1_DAC"), {"mean_syns_connection": 6.0})],
+            [(("L1_DAC", "SO_OLM"), {"mean_syns_connection": 7.0})],
+            [(("L1_DAC", "L4_CHC"), {"mean_syns_connection": 8.0})],
+            [(("SO_OLM", "L1_DAC"), {"mean_syns_connection": 6.5})],
+            [(("SO_OLM", "SO_OLM"), {"mean_syns_connection": 4.5})],
+            [(("SO_OLM", "L4_CHC"), {"mean_syns_connection": 3.5})],
+            [(("L4_CHC", "L1_DAC"), {"mean_syns_connection": 3.0})],
+            [(("L4_CHC", "SO_OLM"), {"mean_syns_connection": 4.0})],
+            [(("L4_CHC", "L4_CHC"), {"mean_syns_connection": 5.0})],
+        ]
+    )
+    existing_recipe.return_value = worker_generator([[]])
+    experimental_syns_con.return_value = worker_generator(
+        [
+            [
+                (("L1_DAC", "L1_DAC"), {"mean_syns_connection": 7.5}),
+                (("SO_OLM", "L4_CHC"), {"mean_syns_connection": 2.0}),
+            ]
+        ]
+    )
+    generalized_cv.return_value = worker_generator([[(("*", "*"), {"cv_syns_connection": 0.32})]])
+    override_mtype.return_value = worker_generator(
+        [[(("L4_CHC", "*"), {"bouton_reduction_factor": 1.0, "p_A": 1.0, "pMu_A": 0.0})]]
+    )
     mtypes = {"L1_DAC", "SO_OLM", "L4_CHC"}
 
     # mock open, used to read the configuration, and to write the result
@@ -184,15 +195,7 @@ def test_app(
     runner = CliRunner()
     result = runner.invoke(
         test_module.app,
-        [
-            "-s",
-            "s2f_config_1.yaml",
-            "-o",
-            "s2f_recipe_1.xml",
-            "--seed",
-            "123",
-            "CircuitConfig",
-        ],
+        ["-s", "s2f_config_1.yaml", "-o", "s2f_recipe_1.xml", "--seed", "123", "CircuitConfig"],
         catch_exceptions=False,
     )
 
@@ -205,4 +208,5 @@ def test_app(
     # Compare the canonicalized XML content
     assert actual_xml == expected_xml
 
+    # note: stdout is not printed, but it can be accessed in result.output
     assert result.exit_code == 0

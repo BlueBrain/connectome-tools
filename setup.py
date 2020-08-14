@@ -12,6 +12,7 @@ setup(
     install_requires=[
         'click>=7.0,<8.0',
         'equation>=1.2',
+        'joblib>=0.14.1',
         'lxml>=3.3',
         'numpy>=1.9',
         'pandas>=0.17',

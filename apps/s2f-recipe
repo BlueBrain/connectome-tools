@@ -14,6 +14,7 @@ import yaml
 import six
 
 from bluepy.v2 import Circuit
+from joblib import Parallel, delayed
 
 from connectome_tools.s2f_recipe import (
     BOUTON_REDUCTION_FACTOR,
@@ -34,6 +35,8 @@ from connectome_tools.version import __version__
 
 L = logging.getLogger('s2f-recipe')
 
+PARALLEL_BACKEND = "loky"
+
 REQUIRED_PARAMS = {
     BOUTON_REDUCTION_FACTOR,
 }
@@ -48,6 +51,10 @@ ALTERNATIVE_PARAMS_2 = {
     MEAN_SYNS_CONNECTION,
 }
 
+# For each strategy defined in the configuration, the script will call the generator
+# function `prepare` in the corresponding module.
+# The generator function `prepare` should yield one or more functions that will be
+# executed in separate processes.
 DISPATCH = {
     'estimate_bouton_reduction': estimate_bouton_reduction,
     'estimate_individual_bouton_reduction': estimate_individual_bouton_reduction,
@@ -96,37 +103,83 @@ def validate_params(pathway_dict):
         return False, ALTERNATIVE_PARAMS_2.difference(pathway_dict)
 
 
-def generate_recipe(circuit, strategies):
-    """ Generate S2F recipe for `circuit` using `strategies`. """
-    result = {}
-    mtypes = sorted(circuit.cells.mtypes)
-
+def build_workers(circuit, strategies):
+    """ Return the list of workers to be executed in separate processes. """
+    workers = []
     for entry in strategies:
         assert len(entry) == 1
         strategy, kwargs = next(iter(entry.items()))
-        L.info("Executing strategy '%s'...", strategy)
-        strategy_result = DISPATCH[strategy].execute(circuit, **kwargs)
-        for pathway_wildcard, params in six.iteritems(strategy_result):
+        L.info("Preparing strategy '%s'...", strategy)
+        worker_generator = DISPATCH[strategy].prepare(circuit, **kwargs)
+        workers.extend(worker_generator)
+    return workers
+
+
+def init_recipe(worker_results, mtypes):
+    """ Return the recipe assembled using the workers results. """
+    recipe = {}
+    for worker_result in worker_results:
+        for pathway_wildcard, params in worker_result:
             pathways = itertools.product(
                 mtypes if pathway_wildcard[0] == '*' else [pathway_wildcard[0]],
                 mtypes if pathway_wildcard[1] == '*' else [pathway_wildcard[1]]
             )
             for pathway in pathways:
-                result.setdefault(pathway, {}).update(params)
+                recipe.setdefault(pathway, {}).update(params)
+    return recipe
 
+
+def clean_recipe(recipe, mtypes):
+    """ Clean the recipe removing invalid pathways and unwanted parameters. """
     for pathway in itertools.product(mtypes, mtypes):
-        if pathway not in result:
+        if pathway not in recipe:
             L.warning("Undefined pathway: %s", pathway)
             continue
-        is_valid, missing_params = validate_params(result[pathway])
+        is_valid, missing_params = validate_params(recipe[pathway])
         if not is_valid:
             L.warning(
                 "pathway %s has undefined parameters: %s; skipping",
                 pathway, ", ".join(missing_params)
             )
-            del result[pathway]
+            del recipe[pathway]
 
-    return result
+
+def generate_recipe(circuit, strategies, n_jobs, parallel_verbosity):
+    """ Generate S2F recipe for `circuit` using `strategies`.
+
+    Args:
+        circuit: BluePy Circuit
+        strategies: List of dictionaries, each one representing a strategy.
+            Example of a single strategy::
+            {
+                "estimate_syns_con": {
+                    "formula": "6 * ((n - 1) ** 0.5) - 1",
+                    "formula_ee": "1.5 * n",
+                    "max_value": 25.0,
+                    "sample": {
+                    "size": 1000
+                    }
+                }
+            }
+        n_jobs: Maximum number of concurrently running jobs. If -1 all CPUs are used.
+            If 1 is given, no parallel computing code is used at all.
+            For n_jobs below -1, (n_cpus + 1 + n_jobs) are used.
+
+    Returns:
+        The recipe generated, i.e. a dictionary containing (pre_mtype, post_mtype) as key,
+        and a dictionary of parameters as value.
+    """
+    mtypes = sorted(circuit.cells.mtypes)
+
+    workers = build_workers(circuit, strategies)
+
+    parallel = Parallel(n_jobs=n_jobs, backend=PARALLEL_BACKEND, verbose=parallel_verbosity)
+    worker_results = parallel([delayed(worker)() for worker in workers])
+
+    recipe = init_recipe(worker_results, mtypes)
+    clean_recipe(recipe, mtypes)
+
+    return recipe
 
 
 def write_recipe(output_path, recipe, comment=None):
@@ -152,30 +205,35 @@ def write_recipe(output_path, recipe, comment=None):
 @click.option("-s", "--strategies", required=True, help="Path to strategies config")
 @click.option("-v", "--verbose", count=True, help="-v for INFO, -vv for DEBUG")
 @click.option("--seed", type=int, default=0, help="Pseudo-random generator seed", show_default=True)
+@click.option("--jobs", type=int, default=1, help="Number of concurrent jobs", show_default=True)
 @click.option("-o", "--output", required=True, help="Path to output file")
-def app(circuit, strategies, verbose, seed, output):
+def app(circuit, strategies, verbose, seed, output, jobs):
     """ S2F recipe generation """
-    logging.basicConfig(level=logging.WARN)
-    L.setLevel({
+    logformat = "%(asctime)s;%(levelname)s;%(name)s;%(message)s"
+    loglevel = {
         0: logging.WARN,
         1: logging.INFO,
         2: logging.DEBUG,
-    }[verbose])
+    }[verbose]
+    logging.basicConfig(level=loglevel, format=logformat)
+    # If non zero, progress messages are printed to stderr.
+    # If more than 10, all iterations are reported.
+    parallel_verbosity = verbose * 10
 
     strategies = load_yaml(strategies)
 
     comment = (
-        "\nGenerated by s2f-recipe==%s" % __version__ +
-        "\nfrom circuit %s" % circuit +
-        "\nusing strategies (seed=%d):" % seed +
-        "\n" + yaml.dump(strategies)
-    )
+        "\nGenerated by s2f-recipe=={version}"
+        "\nfrom circuit {circuit}"
+        "\nusing strategies (seed={seed}):"
+        "\n{strategies}"
+    ).format(version=__version__, circuit=circuit, seed=seed, strategies=yaml.dump(strategies))
 
     circuit = Circuit(circuit)
 
     np.random.seed(seed)
 
-    recipe = generate_recipe(circuit, strategies)
+    recipe = generate_recipe(circuit, strategies, jobs, parallel_verbosity)
     write_recipe(output, recipe, comment=comment)
 
 

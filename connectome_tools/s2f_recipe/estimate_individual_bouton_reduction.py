@@ -35,7 +35,7 @@ def estimate_bouton_density(circuit, mtype, sample_size, sample_target, mask, as
     return np.nanmean(values)
 
 
-def execute(circuit, bio_data, sample=None):
+def prepare(circuit, bio_data, sample=None):
     # pylint: disable=missing-docstring
     mtypes = circuit.cells.mtypes
     if isinstance(bio_data, float):
@@ -61,16 +61,15 @@ def execute(circuit, bio_data, sample=None):
             assume_syns_bouton=sample.get('assume_syns_bouton', 1.0)
         )
 
-    result = {}
     for _, row in bio_data.iterrows():
-        mtype, ref_value = row['mtype'], row['mean']
-        value = estimate(mtype=mtype)
-        if np.isnan(value):
-            L.warning("Could not estimate '%s' bouton density, skipping", mtype)
-            continue
-        L.debug("Bouton density estimate for '%s': %.3g", mtype, value)
-        result[(mtype, '*')] = {
-            BOUTON_REDUCTION_FACTOR: ref_value / value
-        }
+        yield partial(_worker, row, estimate)
 
-    return result
+
+def _worker(row, estimate):
+    mtype, ref_value = row['mtype'], row['mean']
+    value = estimate(mtype=mtype)
+    if np.isnan(value):
+        L.warning("Could not estimate '%s' bouton density, skipping", mtype)
+        return []
+    L.debug("Bouton density estimate for '%s': %.3g", mtype, value)
+    return [((mtype, '*'), {BOUTON_REDUCTION_FACTOR: ref_value / value})]

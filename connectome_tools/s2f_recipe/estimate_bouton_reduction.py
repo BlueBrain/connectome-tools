@@ -6,6 +6,7 @@ between m-types (e.g. pyramidal cells have lower density)
 """
 
 import logging
+from functools import partial
 
 import numpy as np
 
@@ -17,7 +18,12 @@ from connectome_tools.stats import sample_bouton_density
 L = logging.getLogger(__name__)
 
 
-def execute(circuit, bio_data, sample=None):
+def prepare(circuit, bio_data, sample=None):
+    # pylint: disable=missing-docstring
+    yield partial(_worker, circuit, bio_data, sample)
+
+
+def _worker(circuit, bio_data, sample):
     # pylint: disable=missing-docstring
     if isinstance(bio_data, float):
         ref_value = bio_data
@@ -41,9 +47,4 @@ def execute(circuit, bio_data, sample=None):
         value = np.nanmean(values)
 
     L.debug("Bouton density estimate: %.3g", value)
-
-    return {
-        ('*', '*'): {
-            BOUTON_REDUCTION_FACTOR: ref_value / value
-        }
-    }
+    return [(('*', '*'), {BOUTON_REDUCTION_FACTOR: ref_value / value})]

@@ -52,7 +52,7 @@ def estimate_nsyn(circuit, pathway, sample_size, pre, post):
     return values.mean() if values.size else np.nan
 
 
-def execute(
+def prepare(
     circuit,
     formula, formula_ee=None, formula_ei=None, formula_ie=None, formula_ii=None, max_value=None,
     sample=None
@@ -90,19 +90,18 @@ def execute(
         circuit.cells.get(properties=[Cell.MTYPE, Cell.SYNAPSE_CLASS]).drop_duplicates().values
     )
 
-    result = {}
     for pathway in itertools.product(mtypes, mtypes):
-        value = estimate(pathway=pathway)
-        if np.isnan(value):
-            L.warning("Could not estimate '%s' nsyn, skipping", pathway)
-            continue
-        L.debug("nsyn estimate for pathway %s: %.3g", pathway, value)
-        value = choose_formula(formulae, pathway, syn_class_map)(value)
-        value = max(value, 1.0)
-        if max_value is not None:
-            value = min(value, max_value)
-        result[pathway] = {
-            MEAN_SYNS_CONNECTION: value
-        }
+        yield partial(_worker, pathway, estimate, formulae, syn_class_map, max_value)
 
-    return result
+
+def _worker(pathway, estimate, formulae, syn_class_map, max_value):
+    value = estimate(pathway=pathway)
+    if np.isnan(value):
+        L.warning("Could not estimate '%s' nsyn, skipping", pathway)
+        return []
+    L.debug("nsyn estimate for pathway %s: %.3g", pathway, value)
+    value = choose_formula(formulae, pathway, syn_class_map)(value)
+    value = max(value, 1.0)
+    if max_value is not None:
+        value = min(value, max_value)
+    return [(pathway, {MEAN_SYNS_CONNECTION: value})]

@@ -1,4 +1,5 @@
 import os
+from itertools import chain
 
 from bluepy.v2 import Circuit
 from mock import MagicMock
@@ -8,7 +9,7 @@ import connectome_tools.s2f_recipe.existing_recipe as test_module
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "../data")
 
 
-def test_execute():
+def test_prepare():
     circuit = MagicMock(Circuit)
     recipe_path = os.path.join(TEST_DATA_DIR, "s2f_recipe_2.xml")
     expected = {
@@ -29,6 +30,8 @@ def test_execute():
         },
     }
 
-    actual = test_module.execute(circuit, recipe_path=recipe_path)
+    worker_generator = test_module.prepare(circuit, recipe_path=recipe_path)
+    result_generator = (worker() for worker in worker_generator)
+    actual = dict(chain.from_iterable(result_generator))
 
     assert actual == expected

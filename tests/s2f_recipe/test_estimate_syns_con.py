@@ -1,4 +1,5 @@
 import os
+from itertools import chain
 
 import numpy as np
 from bluepy.v2 import Circuit
@@ -77,7 +78,7 @@ TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "../data")
     ]
 )
 @patch(test_module.__name__ + ".sample_pathway_synapse_count")
-def test_execute(mock_synapse_count, _, mtypes, synapse_count, kwargs, expected):
+def test_prepare(mock_synapse_count, _, mtypes, synapse_count, kwargs, expected):
     mock_synapse_count.return_value = np.array(synapse_count)
     circuit = MagicMock(Circuit)
     circuit.cells.mtypes = mtypes
@@ -85,6 +86,8 @@ def test_execute(mock_synapse_count, _, mtypes, synapse_count, kwargs, expected)
         [["L6_TPC:C", "EXC"], ["L4_CHC", "INH"], ["SLM_PPA", "EXC"], ["SP_AA", "INH"]]
     )
 
-    actual = test_module.execute(circuit, **kwargs)
+    worker_generator = test_module.prepare(circuit, **kwargs)
+    result_generator = (worker() for worker in worker_generator)
+    actual = dict(chain.from_iterable(result_generator))
 
     assert actual == expected
