@@ -6,12 +6,13 @@ between m-types (e.g. pyramidal cells have lower density)
 """
 
 import logging
-from functools import partial
 
 import numpy as np
+from bluepy.v2 import Circuit
 
 from connectome_tools.dataset import read_bouton_density
 from connectome_tools.s2f_recipe import BOUTON_REDUCTION_FACTOR
+from connectome_tools.s2f_recipe.utils import Task
 from connectome_tools.stats import sample_bouton_density
 
 
@@ -20,10 +21,10 @@ L = logging.getLogger(__name__)
 
 def prepare(circuit, bio_data, sample=None):
     # pylint: disable=missing-docstring
-    yield partial(_worker, circuit, bio_data, sample)
+    yield Task(_execute, circuit.config, bio_data, sample, task_group=__name__)
 
 
-def _worker(circuit, bio_data, sample):
+def _execute(circuit_config, bio_data, sample):
     # pylint: disable=missing-docstring
     if isinstance(bio_data, float):
         ref_value = bio_data
@@ -37,6 +38,7 @@ def _worker(circuit, bio_data, sample):
     else:
         if sample is None:
             sample = {}
+        circuit = Circuit(circuit_config)
         values = sample_bouton_density(
             circuit,
             n=sample.get('size', 100),

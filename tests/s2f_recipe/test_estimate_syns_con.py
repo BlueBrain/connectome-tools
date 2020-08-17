@@ -81,13 +81,14 @@ TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "../data")
 def test_prepare(mock_synapse_count, _, mtypes, synapse_count, kwargs, expected):
     mock_synapse_count.return_value = np.array(synapse_count)
     circuit = MagicMock(Circuit)
+    circuit.config = {}
     circuit.cells.mtypes = mtypes
     circuit.cells.get.return_value.drop_duplicates.return_value.values = np.array(
         [["L6_TPC:C", "EXC"], ["L4_CHC", "INH"], ["SLM_PPA", "EXC"], ["SP_AA", "INH"]]
     )
 
-    worker_generator = test_module.prepare(circuit, **kwargs)
-    result_generator = (worker() for worker in worker_generator)
-    actual = dict(chain.from_iterable(result_generator))
+    task_generator = test_module.prepare(circuit, **kwargs)
+    result_generator = (task() for task in task_generator)
+    actual = dict(chain.from_iterable(item.value for item in result_generator))
 
     assert actual == expected

@@ -1,5 +1,4 @@
 import os
-from functools import partial
 
 import lxml.etree as ET
 from bluepy.v2 import Circuit
@@ -8,6 +7,7 @@ from mock import MagicMock, mock_open, patch
 from parameterized import param, parameterized
 
 import apps.s2f_recipe as test_module
+from connectome_tools.s2f_recipe.utils import Task
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "../data")
 
@@ -17,7 +17,7 @@ SAME = "SAME"
 def canonicalize_xml(xml_data=None, from_file=None):
     """Normalise the XML data in a way that allows byte-by-byte comparisons.
 
-    Note: Pyhton 3.8 provides xml.etree.ElementTree.canonicalize.
+    Note: python 3.8 provides xml.etree.ElementTree.canonicalize.
 
     Args:
         xml_data (str): XML data string (alternative to from_file).
@@ -30,12 +30,12 @@ def canonicalize_xml(xml_data=None, from_file=None):
     return ET.tostring(etree, method="c14n2", with_comments=False, strip_text=True)
 
 
-def worker_generator(data):
-    def _worker(items):
-        return items
+def task_generator(data):
+    def _execute(_items):
+        return _items
 
-    for worker_data in data:
-        yield partial(_worker, worker_data)
+    for items in data:
+        yield Task(_execute, items)
 
 
 def test_app_help():
@@ -125,6 +125,7 @@ def test_validate_params(_, pathways_dict, expected_is_valid, expected_missing, 
     assert pathways_dict == expected_dict
 
 
+@parameterized.expand([param(jobs=1), param(jobs=2)])
 @patch(test_module.__name__ + ".open")
 @patch(test_module.__name__ + ".Circuit")
 @patch(test_module.__name__ + ".override_mtype.prepare")
@@ -144,15 +145,16 @@ def test_app(
     override_mtype,
     mock_circuit,
     mock_file,
+    jobs,
 ):
     # mock strategies
-    estimate_bouton_reduction.return_value = worker_generator(
+    estimate_bouton_reduction.return_value = task_generator(
         [[(("*", "*"), {"bouton_reduction_factor": 5.0})]]
     )
-    estimate_individual_bouton_reduction.return_value = worker_generator(
+    estimate_individual_bouton_reduction.return_value = task_generator(
         [[(("SO_OLM", "*"), {"bouton_reduction_factor": 11.0})]]
     )
-    estimate_syns_con.return_value = worker_generator(
+    estimate_syns_con.return_value = task_generator(
         [
             [(("L1_DAC", "L1_DAC"), {"mean_syns_connection": 6.0})],
             [(("L1_DAC", "SO_OLM"), {"mean_syns_connection": 7.0})],
@@ -165,8 +167,8 @@ def test_app(
             [(("L4_CHC", "L4_CHC"), {"mean_syns_connection": 5.0})],
         ]
     )
-    existing_recipe.return_value = worker_generator([[]])
-    experimental_syns_con.return_value = worker_generator(
+    existing_recipe.return_value = task_generator([[]])
+    experimental_syns_con.return_value = task_generator(
         [
             [
                 (("L1_DAC", "L1_DAC"), {"mean_syns_connection": 7.5}),
@@ -174,8 +176,8 @@ def test_app(
             ]
         ]
     )
-    generalized_cv.return_value = worker_generator([[(("*", "*"), {"cv_syns_connection": 0.32})]])
-    override_mtype.return_value = worker_generator(
+    generalized_cv.return_value = task_generator([[(("*", "*"), {"cv_syns_connection": 0.32})]])
+    override_mtype.return_value = task_generator(
         [[(("L4_CHC", "*"), {"bouton_reduction_factor": 1.0, "p_A": 1.0, "pMu_A": 0.0})]]
     )
     mtypes = {"L1_DAC", "SO_OLM", "L4_CHC"}
@@ -195,7 +197,17 @@ def test_app(
     runner = CliRunner()
     result = runner.invoke(
         test_module.app,
-        ["-s", "s2f_config_1.yaml", "-o", "s2f_recipe_1.xml", "--seed", "123", "CircuitConfig"],
+        [
+            "-s",
+            "s2f_config_placeholder.yaml",
+            "-o",
+            "s2f_recipe_placeholder.xml",
+            "--seed",
+            "0",
+            "--jobs",
+            jobs,
+            "CircuitConfig",
+        ],
         catch_exceptions=False,
     )
 

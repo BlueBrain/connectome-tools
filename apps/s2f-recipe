@@ -4,8 +4,11 @@
 
 import itertools
 import logging
+import time
 
 from collections import OrderedDict
+from contextlib import contextmanager
+from functools import partial
 
 import click
 import lxml.etree as ET
@@ -32,10 +35,7 @@ from connectome_tools.s2f_recipe import (
 )
 from connectome_tools.version import __version__
 
-
 L = logging.getLogger('s2f-recipe')
-
-PARALLEL_BACKEND = "loky"
 
 REQUIRED_PARAMS = {
     BOUTON_REDUCTION_FACTOR,
@@ -103,23 +103,54 @@ def validate_params(pathway_dict):
         return False, ALTERNATIVE_PARAMS_2.difference(pathway_dict)
 
 
-def build_workers(circuit, strategies):
-    """ Return the list of workers to be executed in separate processes. """
-    workers = []
+def build_tasks(circuit, strategies):
+    """ Return the list of tasks to be executed in separate processes. """
+    tasks = []
     for entry in strategies:
         assert len(entry) == 1
         strategy, kwargs = next(iter(entry.items()))
         L.info("Preparing strategy '%s'...", strategy)
-        worker_generator = DISPATCH[strategy].prepare(circuit, **kwargs)
-        workers.extend(worker_generator)
-    return workers
+        task_generator = DISPATCH[strategy].prepare(circuit, **kwargs)
+        tasks.extend(task_generator)
+    return tasks
 
 
-def init_recipe(worker_results, mtypes):
-    """ Return the recipe assembled using the workers results. """
+def run_parallel(tasks, jobs, base_seed, verbose):
+    """ Run tasks in parallel. """
+
+    # If jobs == 1, then joblib executes the job in the main process
+    # and we should skip both the logging setup and the random number generator initialization.
+    is_parallel = jobs != 1
+    setup_task_logging = partial(setup_logging, verbose) if is_parallel else None
+    # If verbose is more than 10, all iterations are printed to stderr.
+    parallel = Parallel(n_jobs=jobs, backend="loky", verbose=verbose * 10)
+    return parallel(
+        [
+            delayed(task)(
+                task_id=i,
+                seed=base_seed + i if is_parallel else None,
+                setup_logging=setup_task_logging,
+            )
+            for i, task in enumerate(tasks)
+        ]
+    )
+
+
+def analyze_task_results(task_results):
+    """ Log the statistics for each task result. """
+    L.debug("Task results")
+    for task in task_results:
+        L.debug("Task %s %s %.3f", task.id, task.group, task.elapsed)
+
+
+def init_recipe(task_results, mtypes):
+    """ Return the recipe assembled using the tasks results. """
     recipe = {}
-    for worker_result in worker_results:
-        for pathway_wildcard, params in worker_result:
+    # task_results is a list of task results, one for each task
+    for task_result in task_results:
+        # each task_result contains a list of tuples (pathway_wildcard, params)
+        # that are assembled in order (latter parameters can override former parameters)
+        for pathway_wildcard, params in task_result.value:
             pathways = itertools.product(
                 mtypes if pathway_wildcard[0] == '*' else [pathway_wildcard[0]],
                 mtypes if pathway_wildcard[1] == '*' else [pathway_wildcard[1]]
@@ -144,7 +175,7 @@ def clean_recipe(recipe, mtypes):
             del recipe[pathway]
 
 
-def generate_recipe(circuit, strategies, n_jobs, parallel_verbosity):
+def generate_recipe(circuit, strategies, jobs, base_seed, verbose):
     """ Generate S2F recipe for `circuit` using `strategies`.
 
     Args:
@@ -161,9 +192,11 @@ def generate_recipe(circuit, strategies, n_jobs, parallel_verbosity):
                     }
                 }
             }
-        n_jobs: Maximum number of concurrently running jobs. If -1 all CPUs are used.
+        jobs: Maximum number of concurrently running jobs. If -1 all CPUs are used.
             If 1 is given, no parallel computing code is used at all.
             For n_jobs below -1, (n_cpus + 1 + n_jobs) are used.
+        base_seed: Base seed used to initialize the seed in the subprocesses.
+        verbose: Level of verbosity (0, 1, 2).
 
     Returns:
         The recipe generated, i.e. a dictionary containing (pre_mtype, post_mtype) as key,
@@ -171,12 +204,16 @@ def generate_recipe(circuit, strategies, n_jobs, parallel_verbosity):
     """
     mtypes = sorted(circuit.cells.mtypes)
 
-    workers = build_workers(circuit, strategies)
+    L.info("Build tasks")
+    tasks = build_tasks(circuit, strategies)
 
-    parallel = Parallel(n_jobs=n_jobs, backend=PARALLEL_BACKEND, verbose=parallel_verbosity)
-    worker_results = parallel([delayed(worker)() for worker in workers])
+    L.info("Run tasks")
+    task_results = run_parallel(tasks, jobs, base_seed=base_seed, verbose=verbose)
+    analyze_task_results(task_results)
 
-    recipe = init_recipe(worker_results, mtypes)
+    L.info("Assemble the recipe")
+    recipe = init_recipe(task_results, mtypes)
+    L.info("Clean the recipe")
     clean_recipe(recipe, mtypes)
 
     return recipe
@@ -200,26 +237,49 @@ def write_recipe(output_path, recipe, comment=None):
         tree.write(f, pretty_print=True, xml_declaration=True, encoding='utf-8')
 
 
-@click.command()
-@click.argument("circuit")
-@click.option("-s", "--strategies", required=True, help="Path to strategies config")
-@click.option("-v", "--verbose", count=True, help="-v for INFO, -vv for DEBUG")
-@click.option("--seed", type=int, default=0, help="Pseudo-random generator seed", show_default=True)
-@click.option("--jobs", type=int, default=1, help="Number of concurrent jobs", show_default=True)
-@click.option("-o", "--output", required=True, help="Path to output file")
-def app(circuit, strategies, verbose, seed, output, jobs):
-    """ S2F recipe generation """
-    logformat = "%(asctime)s;%(levelname)s;%(name)s;%(message)s"
+def setup_logging(verbose):
+    """ Setup logging. """
+    logformat = "%(asctime)s %(levelname)s %(name)s: %(message)s"
     loglevel = {
         0: logging.WARN,
         1: logging.INFO,
         2: logging.DEBUG,
     }[verbose]
-    logging.basicConfig(level=loglevel, format=logformat)
-    # If non zero, progress messages are printed to stderr.
-    # If more than 10, all iterations are reported.
-    parallel_verbosity = verbose * 10
+    # Because this function can be called in a task executed in a subprocess,
+    # it should not reconfigure logging if it has been already configured
+    # in the same process.
+    logging.basicConfig(format=logformat, level=loglevel)
 
+
+@contextmanager
+def timed(logger, message):
+    """ Context manager to log the execution time using the specified logger. """
+    start_time = time.monotonic()
+    try:
+        yield
+    finally:
+        elapsed = time.monotonic() - start_time
+        logger.info("%s: %.2f seconds", message, elapsed)
+
+
+@click.command()
+@click.argument("circuit")
+@click.option("-s", "--strategies", required=True, help="Path to strategies config")
+@click.option("-v", "--verbose", count=True, help="-v for INFO, -vv for DEBUG")
+@click.option("--seed", type=int, default=0, help="Pseudo-random generator seed", show_default=True)
+@click.option(
+    "-j",
+    "--jobs",
+    type=int,
+    default=1,
+    help="Number of concurrent jobs",
+    show_default=True,
+)
+@click.option("-o", "--output", required=True, help="Path to output file")
+def app(circuit, strategies, verbose, seed, output, jobs):
+    """ S2F recipe generation """
+    setup_logging(verbose)
+    L.info("Configuration: circuit=%s, seed=%s, jobs=%s", circuit, seed, jobs)
     strategies = load_yaml(strategies)
 
     comment = (
@@ -229,12 +289,12 @@ def app(circuit, strategies, verbose, seed, output, jobs):
         "\n{strategies}"
     ).format(version=__version__, circuit=circuit, seed=seed, strategies=yaml.dump(strategies))
 
-    circuit = Circuit(circuit)
-
     np.random.seed(seed)
 
-    recipe = generate_recipe(circuit, strategies, jobs, parallel_verbosity)
-    write_recipe(output, recipe, comment=comment)
+    with timed(L, "Recipe generation"):
+        circuit = Circuit(circuit)
+        recipe = generate_recipe(circuit, strategies, jobs, base_seed=seed, verbose=verbose)
+        write_recipe(output, recipe, comment=comment)
 
 
 if __name__ == '__main__':

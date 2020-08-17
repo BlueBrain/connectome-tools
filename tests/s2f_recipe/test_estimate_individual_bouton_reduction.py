@@ -23,14 +23,15 @@ def mock_sample_bouton_density(circuit, **kwargs):
 @patch(test_module.__name__ + '.sample_bouton_density', side_effect=mock_sample_bouton_density)
 def test_1(_):
     circuit = MagicMock(Circuit)
+    circuit.config = {}
     circuit.cells.mtypes = ['L1_DAC', 'L23_MC', 'L5_TPC']
     expected = {
         ('L23_MC', '*'): {'bouton_reduction_factor': 5.0},
         ('L5_TPC', '*'): {'bouton_reduction_factor': 10.0},
     }
-    worker_generator = test_module.prepare(circuit, bio_data=10.0)
-    result_generator = (worker() for worker in worker_generator)
-    actual = dict(chain.from_iterable(result_generator))
+    task_generator = test_module.prepare(circuit, bio_data=10.0)
+    result_generator = (task() for task in task_generator)
+    actual = dict(chain.from_iterable(item.value for item in result_generator))
 
     npt.assert_equal(actual, expected)
 
@@ -38,13 +39,14 @@ def test_1(_):
 @patch(test_module.__name__ + '.sample_bouton_density', side_effect=mock_sample_bouton_density)
 def test_2(_):
     circuit = MagicMock(Circuit)
+    circuit.config = {}
     circuit.cells.mtypes = ['L1_DAC', 'L23_MC', 'L5_TPC']
     expected = {
         ('L23_MC', '*'): {'bouton_reduction_factor': 15.0},
     }
     bio_data = os.path.join(TEST_DATA_DIR, "bouton_density.tsv")
-    worker_generator = test_module.prepare(circuit, bio_data=bio_data)
-    result_generator = (worker() for worker in worker_generator)
-    actual = dict(chain.from_iterable(result_generator))
+    task_generator = test_module.prepare(circuit, bio_data=bio_data)
+    result_generator = (task() for task in task_generator)
+    actual = dict(chain.from_iterable(item.value for item in result_generator))
 
     npt.assert_equal(actual, expected)

@@ -5,14 +5,15 @@ happen due to the special nature of ChC synapses on the axon.
 (more precisely: one touch actually represents a train of 5 synapses
 and therefore the syns per con calculation would be off by that factor).
 """
-from functools import partial
+
+from connectome_tools.s2f_recipe.utils import Task
 
 
 def prepare(circuit, mtype_pattern, **kwargs):
     # pylint: disable=missing-docstring
-    yield partial(_worker, circuit.cells.mtypes, mtype_pattern, **kwargs)
+    yield Task(_execute, circuit.cells.mtypes, mtype_pattern, task_group=__name__, **kwargs)
 
 
-def _worker(mtypes, mtype_pattern, **kwargs):
+def _execute(mtypes, mtype_pattern, **kwargs):
     # pylint: disable=missing-docstring
     return [((mtype, "*"), kwargs) for mtype in mtypes if mtype_pattern in mtype]

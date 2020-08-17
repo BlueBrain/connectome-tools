@@ -3,18 +3,18 @@ This strategy uses the biological mean number of
 synapses per connection for a number of pathways where it
 has been experimentally determined.
 """
-from functools import partial
 
 from connectome_tools.dataset import read_nsyn
 from connectome_tools.s2f_recipe import MEAN_SYNS_CONNECTION
+from connectome_tools.s2f_recipe.utils import Task
 
 
 def prepare(circuit, bio_data):
     # pylint: disable=missing-docstring
-    yield partial(_worker, bio_data, mtypes=circuit.cells.mtypes)
+    yield Task(_execute, bio_data, mtypes=circuit.cells.mtypes, task_group=__name__)
 
 
-def _worker(bio_data, mtypes):
+def _execute(bio_data, mtypes):
     # pylint: disable=missing-docstring
     bio_data = read_nsyn(bio_data, mtypes=mtypes)
     return [

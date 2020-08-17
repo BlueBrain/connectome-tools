@@ -13,10 +13,11 @@ from functools import partial
 import numpy as np
 
 from Equation import Expression
-from bluepy.v2 import Cell
+from bluepy.v2 import Cell, Circuit
 
 from connectome_tools.dataset import read_nsyn
 from connectome_tools.s2f_recipe import MEAN_SYNS_CONNECTION
+from connectome_tools.s2f_recipe.utils import Task
 from connectome_tools.stats import sample_pathway_synapse_count
 
 
@@ -39,9 +40,10 @@ def _cell_group(mtype, target=None):
     return result
 
 
-def estimate_nsyn(circuit, pathway, sample_size, pre, post):
+def estimate_nsyn(circuit_config, pathway, sample_size, pre, post):
     """ Mean nsyn for given mtype. """
     pre_mtype, post_mtype = pathway
+    circuit = Circuit(circuit_config)
     values = sample_pathway_synapse_count(
         circuit,
         n=sample_size,
@@ -79,7 +81,7 @@ def prepare(
             sample = {}
         estimate = partial(
             estimate_nsyn,
-            circuit=circuit,
+            circuit_config=circuit.config,
             sample_size=sample.get('size', 100),
             pre=sample.get('pre', None),
             post=sample.get('post', None)
@@ -91,10 +93,12 @@ def prepare(
     )
 
     for pathway in itertools.product(mtypes, mtypes):
-        yield partial(_worker, pathway, estimate, formulae, syn_class_map, max_value)
+        yield Task(
+            _execute, pathway, estimate, formulae, syn_class_map, max_value, task_group=__name__
+        )
 
 
-def _worker(pathway, estimate, formulae, syn_class_map, max_value):
+def _execute(pathway, estimate, formulae, syn_class_map, max_value):
     value = estimate(pathway=pathway)
     if np.isnan(value):
         L.warning("Could not estimate '%s' nsyn, skipping", pathway)

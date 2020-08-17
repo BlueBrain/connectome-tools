@@ -13,21 +13,25 @@ from functools import partial
 import numpy as np
 import pandas as pd
 
-from bluepy.v2 import Cell
+from bluepy.v2 import Cell, Circuit
 
 from connectome_tools.dataset import read_bouton_density
 from connectome_tools.s2f_recipe import BOUTON_REDUCTION_FACTOR
+from connectome_tools.s2f_recipe.utils import Task
 from connectome_tools.stats import sample_bouton_density
 
 
 L = logging.getLogger(__name__)
 
 
-def estimate_bouton_density(circuit, mtype, sample_size, sample_target, mask, assume_syns_bouton):
+def estimate_bouton_density(
+    circuit_config, mtype, sample_size, sample_target, mask, assume_syns_bouton
+):
     """ Mean bouton density for given mtype. """
     group = {Cell.MTYPE: mtype}
     if sample_target is not None:
         group['$target'] = sample_target
+    circuit = Circuit(circuit_config)
     values = sample_bouton_density(
         circuit,
         n=sample_size, group=group, mask=mask, synapses_per_bouton=assume_syns_bouton
@@ -54,7 +58,7 @@ def prepare(circuit, bio_data, sample=None):
             sample = {}
         estimate = partial(
             estimate_bouton_density,
-            circuit=circuit,
+            circuit_config=circuit.config,
             sample_size=sample.get('size', 100),
             sample_target=sample.get('target', None),
             mask=sample.get('mask', None),
@@ -62,10 +66,10 @@ def prepare(circuit, bio_data, sample=None):
         )
 
     for _, row in bio_data.iterrows():
-        yield partial(_worker, row, estimate)
+        yield Task(_execute, row, estimate, task_group=__name__)
 
 
-def _worker(row, estimate):
+def _execute(row, estimate):
     mtype, ref_value = row['mtype'], row['mean']
     value = estimate(mtype=mtype)
     if np.isnan(value):

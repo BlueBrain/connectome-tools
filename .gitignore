@@ -7,3 +7,4 @@ htmlcov
 doc/build
 .tox
 .idea
+dask-worker-space

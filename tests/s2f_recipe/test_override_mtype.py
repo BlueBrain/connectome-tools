@@ -57,8 +57,8 @@ def test_prepare(_, kwargs, expected):
     circuit = MagicMock(Circuit)
     circuit.cells.mtypes = {"L6_TPC:C", "L4_CHC"}
 
-    worker_generator = test_module.prepare(circuit, **kwargs)
-    result_generator = (worker() for worker in worker_generator)
-    actual = dict(chain.from_iterable(result_generator))
+    task_generator = test_module.prepare(circuit, **kwargs)
+    result_generator = (task() for task in task_generator)
+    actual = dict(chain.from_iterable(item.value for item in result_generator))
 
     assert actual == expected
