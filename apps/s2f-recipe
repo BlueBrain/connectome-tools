@@ -116,19 +116,12 @@ def build_tasks(circuit, strategies):
 def run_parallel(tasks, jobs, base_seed, verbose):
     """ Run tasks in parallel. """
 
-    # If jobs == 1, then joblib executes the job in the main process
-    # and we should skip both the logging setup and the random number generator initialization.
-    is_parallel = jobs != 1
-    setup_task_logging = partial(setup_logging, verbose) if is_parallel else None
+    setup_task_logging = partial(setup_logging, verbose)
     # If verbose is more than 10, all iterations are printed to stderr.
     parallel = Parallel(n_jobs=jobs, backend="loky", verbose=verbose * 10)
     return parallel(
         [
-            delayed(task)(
-                task_id=i,
-                seed=base_seed + i if is_parallel else None,
-                setup_logging=setup_task_logging,
-            )
+            delayed(task)(task_id=i, seed=base_seed + i, setup_logging=setup_task_logging)
             for i, task in enumerate(tasks)
         ]
     )
@@ -270,8 +263,8 @@ def timed(logger, message):
     "-j",
     "--jobs",
     type=int,
-    default=1,
-    help="Number of concurrent jobs",
+    default=-1,
+    help="Maximum number of concurrently running jobs (if -1 all CPUs are used)",
     show_default=True,
 )
 @click.option("-o", "--output", required=True, help="Path to output file")
