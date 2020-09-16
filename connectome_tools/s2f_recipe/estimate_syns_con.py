@@ -107,7 +107,9 @@ def _execute(pathway, estimate, formulae, syn_class_map, max_value):
         return []
     L.debug("nsyn estimate for pathway %s: %.3g", pathway, value)
     value = choose_formula(formulae, pathway, syn_class_map)(value)
-    value = max(value, 1.0)
+    # NSETM-1137 consider nan as 1.0
+    if value < 1.0 or np.isnan(value):
+        value = 1.0
     if max_value is not None:
         value = min(value, max_value)
     return [(pathway, {MEAN_SYNS_CONNECTION: value})]

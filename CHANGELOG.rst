@@ -6,7 +6,12 @@ Version 0.3.3
 
 New Features
 ~~~~~~~~~~~~
-- Add support for `p_A` and `pMu_A` parameters.
+- Add support for `p_A` and `pMu_A` parameters. [NSETM-1096]
+
+
+Bug Fixes
+~~~~~~~~~~~~
+- If formula result for `estimate_syns_con` is NaN, it's now considered as 1.0. [NSETM-1137]
 
 
 Removed Features
@@ -16,4 +21,4 @@ Removed Features
 
 Improvements
 ~~~~~~~~~~~~
-- Add ``--jobs`` option to parallelize tasks.
+- Add ``--jobs`` option to parallelize tasks. [NSETM-1102]

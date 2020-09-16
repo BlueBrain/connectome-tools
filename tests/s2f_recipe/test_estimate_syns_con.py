@@ -47,6 +47,18 @@ TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "../data")
             },
         ),
         param(
+            _="formula_nan_as_1.0",
+            mtypes={"L6_TPC:C", "L4_CHC"},
+            synapse_count=[1.0, 2.0],
+            kwargs={"formula": "6 * ((n - 2) ** 0.5) - 1", "max_value": 25.0, "sample": None},
+            expected={
+                ("L4_CHC", "L4_CHC"): {"mean_syns_connection": 1.0},
+                ("L4_CHC", "L6_TPC:C"): {"mean_syns_connection": 1.0},
+                ("L6_TPC:C", "L4_CHC"): {"mean_syns_connection": 1.0},
+                ("L6_TPC:C", "L6_TPC:C"): {"mean_syns_connection": 1.0},
+            },
+        ),
+        param(
             _="sample_file",
             mtypes={"SLM_PPA"},
             synapse_count=[1.0, 3.0, 4.0, 11.0, 7.0],
