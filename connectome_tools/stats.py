@@ -1,4 +1,4 @@
-""" Calculating connectome stats. """
+"""Calculating connectome stats."""
 
 import itertools
 import logging
@@ -12,7 +12,7 @@ L = logging.getLogger(__name__)
 
 
 def _segment_lengths(segments):
-    """ Find segment lengths given a DataFrame returned by morph.spatial_index() query. """
+    """Find segment lengths given a DataFrame returned by morph.spatial_index() query."""
     return np.linalg.norm(
         segments[[Segment.X1, Segment.Y1, Segment.Z1]].values
         - segments[[Segment.X2, Segment.Y2, Segment.Z2]].values,
@@ -28,7 +28,7 @@ def _load_mask(circuit, mask):
 
 
 def _calc_bouton_density(circuit, gid, synapses_per_bouton, mask):
-    """ Calculate bouton density for a given `gid`. """
+    """Calculate bouton density for a given `gid`."""
     if mask is None:
         # count all efferent synapses and total axon length
         synapse_count = len(circuit.connectome.efferent_synapses(gid))
@@ -66,19 +66,20 @@ def _calc_bouton_density(circuit, gid, synapses_per_bouton, mask):
 
 
 def bouton_density(circuit, gid, synapses_per_bouton=1.0, mask=None):
-    """ Calculate bouton density for a given `gid`. """
+    """Calculate bouton density for a given `gid`."""
     mask = _load_mask(circuit, mask)
     return _calc_bouton_density(circuit, gid, synapses_per_bouton, mask)
 
 
 def sample_bouton_density(circuit, n, group=None, synapses_per_bouton=1.0, mask=None):
-    """
-    Sample bouton density.
+    """Sample bouton density.
 
     Args:
+        circuit: circuit instance
         n: sample size
         group: cell group
         synapses_per_bouton: assumed number of synapses per bouton
+        mask (str): region of interest mask
 
     Returns:
         numpy array of length min(n, N) with bouton density per cell,
@@ -94,10 +95,10 @@ def sample_bouton_density(circuit, n, group=None, synapses_per_bouton=1.0, mask=
 
 
 def sample_pathway_synapse_count(circuit, n, pre=None, post=None, unique_gids=False):
-    """
-    Sample synapse count for pathway connections.
+    """Sample synapse count for pathway connections.
 
     Args:
+        circuit: circuit instance
         n: sample size
         pre: presynaptic cell group
         post: postsynaptic cell group

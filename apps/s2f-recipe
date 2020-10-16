@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-""" S2F recipe generation. """
+"""S2F recipe generation."""
 
 import itertools
 import logging
@@ -65,7 +65,7 @@ DISPATCH = {
 
 
 def load_yaml(filepath):
-    """ Load YAML file. """
+    """Load YAML file."""
     with open(filepath) as f:
         return yaml.safe_load(f)
 
@@ -102,7 +102,7 @@ def validate_params(pathway_dict):
 
 
 def build_tasks(circuit, strategies):
-    """ Return the list of tasks to be executed in separate processes. """
+    """Return the list of tasks to be executed in separate processes."""
     tasks = []
     for entry in strategies:
         assert len(entry) == 1
@@ -114,8 +114,7 @@ def build_tasks(circuit, strategies):
 
 
 def run_parallel(tasks, jobs, base_seed, verbose):
-    """ Run tasks in parallel. """
-
+    """Run tasks in parallel."""
     setup_task_logging = partial(setup_logging, verbose)
     # If verbose is more than 10, all iterations are printed to stderr.
     parallel = Parallel(n_jobs=jobs, backend="loky", verbose=verbose * 10)
@@ -128,14 +127,14 @@ def run_parallel(tasks, jobs, base_seed, verbose):
 
 
 def analyze_task_results(task_results):
-    """ Log the statistics for each task result. """
+    """Log the statistics for each task result."""
     L.debug("Task results")
     for task in task_results:
         L.debug("Task %s %s %.3f", task.id, task.group, task.elapsed)
 
 
 def init_recipe(task_results, mtypes):
-    """ Return the recipe assembled using the tasks results. """
+    """Return the recipe assembled using the tasks results."""
     recipe = {}
     # task_results is a list of task results, one for each task
     for task_result in task_results:
@@ -152,7 +151,7 @@ def init_recipe(task_results, mtypes):
 
 
 def clean_recipe(recipe, mtypes):
-    """ Clean the recipe removing invalid pathways and unwanted parameters. """
+    """Clean the recipe removing invalid pathways and unwanted parameters."""
     for pathway in itertools.product(mtypes, mtypes):
         if pathway not in recipe:
             L.warning("Undefined pathway: %s", pathway)
@@ -212,7 +211,7 @@ def generate_recipe(circuit, strategies, jobs, base_seed, verbose):
 
 
 def write_recipe(output_path, recipe, comment=None):
-    """ Dump `recipe` as XML to `output_path`. """
+    """Dump `recipe` as XML to `output_path`."""
     root = ET.Element("ConnectionRules")
     if comment is not None:
         root.addprevious(ET.Comment(comment))
@@ -230,7 +229,7 @@ def write_recipe(output_path, recipe, comment=None):
 
 
 def setup_logging(verbose):
-    """ Setup logging. """
+    """Setup logging."""
     logformat = "%(asctime)s %(levelname)s %(name)s: %(message)s"
     loglevels = {
         0: logging.WARN,
@@ -245,7 +244,7 @@ def setup_logging(verbose):
 
 @contextmanager
 def timed(logger, message):
-    """ Context manager to log the execution time using the specified logger. """
+    """Context manager to log the execution time using the specified logger."""
     start_time = time.monotonic()
     try:
         yield
@@ -269,7 +268,7 @@ def timed(logger, message):
 )
 @click.option("-o", "--output", required=True, help="Path to output file")
 def app(circuit, strategies, verbose, seed, output, jobs):
-    """ S2F recipe generation """
+    """S2F recipe generation."""
     setup_logging(verbose)
     L.info("Configuration: circuit=%s, seed=%s, jobs=%s", circuit, seed, jobs)
     strategies = load_yaml(strategies)

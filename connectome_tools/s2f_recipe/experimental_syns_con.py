@@ -1,4 +1,5 @@
-"""
+"""Strategy experimental_syns_con.
+
 This strategy uses the biological mean number of
 synapses per connection for a number of pathways where it
 has been experimentally determined.
@@ -10,12 +11,11 @@ from connectome_tools.s2f_recipe.utils import Task
 
 
 def prepare(circuit, bio_data):
-    # pylint: disable=missing-docstring
+    # noqa: D103 # pylint: disable=missing-docstring
     yield Task(_execute, bio_data, mtypes=circuit.cells.mtypes, task_group=__name__)
 
 
 def _execute(bio_data, mtypes):
-    # pylint: disable=missing-docstring
     bio_data = read_nsyn(bio_data, mtypes=mtypes)
     return [
         ((row["from"], row["to"]), {MEAN_SYNS_CONNECTION: row["mean"]})

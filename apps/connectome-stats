@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-""" Connectome statistics. """
+"""Connectome statistics."""
 
 import itertools
 import logging
@@ -17,7 +17,7 @@ NA_VALUE = "N/A"
 
 
 def _format_sample(sample, short=False):
-    """ Get string representation for sample and its mean / std / size. """
+    """Get string representation for sample and its mean / std / size."""
     ftoa = lambda x: "%.3g" % x
     size = len(sample)
     if size > 0:
@@ -40,7 +40,7 @@ def _cell_group(mtype, target=None):
 @click.group()
 @click.option("--seed", type=int, default=0, help="Random generator seed", show_default=True)
 def app(seed):
-    """ Calculate some connectome statistics. """
+    """Calculate some connectome statistics."""
     logging.basicConfig(level=logging.WARN)
     np.random.seed(seed)
 
@@ -52,7 +52,7 @@ def app(seed):
 @click.option("--post", default=None, help="Postsynaptic target", show_default=True)
 @click.option("--short", is_flag=True, default=False, help="Omit sampled values", show_default=True)
 def nsyn_per_connection(circuit, sample_size, pre, post, short):
-    """Mean connection synapse count per pathway"""
+    """Mean connection synapse count per pathway."""
     circuit = Circuit(circuit)
     mtypes = sorted(circuit.cells.mtypes)
 
@@ -83,7 +83,7 @@ def nsyn_per_connection(circuit, sample_size, pre, post, short):
 )
 @click.option("--short", is_flag=True, default=False, help="Omit sampled values", show_default=True)
 def bouton_density(circuit, sample_size, sample_target, mask, assume_syns_bouton, short):
-    """ Mean bouton density per mtype """
+    """Mean bouton density per mtype."""
     circuit = Circuit(circuit)
     mtypes = sorted(circuit.cells.mtypes)
 

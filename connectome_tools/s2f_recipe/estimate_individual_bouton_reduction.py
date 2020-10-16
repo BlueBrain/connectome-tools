@@ -1,4 +1,5 @@
-"""
+"""Strategy estimate_individual_bouton_reduction.
+
 This strategy will estimate a reduction factor based for each
 individual m-type. It takes into account the variability in the bouton
 densities between m-types (e.g. pyramidal cells have lower density),
@@ -24,7 +25,7 @@ L = logging.getLogger(__name__)
 def estimate_bouton_density(
     circuit_config, mtype, sample_size, sample_target, mask, assume_syns_bouton
 ):
-    """ Mean bouton density for given mtype. """
+    """Mean bouton density for given mtype."""
     group = {Cell.MTYPE: mtype}
     if sample_target is not None:
         group["$target"] = sample_target
@@ -36,7 +37,7 @@ def estimate_bouton_density(
 
 
 def prepare(circuit, bio_data, sample=None):
-    # pylint: disable=missing-docstring
+    # noqa: D103 # pylint: disable=missing-docstring
     mtypes = circuit.cells.mtypes
     if isinstance(bio_data, float):
         bio_data = pd.DataFrame(

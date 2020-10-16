@@ -1,6 +1,4 @@
-"""
-Common functions.
-"""
+"""Common functions."""
 import time
 from collections import namedtuple
 from functools import partial
@@ -11,7 +9,7 @@ TaskResult = namedtuple("TaskResult", ["id", "group", "value", "elapsed"])
 
 
 class Task:
-    """ Callable task class. """
+    """Callable task class."""
 
     def __init__(self, func, *args, task_group=None, **kwargs):
         """Initialize the task.

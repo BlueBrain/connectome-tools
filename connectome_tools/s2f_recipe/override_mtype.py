@@ -1,4 +1,5 @@
-"""
+"""Strategy override_mtype.
+
 This strategy is to be used last and overrides parameters for a subset of mtypes.
 This is meant to avoid excessive pruning that would otherwise
 happen due to the special nature of ChC synapses on the axon.
@@ -10,10 +11,9 @@ from connectome_tools.s2f_recipe.utils import Task
 
 
 def prepare(circuit, mtype_pattern, **kwargs):
-    # pylint: disable=missing-docstring
+    # noqa: D103 # pylint: disable=missing-docstring
     yield Task(_execute, circuit.cells.mtypes, mtype_pattern, task_group=__name__, **kwargs)
 
 
 def _execute(mtypes, mtype_pattern, **kwargs):
-    # pylint: disable=missing-docstring
     return [((mtype, "*"), kwargs) for mtype in mtypes if mtype_pattern in mtype]

@@ -1,4 +1,4 @@
-""" S2F recipe generation. """
+"""S2F recipe generation."""
 
 BOUTON_REDUCTION_FACTOR = "bouton_reduction_factor"
 MEAN_SYNS_CONNECTION = "mean_syns_connection"

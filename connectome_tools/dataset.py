@@ -1,4 +1,4 @@
-""" Reference datasets access. """
+"""Reference datasets access."""
 
 import logging
 
@@ -9,7 +9,7 @@ L = logging.getLogger(__name__)
 
 
 def read_bouton_density(filepath, mtypes=None):
-    """ Read bouton density data from .tsv file. """
+    """Read bouton density data from .tsv file."""
     result = pd.read_csv(filepath, sep=r"\s+")
     if mtypes is not None:
         mask = result["mtype"].isin(mtypes)
@@ -21,7 +21,7 @@ def read_bouton_density(filepath, mtypes=None):
 
 
 def read_nsyn(filepath, mtypes=None):
-    """ Read nsyn data from .tsv file. """
+    """Read nsyn data from .tsv file."""
     result = pd.read_csv(filepath, sep=r"\s+")
     if mtypes is not None:
         mask1 = result["from"].isin(mtypes)

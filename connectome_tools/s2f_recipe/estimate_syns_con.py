@@ -1,4 +1,5 @@
-"""
+"""Strategy estimate_syns_con.
+
 This strategy estimates the functional mean number of synapses per
 connection from the structural number of appositions per connection.
 For the prediction, an algebraic expression using 'n' (mean number of
@@ -22,7 +23,7 @@ L = logging.getLogger(__name__)
 
 
 def choose_formula(formulae, pathway, syn_class_map):
-    """ Choose formula based on pre- and post- synapse class (EXC | INH). """
+    """Choose formula based on pre- and post- synapse class (EXC | INH)."""
     custom = (syn_class_map[pathway[0]], syn_class_map[pathway[1]])
     if custom in formulae:
         return formulae[custom]
@@ -38,7 +39,7 @@ def _cell_group(mtype, target=None):
 
 
 def estimate_nsyn(circuit_config, pathway, sample_size, pre, post):
-    """ Mean nsyn for given mtype. """
+    """Mean nsyn for given mtype."""
     pre_mtype, post_mtype = pathway
     circuit = Circuit(circuit_config)
     values = sample_pathway_synapse_count(
@@ -61,7 +62,7 @@ def prepare(
     max_value=None,
     sample=None,
 ):
-    # pylint: disable=missing-docstring, too-many-arguments, too-many-locals
+    # noqa: D103 # pylint: disable=missing-docstring, too-many-arguments, too-many-locals
     formulae = {}
     formulae[("*", "*")] = Expression(formula)
     if formula_ee is not None:

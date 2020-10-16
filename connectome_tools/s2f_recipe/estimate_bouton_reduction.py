@@ -1,4 +1,5 @@
-"""
+"""Strategy estimate_bouton_reduction.
+
 This strategy will estimate an overall reduction factor based
 on an estimated mean bouton density over all m-types.
 It does not take into account potential variability in the bouton densities
@@ -19,12 +20,11 @@ L = logging.getLogger(__name__)
 
 
 def prepare(circuit, bio_data, sample=None):
-    # pylint: disable=missing-docstring
+    # noqa: D103 # pylint: disable=missing-docstring
     yield Task(_execute, circuit.config, bio_data, sample, task_group=__name__)
 
 
 def _execute(circuit_config, bio_data, sample):
-    # pylint: disable=missing-docstring
     if isinstance(bio_data, float):
         ref_value = bio_data
     else:
