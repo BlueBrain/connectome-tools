@@ -99,7 +99,3 @@ def bouton_density(circuit, sample_size, sample_target, mask, assume_syns_bouton
         )
         mean, std, size, values = _format_sample(sample, short)
         click.echo("\t".join([mtype, mean, std, size, values]))
-
-
-if __name__ == "__main__":
-    app()  # pylint: disable=no-value-for-parameter

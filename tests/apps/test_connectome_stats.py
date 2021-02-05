@@ -1,6 +1,6 @@
 from click.testing import CliRunner
 
-import apps.connectome_stats as test_module
+from connectome_tools.apps import connectome_stats as test_module
 
 
 def test_app_help():

@@ -286,7 +286,3 @@ def app(circuit, strategies, verbose, seed, output, jobs):
         circuit = Circuit(circuit)
         recipe = generate_recipe(circuit, strategies, jobs, base_seed=seed, verbose=verbose)
         write_recipe(output, recipe, comment=comment)
-
-
-if __name__ == "__main__":
-    app()  # pylint: disable=no-value-for-parameter

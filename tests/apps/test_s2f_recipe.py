@@ -6,7 +6,7 @@ from click.testing import CliRunner
 from mock import MagicMock, mock_open, patch
 from parameterized import param, parameterized
 
-import apps.s2f_recipe as test_module
+from connectome_tools.apps import s2f_recipe as test_module
 from connectome_tools.s2f_recipe.utils import Task
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "../data")

@@ -36,8 +36,8 @@ setup(
         "pandas>=0.17",
         "pyyaml>=5.3.1",
         "six>=1.0",
-        "bluepy>=0.13.0",
-        "voxcell>=2.5.6",
+        "bluepy>=0.13.0,<2.0.0",
+        "voxcell>=2.5.6,<3.0.0",
     ],
     packages=find_packages(),
     python_requires=">=3.6",
@@ -50,10 +50,13 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Topic :: Scientific/Engineering :: Bio-Informatics",
     ],
-    scripts=[
-        "apps/connectome-stats",
-        "apps/s2f-recipe",
-    ],
+    entry_points={
+        "console_scripts": [
+            "connectome-stats=connectome_tools.apps.connectome_stats:app",
+            "s2f-recipe=connectome_tools.apps.s2f_recipe:app",
+        ],
+    },
 )
