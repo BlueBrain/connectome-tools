@@ -10,6 +10,7 @@ import numpy as np
 from bluepy.v2 import Cell, Circuit
 
 from connectome_tools import stats
+from connectome_tools.utils import runalone
 
 L = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ def _cell_group(mtype, target=None):
 
 @click.group()
 @click.option("--seed", type=int, default=0, help="Random generator seed", show_default=True)
+@runalone
 def app(seed):
     """Calculate some connectome statistics."""
     logging.basicConfig(level=logging.WARN)

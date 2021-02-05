@@ -31,6 +31,7 @@ from connectome_tools.s2f_recipe import (
     generalized_cv,
     override_mtype,
 )
+from connectome_tools.utils import runalone
 from connectome_tools.version import __version__
 
 L = logging.getLogger("s2f-recipe")
@@ -267,6 +268,7 @@ def timed(logger, message):
     show_default=True,
 )
 @click.option("-o", "--output", required=True, help="Path to output file")
+@runalone
 def app(circuit, strategies, verbose, seed, output, jobs):
     """S2F recipe generation."""
     setup_logging(verbose)

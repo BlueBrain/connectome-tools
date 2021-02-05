@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version 0.3.4
+-------------
+
+Improvements
+~~~~~~~~~~~~
+- Ensure that only one instance of s2-recipe or connectome-stats is running. [NSETM-1322]
+
+
 Version 0.3.3
 -------------
 

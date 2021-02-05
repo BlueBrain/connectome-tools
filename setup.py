@@ -34,6 +34,7 @@ setup(
         "lxml>=3.3",
         "numpy>=1.9",
         "pandas>=0.17",
+        "psutil>=5.7.2",
         "pyyaml>=5.3.1",
         "six>=1.0",
         "bluepy>=0.13.0,<2.0.0",

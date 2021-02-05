@@ -476,6 +476,35 @@ Example 2:
         pMu_A: 0.0
 
 
+Troubleshooting
+===============
+
+The tools ``s2f-recipe`` and ``connectome-stats`` should not be executed using ``srun``,
+because ``srun`` could launch multiple instances of them.
+
+Starting from version `0.3.4`, the script will terminate if it detects that another instance
+is running.
+
+If you are running the command using a sbatch script, verify that ``srun`` is not used.
+
+This is an example of a minimal script for ``s2f-recipe``, running one instance of the program on a
+single exclusive node. You can see that ``srun`` is not used, and you can also omit the option
+``--jobs`` to use all the available cpus (see the documentation above for more details):
+
+.. code-block:: bash
+
+    #!/bin/bash
+    #SBATCH --nodes=1
+    #SBATCH --mem=0
+    #SBATCH --exclusive
+    #SBATCH --account=projXX
+
+    module load archive/2020-12
+    module load connectome-tools
+
+    s2f-recipe -s ./s2f.yaml -o ./builderConnectivityRecipeAllPathways.xml -v $CIRCUIT/CircuitConfig_struct
+
+
 Acknowledgments
 ===============
 
