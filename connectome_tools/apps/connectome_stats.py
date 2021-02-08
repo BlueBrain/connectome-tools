@@ -7,7 +7,7 @@ import logging
 
 import click
 import numpy as np
-from bluepy.v2 import Cell, Circuit
+from bluepy import Cell, Circuit
 
 from connectome_tools import stats
 from connectome_tools.utils import runalone

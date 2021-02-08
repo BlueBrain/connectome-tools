@@ -1,7 +1,7 @@
 import os
 
 import lxml.etree as ET
-from bluepy.v2 import Circuit
+from bluepy import Circuit
 from click.testing import CliRunner
 from mock import MagicMock, mock_open, patch
 from parameterized import param, parameterized

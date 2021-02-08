@@ -5,7 +5,7 @@ import logging
 
 import neurom as nm
 import numpy as np
-from bluepy.v2 import Segment, Synapse
+from bluepy import Segment, Synapse
 from voxcell import ROIMask
 
 L = logging.getLogger(__name__)

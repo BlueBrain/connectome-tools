@@ -1,6 +1,6 @@
 from itertools import chain
 
-from bluepy.v2 import Circuit
+from bluepy import Circuit
 from mock import MagicMock
 
 import connectome_tools.s2f_recipe.generalized_cv as test_module

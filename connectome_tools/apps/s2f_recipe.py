@@ -12,9 +12,8 @@ from functools import partial
 import click
 import lxml.etree as ET
 import numpy as np
-import six
 import yaml
-from bluepy.v2 import Circuit
+from bluepy import Circuit
 from joblib import Parallel, delayed
 
 from connectome_tools.s2f_recipe import (
@@ -220,7 +219,7 @@ def write_recipe(output_path, recipe, comment=None):
         attr = OrderedDict()
         attr["from"] = pathway[0]
         attr["to"] = pathway[1]
-        for param, value in six.iteritems(params):
+        for param, value in params.items():
             attr[param] = "{:.3f}".format(value)
         ET.SubElement(root, "mTypeRule", attr)
 

@@ -3,7 +3,7 @@ from itertools import chain
 
 import numpy as np
 import numpy.testing as npt
-from bluepy.v2 import Circuit
+from bluepy import Circuit
 from mock import MagicMock, patch
 
 import connectome_tools.s2f_recipe.estimate_bouton_reduction as test_module

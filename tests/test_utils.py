@@ -1,6 +1,5 @@
-from unittest.mock import Mock, patch
-
 import pytest
+from mock import Mock, patch
 from psutil import Process
 
 import connectome_tools.utils as test_module

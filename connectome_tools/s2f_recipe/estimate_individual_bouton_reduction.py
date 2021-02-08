@@ -12,7 +12,7 @@ from functools import partial
 
 import numpy as np
 import pandas as pd
-from bluepy.v2 import Cell, Circuit
+from bluepy import Cell, Circuit
 
 from connectome_tools.dataset import read_bouton_density
 from connectome_tools.s2f_recipe import BOUTON_REDUCTION_FACTOR

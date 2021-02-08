@@ -11,7 +11,7 @@ import logging
 from functools import partial
 
 import numpy as np
-from bluepy.v2 import Cell, Circuit
+from bluepy import Cell, Circuit
 from Equation import Expression
 
 from connectome_tools.dataset import read_nsyn

@@ -2,7 +2,7 @@ import os
 from itertools import chain
 
 import numpy as np
-from bluepy.v2 import Circuit
+from bluepy import Circuit
 from mock import MagicMock, patch
 from parameterized import param, parameterized
 from pytest import approx

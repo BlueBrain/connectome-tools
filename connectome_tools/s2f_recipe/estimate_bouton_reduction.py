@@ -9,7 +9,7 @@ between m-types (e.g. pyramidal cells have lower density)
 import logging
 
 import numpy as np
-from bluepy.v2 import Circuit
+from bluepy import Circuit
 
 from connectome_tools.dataset import read_bouton_density
 from connectome_tools.s2f_recipe import BOUTON_REDUCTION_FACTOR

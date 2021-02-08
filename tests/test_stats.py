@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
-from bluepy.v2.enums import Segment, Synapse
+from bluepy.enums import Segment, Synapse
 from mock import Mock, patch
 
 import connectome_tools.stats as test_module

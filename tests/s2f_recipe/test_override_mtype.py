@@ -1,6 +1,6 @@
 from itertools import chain
 
-from bluepy.v2 import Circuit
+from bluepy import Circuit
 from mock import MagicMock
 from parameterized import param, parameterized
 
