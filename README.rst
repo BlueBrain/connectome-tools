@@ -198,11 +198,12 @@ Usage:
     s2f-recipe -s STRATEGIES -o OUTPUT [--seed SEED] [-v] <CircuitConfig>
 
 Options:
-    -s, --strategies TEXT   Path to strategies config (YAML)
-    -o, --output OUTPUT     Path to output file (XML)
-    -j, --jobs INTEGER      Number of concurrent jobs
-    -v, --verbose           Log verbosity level
-    --seed SEED             Random generator seed
+    -s, --strategies TEXT  Path to strategies config (YAML)  [required]
+    -o, --output TEXT      Path to output file (XML)  [required]
+    -v, --verbose          -v for INFO, -vv for DEBUG
+    --seed INTEGER         Pseudo-random generator seed  [default: 0]
+    -j, --jobs INTEGER     Maximum number of concurrently running jobs (if -1
+                           all CPUs are used)  [default: -1]
 
 For better performance, it's recommended to run the script specifying multiple concurrent jobs.
 
@@ -488,21 +489,26 @@ is running.
 If you are running the command using a sbatch script, verify that ``srun`` is not used.
 
 This is an example of a minimal script for ``s2f-recipe``, running one instance of the program on a
-single exclusive node. You can see that ``srun`` is not used, and you can also omit the option
-``--jobs`` to use all the available cpus (see the documentation above for more details):
+single exclusive node, without using ``srun``:
 
 .. code-block:: bash
 
     #!/bin/bash
+    #SBATCH --job-name="<job-name>"
+    #SBATCH --qos="<qos>"
+    #SBATCH --time="<time>"
     #SBATCH --nodes=1
     #SBATCH --mem=0
     #SBATCH --exclusive
-    #SBATCH --account=projXX
+    #SBATCH --constraint=cpu
+    #SBATCH --partition="<partition>"
+    #SBATCH --account="<projXX>"
+    set -eu
 
-    module load archive/2020-12
+    module load "archive/<YYYY-MM>"
     module load connectome-tools
 
-    s2f-recipe -s ./s2f.yaml -o ./builderConnectivityRecipeAllPathways.xml -v $CIRCUIT/CircuitConfig_struct
+    s2f-recipe <OPTIONS AND ARGUMENTS>
 
 
 Acknowledgments

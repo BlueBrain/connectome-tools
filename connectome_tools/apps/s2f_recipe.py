@@ -256,7 +256,8 @@ def timed(logger, message):
 
 @click.command()
 @click.argument("circuit")
-@click.option("-s", "--strategies", required=True, help="Path to strategies config")
+@click.option("-s", "--strategies", required=True, help="Path to strategies config (YAML)")
+@click.option("-o", "--output", required=True, help="Path to output file (XML)")
 @click.option("-v", "--verbose", count=True, help="-v for INFO, -vv for DEBUG")
 @click.option("--seed", type=int, default=0, help="Pseudo-random generator seed", show_default=True)
 @click.option(
@@ -267,10 +268,17 @@ def timed(logger, message):
     help="Maximum number of concurrently running jobs (if -1 all CPUs are used)",
     show_default=True,
 )
-@click.option("-o", "--output", required=True, help="Path to output file")
 @runalone
-def app(circuit, strategies, verbose, seed, output, jobs):
-    """S2F recipe generation."""
+def app(circuit, strategies, output, verbose, seed, jobs):  # noqa: D301
+    """S2F recipe generation.
+
+    See the official documentation for more information
+    and for an example of a sbatch script to run the program.
+
+    \f
+    # Ignore Missing parameter(s) in Docstring with darglint
+    # noqa: DAR101
+    """
     setup_logging(verbose)
     L.info("Configuration: circuit=%s, seed=%s, jobs=%s", circuit, seed, jobs)
     strategies = load_yaml(strategies)
