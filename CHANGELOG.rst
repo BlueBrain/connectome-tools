@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version 0.4.1
+-------------
+
+Bug Fixes
+~~~~~~~~~~~~
+- Change the old hidden variable from bluepy _PRE_SEGMENT_ID to the new one Synapse.PRE_SEGMENT_ID
+
+
 Version 0.4.0
 -------------
 

@@ -50,7 +50,7 @@ def _calc_bouton_density(circuit, gid, synapses_per_bouton, mask):
         axon_length = _segment_lengths(filtered).sum()
 
         # find axon segments with synapses; count synapses per each such segment
-        INDEX_COLS = [Synapse.PRE_SECTION_ID, "_PRE_SEGMENT_ID"]
+        INDEX_COLS = [Synapse.PRE_SECTION_ID, Synapse.PRE_SEGMENT_ID]
         syn_per_segment = (
             circuit.connectome.efferent_synapses(gid, properties=INDEX_COLS)
             .groupby(INDEX_COLS)

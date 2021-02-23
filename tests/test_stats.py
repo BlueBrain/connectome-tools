@@ -82,7 +82,7 @@ def test_bouton_density_3():
         ],
         columns=[
             Synapse.PRE_SECTION_ID,
-            "_PRE_SEGMENT_ID",
+            Synapse.PRE_SEGMENT_ID,
         ],
     )
     expected = (3 + 1) / sum(  # three synapses on (11, 1); one synapse on (12, 0)
