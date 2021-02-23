@@ -1,0 +1,31 @@
+- estimate_syns_con:
+    formula: 1 * n
+    max_value: 25.0
+    sample:
+        size: 1000
+        pre: VPM@right.column
+        post: VPM@right.column
+#- experimental_syns_con:
+#    bio_data: /gpfs/bbp.cscs.ch/project/proj55/data/synapses/nsyn_per_connections.tsv
+- estimate_individual_bouton_reduction:
+    bio_data: /gpfs/bbp.cscs.ch/project/proj55/data/synapses/bouton_density_20200811.tsv
+    sample:
+        target: 'LGd_IN'
+        size: 1000
+        assume_syns_bouton: 1.2
+- estimate_individual_bouton_reduction:
+    bio_data: /gpfs/bbp.cscs.ch/project/proj55/data/synapses/bouton_density_20200811.tsv
+    sample:
+        target: 'VP_TC'
+        mask: 'masks/[mask]RT'
+        size: 1000
+        assume_syns_bouton: 1.2
+- estimate_individual_bouton_reduction:
+    bio_data: /gpfs/bbp.cscs.ch/project/proj55/data/synapses/bouton_density_20200811.tsv
+    sample:
+        target: 'Rt_RC'
+        mask: 'masks/[mask]THnotRT'
+        size: 1000
+        assume_syns_bouton: 1.2
+- generalized_cv:
+    cv: 0.9
