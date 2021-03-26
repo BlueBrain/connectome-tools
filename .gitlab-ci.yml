@@ -1,0 +1,4 @@
+include:
+  - project: nse/dummy-ci-test
+    file: /.ci/pipelines/nse.connectome-tools.yml
+
