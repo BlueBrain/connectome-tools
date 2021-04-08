@@ -27,11 +27,15 @@ def _load_mask(circuit, mask):
         return circuit.atlas.load_data(mask, cls=ROIMask)
 
 
-def _calc_bouton_density(circuit, gid, synapses_per_bouton, mask):
+def _calc_bouton_density(circuit, gid, projection, synapses_per_bouton, mask):
     """Calculate bouton density for a given `gid`."""
+    if projection is None:
+        conn_obj = circuit.connectome
+    else:
+        conn_obj = circuit.projection(projection)
     if mask is None:
         # count all efferent synapses and total axon length
-        synapse_count = len(circuit.connectome.efferent_synapses(gid))
+        synapse_count = len(conn_obj.efferent_synapses(gid))
         axon_length = nm.get(
             "neurite_lengths", circuit.morph.get(gid, False), neurite_type=nm.AXON
         )[0]
@@ -52,9 +56,7 @@ def _calc_bouton_density(circuit, gid, synapses_per_bouton, mask):
         # find axon segments with synapses; count synapses per each such segment
         INDEX_COLS = [Synapse.PRE_SECTION_ID, Synapse.PRE_SEGMENT_ID]
         syn_per_segment = (
-            circuit.connectome.efferent_synapses(gid, properties=INDEX_COLS)
-            .groupby(INDEX_COLS)
-            .size()
+            conn_obj.efferent_synapses(gid, properties=INDEX_COLS).groupby(INDEX_COLS).size()
         )
 
         # count synapses on filtered segments
@@ -65,19 +67,24 @@ def _calc_bouton_density(circuit, gid, synapses_per_bouton, mask):
     return (1.0 * synapse_count / synapses_per_bouton) / axon_length
 
 
-def bouton_density(circuit, gid, synapses_per_bouton=1.0, mask=None):
+def bouton_density(circuit, gid, projection=None, synapses_per_bouton=1.0, mask=None):
     """Calculate bouton density for a given `gid`."""
     mask = _load_mask(circuit, mask)
-    return _calc_bouton_density(circuit, gid, synapses_per_bouton, mask)
+    return _calc_bouton_density(circuit, gid, projection, synapses_per_bouton, mask)
 
 
-def sample_bouton_density(circuit, n, group=None, synapses_per_bouton=1.0, mask=None):
+def sample_bouton_density(
+    circuit, n, group=None, projection=None, synapses_per_bouton=1.0, mask=None
+):
     """Sample bouton density.
 
     Args:
         circuit: circuit instance
         n: sample size
         group: cell group
+        projection (str, default=None): Name of a projection. If specified, calculates bouton
+            density based on synapses in that projection, and that projection only. By default
+            (i.e. None) uses the local connectivity only.
         synapses_per_bouton: assumed number of synapses per bouton
         mask (str): region of interest mask
 
@@ -91,10 +98,14 @@ def sample_bouton_density(circuit, n, group=None, synapses_per_bouton=1.0, mask=
     elif len(gids) == 0:
         L.warning("No GID matching selection for group '%s'", group)
     mask = _load_mask(circuit, mask)
-    return np.array([_calc_bouton_density(circuit, gid, synapses_per_bouton, mask) for gid in gids])
+    return np.array(
+        [_calc_bouton_density(circuit, gid, projection, synapses_per_bouton, mask) for gid in gids]
+    )
 
 
-def sample_pathway_synapse_count(circuit, n, pre=None, post=None, unique_gids=False):
+def sample_pathway_synapse_count(
+    circuit, n, pre=None, post=None, projection=None, unique_gids=False
+):
     """Sample synapse count for pathway connections.
 
     Args:
@@ -102,13 +113,19 @@ def sample_pathway_synapse_count(circuit, n, pre=None, post=None, unique_gids=Fa
         n: sample size
         pre: presynaptic cell group
         post: postsynaptic cell group
+        projection (str, default=None): Name of a projection. If specified, uses synapses in
+            that projection only instead of the local connectivity.
         unique_gids(bool): don't use one GID more than once
 
     Returns:
         numpy array of length min(n, N) with synapse number per connection,
         where N is the total number of connections satisfying the constraints.
     """
-    it = circuit.connectome.iter_connections(
+    if projection is None:
+        conn_obj = circuit.connectome
+    else:
+        conn_obj = circuit.projection(projection)
+    it = conn_obj.iter_connections(
         pre, post, shuffle=True, unique_gids=unique_gids, return_synapse_count=True
     )
     return np.array([p[2] for p in itertools.islice(it, n)])

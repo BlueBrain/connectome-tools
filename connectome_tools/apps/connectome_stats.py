@@ -52,8 +52,9 @@ def app(seed):
 @click.option("-n", "--sample-size", type=int, default=100, help="Sample size", show_default=True)
 @click.option("--pre", default=None, help="Presynaptic target", show_default=True)
 @click.option("--post", default=None, help="Postsynaptic target", show_default=True)
+@click.option("--projection", default=None, help="Projection name", show_default=True)
 @click.option("--short", is_flag=True, default=False, help="Omit sampled values", show_default=True)
-def nsyn_per_connection(circuit, sample_size, pre, post, short):
+def nsyn_per_connection(circuit, sample_size, pre, post, projection, short):
     """Mean connection synapse count per pathway."""
     circuit = Circuit(circuit)
     mtypes = sorted(circuit.cells.mtypes)
@@ -66,6 +67,7 @@ def nsyn_per_connection(circuit, sample_size, pre, post, short):
             n=sample_size,
             pre=_cell_group(pre_mtype, target=pre),
             post=_cell_group(post_mtype, target=post),
+            projection=projection,
         )
         mean, std, size, values = _format_sample(sample, short)
         click.echo("\t".join([pre_mtype, post_mtype, mean, std, size, values]))
@@ -83,8 +85,11 @@ def nsyn_per_connection(circuit, sample_size, pre, post, short):
     help="Synapse count per bouton",
     show_default=True,
 )
+@click.option("--projection", default=None, help="Projection name", show_default=True)
 @click.option("--short", is_flag=True, default=False, help="Omit sampled values", show_default=True)
-def bouton_density(circuit, sample_size, sample_target, mask, assume_syns_bouton, short):
+def bouton_density(
+    circuit, sample_size, sample_target, mask, assume_syns_bouton, projection, short
+):
     """Mean bouton density per mtype."""
     circuit = Circuit(circuit)
     mtypes = sorted(circuit.cells.mtypes)
@@ -97,7 +102,12 @@ def bouton_density(circuit, sample_size, sample_target, mask, assume_syns_bouton
         else:
             group = _cell_group(mtype, target=sample_target)
         sample = stats.sample_bouton_density(
-            circuit, n=sample_size, group=group, mask=mask, synapses_per_bouton=assume_syns_bouton
+            circuit,
+            n=sample_size,
+            group=group,
+            mask=mask,
+            synapses_per_bouton=assume_syns_bouton,
+            projection=projection,
         )
         mean, std, size, values = _format_sample(sample, short)
         click.echo("\t".join([mtype, mean, std, size, values]))

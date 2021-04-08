@@ -4,6 +4,10 @@ Changelog
 Version 0.4.1
 -------------
 
+New Features
+~~~~~~~~~~~~
+- Add support for analysis of bouton density and synapse counts in projections
+
 Bug Fixes
 ~~~~~~~~~~~~
 - Change the old hidden variable from bluepy _PRE_SEGMENT_ID to the new one Synapse.PRE_SEGMENT_ID

@@ -96,6 +96,20 @@ def test_bouton_density_3():
     npt.assert_almost_equal(actual, expected)
 
 
+@patch("neurom.get")
+def test_bouton_density_4(nm_get):
+    circuit = Mock()
+    projection = Mock()
+    projection.efferent_synapses.return_value = [(2, 1), (3, 1), (4, 2), (5, 2), (6, 2), (7, 3)]
+    circuit.projection.return_value = projection
+    nm_get.return_value = [10.0]
+    actual = test_module.bouton_density(
+        circuit, 42, projection="test_projection", synapses_per_bouton=1.5
+    )
+    circuit.projection.assert_called_with("test_projection")
+    npt.assert_almost_equal(actual, 0.4)
+
+
 @patch(test_module.__name__ + "._calc_bouton_density", side_effect=[42.0, 43.0])
 def test_sample_bouton_density_1(mock_get):
     circuit = Mock()
@@ -110,7 +124,17 @@ def test_sample_bouton_density_2(mock_get):
     npt.assert_equal(test_module.sample_bouton_density(circuit, n=2), [])
 
 
-def test_sample_pathway_synapse_count():
+def test_sample_pathway_synapse_count_1():
     circuit = Mock()
     circuit.connectome.iter_connections.return_value = [(0, 0, 42), (0, 0, 43), (0, 0, 44)]
     npt.assert_equal(test_module.sample_pathway_synapse_count(circuit, n=2), [42, 43])
+
+
+def test_sample_pathway_synapse_count_2():
+    circuit = Mock()
+    projection = Mock()
+    projection.iter_connections.return_value = [(0, 0, 101), (0, 0, 77), (0, 0, 2)]
+    circuit.projection.return_value = projection
+    actual = test_module.sample_pathway_synapse_count(circuit, projection="test_projection", n=2)
+    npt.assert_equal(actual, [101, 77])
+    circuit.projection.assert_called_with("test_projection")
