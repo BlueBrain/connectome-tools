@@ -1,5 +1,3 @@
 include:
   - project: nse/ci
-    ref: NSETM-1401_add_collapsible_sections
     file: /ci/pipelines/nse.connectome-tools.yml
-

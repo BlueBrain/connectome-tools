@@ -13,18 +13,40 @@ from bluepy import Circuit
 
 from connectome_tools.dataset import read_bouton_density
 from connectome_tools.s2f_recipe import BOUTON_REDUCTION_FACTOR
-from connectome_tools.s2f_recipe.utils import Task
+from connectome_tools.s2f_recipe.utils import BaseExecutor
 from connectome_tools.stats import sample_bouton_density
+from connectome_tools.utils import Task
 
 L = logging.getLogger(__name__)
 
 
-def prepare(circuit, bio_data, sample=None):
-    # noqa: D103 # pylint: disable=missing-docstring
-    yield Task(_execute, circuit.config, bio_data, sample, task_group=__name__)
+class Executor(BaseExecutor):
+    """Executor class for estimate_bouton_reduction strategy."""
+
+    # is_parallel is False because `_execute` needs to be executed in the main process,
+    # while the function `sample_bouton_density` will make use of subprocesses
+    is_parallel = False
+
+    def prepare(self, circuit, bio_data, sample=None):
+        """Yield tasks that should be executed.
+
+        Args:
+            circuit (bluepy.Circuit): circuit instance.
+            bio_data: reference value (float)
+                or name of the .tsv file containing bouton density data (str).
+            sample: sample configuration (dict)
+                or name of the .tsv file containing bouton density data (str).
+
+        Yields:
+            (Task) task to be executed.
+        """
+        # pylint: disable=arguments-differ
+        yield Task(
+            _execute, circuit.config, bio_data, sample, n_jobs=self.jobs, task_group=__name__
+        )
 
 
-def _execute(circuit_config, bio_data, sample):
+def _execute(circuit_config, bio_data, sample, n_jobs):
     if isinstance(bio_data, float):
         ref_value = bio_data
     else:
@@ -44,8 +66,9 @@ def _execute(circuit_config, bio_data, sample):
             group=sample.get("target", None),
             mask=sample.get("mask", None),
             synapses_per_bouton=sample.get("assume_syns_bouton", 1.0),
+            n_jobs=n_jobs,
         )
         value = np.nanmean(values)
 
-    L.debug("Bouton density estimate: %.3g", value)
+    L.info("Bouton density estimate: %.3g", value)
     return [(("*", "*"), {BOUTON_REDUCTION_FACTOR: ref_value / value})]

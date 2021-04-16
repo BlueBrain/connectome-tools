@@ -16,7 +16,7 @@ def test_1(_):
     circuit = MagicMock(Circuit)
     circuit.config = {}
     expected = {("*", "*"): {"bouton_reduction_factor": 5.0}}
-    task_generator = test_module.prepare(circuit, bio_data=10.0)
+    task_generator = test_module.Executor().prepare(circuit, bio_data=10.0)
     result_generator = (task() for task in task_generator)
     actual = dict(chain.from_iterable(item.value for item in result_generator))
 
@@ -29,7 +29,7 @@ def test_2(_):
     circuit.config = {}
     expected = {("*", "*"): {"bouton_reduction_factor": 21.0}}
     bio_data = os.path.join(TEST_DATA_DIR, "bouton_density.tsv")
-    task_generator = test_module.prepare(circuit, bio_data=bio_data)
+    task_generator = test_module.Executor().prepare(circuit, bio_data=bio_data)
     result_generator = (task() for task in task_generator)
     actual = dict(chain.from_iterable(item.value for item in result_generator))
 

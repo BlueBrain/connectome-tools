@@ -2,11 +2,14 @@
 
 import itertools
 import logging
+import os
 
 import neurom as nm
 import numpy as np
-from bluepy import Segment, Synapse
+from bluepy import Circuit, Segment, Synapse
 from voxcell import ROIMask
+
+from connectome_tools.utils import Task, run_parallel
 
 L = logging.getLogger(__name__)
 
@@ -74,7 +77,7 @@ def bouton_density(circuit, gid, projection=None, synapses_per_bouton=1.0, mask=
 
 
 def sample_bouton_density(
-    circuit, n, group=None, projection=None, synapses_per_bouton=1.0, mask=None
+    circuit, n, group=None, projection=None, synapses_per_bouton=1.0, mask=None, n_jobs=1
 ):
     """Sample bouton density.
 
@@ -87,6 +90,7 @@ def sample_bouton_density(
             (i.e. None) uses the local connectivity only.
         synapses_per_bouton: assumed number of synapses per bouton
         mask (str): region of interest mask
+        n_jobs (int): number of parallel jobs (1 for single process, -1 to use all the cpus)
 
     Returns:
         numpy array of length min(n, N) with bouton density per cell,
@@ -97,10 +101,57 @@ def sample_bouton_density(
         gids = np.random.choice(gids, size=n, replace=False)
     elif len(gids) == 0:
         L.warning("No GID matching selection for group '%s'", group)
+        return np.empty(0)
+    if n_jobs == 1:
+        return _sample_bouton_density_task(circuit, gids, projection, synapses_per_bouton, mask)
+    else:
+        return _sample_bouton_density_parallel(
+            circuit, gids, projection, synapses_per_bouton, mask, n_jobs=n_jobs
+        )
+
+
+def _sample_bouton_density_task(
+    circuit_or_config, gids, projection=None, synapses_per_bouton=1.0, mask=None
+):
+    """Sample bouton density task."""
+    # If executed in a subprocess, a configuration should be passed instead of a circuit instance.
+    if isinstance(circuit_or_config, Circuit):
+        circuit = circuit_or_config
+    else:
+        circuit = Circuit(circuit_or_config)
     mask = _load_mask(circuit, mask)
     return np.array(
         [_calc_bouton_density(circuit, gid, projection, synapses_per_bouton, mask) for gid in gids]
     )
+
+
+def _sample_bouton_density_parallel(
+    circuit, gids, projection=None, synapses_per_bouton=1.0, mask=None, n_jobs=-1
+):
+    """Sample bouton density in parallel."""
+    # The gids are split in chunks to reduce the number of tasks submitted to the subprocesses.
+    n_chunks = n_jobs if n_jobs > 0 else os.cpu_count() or 1
+    L.info(
+        "Sampling bouton density using jobs=%s and splitting %s gids in %s chunks",
+        n_jobs,
+        len(gids),
+        n_chunks,
+    )
+    tasks = [
+        Task(
+            _sample_bouton_density_task,
+            circuit.config,
+            chunk,
+            projection=projection,
+            synapses_per_bouton=synapses_per_bouton,
+            mask=mask,
+            task_group="sample_bouton_density",
+        )
+        for chunk in np.array_split(gids, n_chunks)
+    ]
+    # base_seed is None because the RNG is not used in the subprocesses
+    results = run_parallel(tasks, n_jobs, base_seed=None)
+    return np.concatenate([result.value for result in results])
 
 
 def sample_pathway_synapse_count(

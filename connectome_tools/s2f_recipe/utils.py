@@ -1,44 +1,47 @@
 """Common functions."""
-import time
-from collections import namedtuple
-from functools import partial
+import logging
+from abc import ABC, abstractmethod
 
-import numpy as np
+from connectome_tools.utils import run_parallel, run_sequential
 
-TaskResult = namedtuple("TaskResult", ["id", "group", "value", "elapsed"])
+L = logging.getLogger(__name__)
 
 
-class Task:
-    """Callable task class."""
+class BaseExecutor(ABC):
+    """Abstract class that can be subclassed for each strategy."""
 
-    def __init__(self, func, *args, task_group=None, **kwargs):
-        """Initialize the task.
-
-        Args:
-            func: Function that will be called when calling the object.
-            *args: Positional arguments for func.
-            **kwargs: Named arguments for func.
-            task_group: Task group, that can be reused for multiple tasks.
-        """
-        self._func = partial(func, *args, **kwargs)
-        self.group = task_group
-
-    def __call__(self, task_id=None, seed=None, setup_logging=None):
-        """Execute the task.
+    def __init__(self, jobs=None, base_seed=None):
+        """Create a new executor.
 
         Args:
-            task_id: Task id, should be unique.
-            seed: Seed to initialize the random number generator in the subprocess.
-            setup_logging: If not None, it must be a callable to configure logging.
-
-        Returns:
-            The task result (it should be serializable to be returned from different processes).
+            jobs: number of concurrent jobs, only for parallel executions.
+            base_seed: initial random seed, only for parallel executions.
         """
-        start_time = time.monotonic()
-        if setup_logging:
-            setup_logging()
-        if seed is not None:
-            np.random.seed(seed)
-        result = self._func()
-        elapsed = time.monotonic() - start_time
-        return TaskResult(id=task_id, group=self.group, value=result, elapsed=elapsed)
+        self.jobs = jobs
+        self.base_seed = base_seed
+
+    @property
+    @abstractmethod
+    def is_parallel(self):
+        """Return True if the tasks should be executed in parallel, False otherwise."""
+
+    @abstractmethod
+    def prepare(self, *args, **kwargs):
+        """Yield tasks that should be executed."""
+
+    def run(self, *args, **kwargs):
+        """Run the executor."""
+        L.info("Preparing strategy '%s'...", self.name)
+        tasks = self.prepare(*args, **kwargs)
+        if self.is_parallel:
+            L.info("Running strategy '%s' in parallel...", self.name)
+            results = run_parallel(tasks, self.jobs, self.base_seed)
+        else:
+            L.info("Running strategy '%s' sequentially...", self.name)
+            results = run_sequential(tasks)
+        return results
+
+    @property
+    def name(self):
+        """Executor name."""
+        return self.__module__

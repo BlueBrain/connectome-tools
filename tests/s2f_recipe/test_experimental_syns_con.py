@@ -18,7 +18,7 @@ def test_prepare():
         ("SLM_PPA", "SP_AA"): {"mean_syns_connection": 3.0},
     }
 
-    task_generator = test_module.prepare(circuit, bio_data=bio_data)
+    task_generator = test_module.Executor().prepare(circuit, bio_data=bio_data)
     result_generator = (task() for task in task_generator)
     actual = dict(chain.from_iterable(item.value for item in result_generator))
 

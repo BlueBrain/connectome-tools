@@ -16,13 +16,14 @@ from Equation import Expression
 
 from connectome_tools.dataset import read_nsyn
 from connectome_tools.s2f_recipe import MEAN_SYNS_CONNECTION
-from connectome_tools.s2f_recipe.utils import Task
+from connectome_tools.s2f_recipe.utils import BaseExecutor
 from connectome_tools.stats import sample_pathway_synapse_count
+from connectome_tools.utils import Task
 
 L = logging.getLogger(__name__)
 
 
-def choose_formula(formulae, pathway, syn_class_map):
+def _choose_formula(formulae, pathway, syn_class_map):
     """Choose formula based on pre- and post- synapse class (EXC | INH)."""
     custom = (syn_class_map[pathway[0]], syn_class_map[pathway[1]])
     if custom in formulae:
@@ -38,7 +39,7 @@ def _cell_group(mtype, target=None):
     return result
 
 
-def estimate_nsyn(circuit_config, pathway, sample_size, pre, post):
+def _estimate_nsyn(circuit_config, pathway, sample_size, pre, post):
     """Mean nsyn for given mtype."""
     pre_mtype, post_mtype = pathway
     circuit = Circuit(circuit_config)
@@ -52,53 +53,75 @@ def estimate_nsyn(circuit_config, pathway, sample_size, pre, post):
     return values.mean() if values.size else np.nan
 
 
-def prepare(
-    circuit,
-    formula,
-    formula_ee=None,
-    formula_ei=None,
-    formula_ie=None,
-    formula_ii=None,
-    max_value=None,
-    sample=None,
-):
-    # noqa: D103 # pylint: disable=missing-docstring, too-many-arguments, too-many-locals
-    formulae = {}
-    formulae[("*", "*")] = Expression(formula)
-    if formula_ee is not None:
-        formulae[("EXC", "EXC")] = Expression(formula_ee)
-    if formula_ei is not None:
-        formulae[("EXC", "INH")] = Expression(formula_ei)
-    if formula_ie is not None:
-        formulae[("INH", "EXC")] = Expression(formula_ie)
-    if formula_ii is not None:
-        formulae[("INH", "INH")] = Expression(formula_ii)
+class Executor(BaseExecutor):
+    """Executor class for estimate_syns_con strategy."""
 
-    mtypes = sorted(circuit.cells.mtypes)
+    is_parallel = True
 
-    if isinstance(sample, str):
-        dset = read_nsyn(sample).set_index(["from", "to"])
-        estimate = lambda pathway: dset.loc[pathway]["mean"]
-    else:
-        if sample is None:
-            sample = {}
-        estimate = partial(
-            estimate_nsyn,
-            circuit_config=circuit.config,
-            sample_size=sample.get("size", 100),
-            pre=sample.get("pre", None),
-            post=sample.get("post", None),
+    def prepare(
+        self,
+        circuit,
+        formula,
+        formula_ee=None,
+        formula_ei=None,
+        formula_ie=None,
+        formula_ii=None,
+        max_value=None,
+        sample=None,
+    ):
+        """Yield tasks that should be executed.
+
+        Args:
+            circuit (bluepy.Circuit): circuit instance.
+            formula (str): default formula.
+            formula_ee (str): formula for EXC-EXC pathways, it can be None to use the default.
+            formula_ei (str): formula for EXC-INH pathways, it can be None to use the default.
+            formula_ie (str): formula for INH-EXC pathways, it can be None to use the default.
+            formula_ii (str): formula for INH-INH pathways, it can be None to use the default.
+            max_value (float): maximum value used to cap the result, or None for no capping.
+            sample: sample configuration (dict)
+                or name of the .tsv file containing nsyn data (string).
+
+        Yields:
+            (Task) task to be executed.
+        """
+        # pylint: disable=arguments-differ, too-many-arguments
+        formulae = {}
+        formulae[("*", "*")] = Expression(formula)
+        if formula_ee is not None:
+            formulae[("EXC", "EXC")] = Expression(formula_ee)
+        if formula_ei is not None:
+            formulae[("EXC", "INH")] = Expression(formula_ei)
+        if formula_ie is not None:
+            formulae[("INH", "EXC")] = Expression(formula_ie)
+        if formula_ii is not None:
+            formulae[("INH", "INH")] = Expression(formula_ii)
+
+        mtypes = sorted(circuit.cells.mtypes)
+
+        if isinstance(sample, str):
+            dset = read_nsyn(sample).set_index(["from", "to"])
+            estimate = lambda pathway: dset.loc[pathway]["mean"]
+        else:
+            if sample is None:
+                sample = {}
+            estimate = partial(
+                _estimate_nsyn,
+                circuit_config=circuit.config,
+                sample_size=sample.get("size", 100),
+                pre=sample.get("pre", None),
+                post=sample.get("post", None),
+            )
+
+        # TODO: a better way to get mtype -> synapse_class mapping (from the recipe directly?)
+        syn_class_map = dict(
+            circuit.cells.get(properties=[Cell.MTYPE, Cell.SYNAPSE_CLASS]).drop_duplicates().values
         )
 
-    # TODO: a better way to get mtype -> synapse_class mapping (from the recipe directly?)
-    syn_class_map = dict(
-        circuit.cells.get(properties=[Cell.MTYPE, Cell.SYNAPSE_CLASS]).drop_duplicates().values
-    )
-
-    for pathway in itertools.product(mtypes, mtypes):
-        yield Task(
-            _execute, pathway, estimate, formulae, syn_class_map, max_value, task_group=__name__
-        )
+        for pathway in itertools.product(mtypes, mtypes):
+            yield Task(
+                _execute, pathway, estimate, formulae, syn_class_map, max_value, task_group=__name__
+            )
 
 
 def _execute(pathway, estimate, formulae, syn_class_map, max_value):
@@ -106,8 +129,8 @@ def _execute(pathway, estimate, formulae, syn_class_map, max_value):
     if np.isnan(value):
         L.warning("Could not estimate '%s' nsyn, skipping", pathway)
         return []
-    L.debug("nsyn estimate for pathway %s: %.3g", pathway, value)
-    value = choose_formula(formulae, pathway, syn_class_map)(value)
+    L.info("nsyn estimate for pathway %s: %.3g", pathway, value)
+    value = _choose_formula(formulae, pathway, syn_class_map)(value)
     # NSETM-1137 consider nan as 1.0
     if value < 1.0 or np.isnan(value):
         value = 1.0

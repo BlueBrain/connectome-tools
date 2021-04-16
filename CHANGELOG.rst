@@ -1,12 +1,26 @@
 Changelog
 =========
 
+Version 0.5.0
+-------------
+
+New Features
+~~~~~~~~~~~~
+- Add parameter ``n_jobs`` in ``stats.sample_bouton_density`` for parallel execution.
+
+
+Improvements
+~~~~~~~~~~~~
+- Parallelize strategy ``estimate_bouton_reduction`` in ``s2f-recipe``. [NSETM-1435]
+
+
 Version 0.4.1
 -------------
 
 New Features
 ~~~~~~~~~~~~
-- Add support for analysis of bouton density and synapse counts in projections
+- Add support for analysis of bouton density and synapse counts in projections.
+
 
 Bug Fixes
 ~~~~~~~~~~~~

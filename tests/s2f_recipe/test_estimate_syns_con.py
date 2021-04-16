@@ -99,7 +99,7 @@ def test_prepare(mock_synapse_count, _, mtypes, synapse_count, kwargs, expected)
         [["L6_TPC:C", "EXC"], ["L4_CHC", "INH"], ["SLM_PPA", "EXC"], ["SP_AA", "INH"]]
     )
 
-    task_generator = test_module.prepare(circuit, **kwargs)
+    task_generator = test_module.Executor().prepare(circuit, **kwargs)
     result_generator = (task() for task in task_generator)
     actual = dict(chain.from_iterable(item.value for item in result_generator))
 

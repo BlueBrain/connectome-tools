@@ -4,17 +4,13 @@
 
 import itertools
 import logging
-import time
 from collections import OrderedDict
-from contextlib import contextmanager
-from functools import partial
 
 import click
 import lxml.etree as ET
 import numpy as np
 import yaml
 from bluepy import Circuit
-from joblib import Parallel, delayed
 
 from connectome_tools.s2f_recipe import (
     BOUTON_REDUCTION_FACTOR,
@@ -30,7 +26,7 @@ from connectome_tools.s2f_recipe import (
     generalized_cv,
     override_mtype,
 )
-from connectome_tools.utils import runalone
+from connectome_tools.utils import runalone, setup_logging, timed
 from connectome_tools.version import __version__
 
 L = logging.getLogger("s2f-recipe")
@@ -49,18 +45,15 @@ ALTERNATIVE_PARAMS_2 = {
     MEAN_SYNS_CONNECTION,
 }
 
-# For each strategy defined in the configuration, the script will call the generator
-# function `prepare` in the corresponding module.
-# The generator function `prepare` should yield one or more functions that will be
-# executed in separate processes.
+# Associate the right class for each strategy defined in the configuration.
 DISPATCH = {
-    "estimate_bouton_reduction": estimate_bouton_reduction,
-    "estimate_individual_bouton_reduction": estimate_individual_bouton_reduction,
-    "estimate_syns_con": estimate_syns_con,
-    "experimental_syns_con": experimental_syns_con,
-    "existing_recipe": existing_recipe,
-    "generalized_cv": generalized_cv,
-    "override_mtype": override_mtype,
+    "estimate_bouton_reduction": estimate_bouton_reduction.Executor,
+    "estimate_individual_bouton_reduction": estimate_individual_bouton_reduction.Executor,
+    "estimate_syns_con": estimate_syns_con.Executor,
+    "experimental_syns_con": experimental_syns_con.Executor,
+    "existing_recipe": existing_recipe.Executor,
+    "generalized_cv": generalized_cv.Executor,
+    "override_mtype": override_mtype.Executor,
 }
 
 
@@ -101,36 +94,16 @@ def validate_params(pathway_dict):
         return False, ALTERNATIVE_PARAMS_2.difference(pathway_dict)
 
 
-def build_tasks(circuit, strategies):
-    """Return the list of tasks to be executed in separate processes."""
-    tasks = []
+def execute_strategies(circuit, strategies, jobs, base_seed):
+    """Execute each strategy sequentially."""
+    strategy_results = []
     for entry in strategies:
         assert len(entry) == 1
         strategy, kwargs = next(iter(entry.items()))
-        L.info("Preparing strategy '%s'...", strategy)
-        task_generator = DISPATCH[strategy].prepare(circuit, **kwargs)
-        tasks.extend(task_generator)
-    return tasks
-
-
-def run_parallel(tasks, jobs, base_seed, verbose):
-    """Run tasks in parallel."""
-    setup_task_logging = partial(setup_logging, verbose)
-    # If verbose is more than 10, all iterations are printed to stderr.
-    parallel = Parallel(n_jobs=jobs, backend="loky", verbose=verbose * 10)
-    return parallel(
-        [
-            delayed(task)(task_id=i, seed=base_seed + i, setup_logging=setup_task_logging)
-            for i, task in enumerate(tasks)
-        ]
-    )
-
-
-def analyze_task_results(task_results):
-    """Log the statistics for each task result."""
-    L.debug("Task results")
-    for task in task_results:
-        L.debug("Task %s %s %.3f", task.id, task.group, task.elapsed)
+        executor = DISPATCH[strategy](jobs, base_seed)
+        results = executor.run(circuit, **kwargs)
+        strategy_results.extend(results)
+    return strategy_results
 
 
 def init_recipe(task_results, mtypes):
@@ -166,7 +139,7 @@ def clean_recipe(recipe, mtypes):
             del recipe[pathway]
 
 
-def generate_recipe(circuit, strategies, jobs, base_seed, verbose):
+def generate_recipe(circuit, strategies, jobs, base_seed):
     """Generate S2F recipe for `circuit` using `strategies`.
 
     Args:
@@ -187,7 +160,6 @@ def generate_recipe(circuit, strategies, jobs, base_seed, verbose):
             If 1 is given, no parallel computing code is used at all.
             For n_jobs below -1, (n_cpus + 1 + n_jobs) are used.
         base_seed: Base seed used to initialize the seed in the subprocesses.
-        verbose: Level of verbosity (0, 1, 2).
 
     Returns:
         The recipe generated, i.e. a dictionary containing (pre_mtype, post_mtype) as key,
@@ -195,12 +167,8 @@ def generate_recipe(circuit, strategies, jobs, base_seed, verbose):
     """
     mtypes = sorted(circuit.cells.mtypes)
 
-    L.info("Build tasks")
-    tasks = build_tasks(circuit, strategies)
-
-    L.info("Run tasks")
-    task_results = run_parallel(tasks, jobs, base_seed=base_seed, verbose=verbose)
-    analyze_task_results(task_results)
+    L.info("Execute strategies")
+    task_results = execute_strategies(circuit, strategies, jobs=jobs, base_seed=base_seed)
 
     L.info("Assemble the recipe")
     recipe = init_recipe(task_results, mtypes)
@@ -228,31 +196,6 @@ def write_recipe(output_path, recipe, comment=None):
         tree.write(f, pretty_print=True, xml_declaration=True, encoding="utf-8")
 
 
-def setup_logging(verbose):
-    """Setup logging."""
-    logformat = "%(asctime)s %(levelname)s %(name)s: %(message)s"
-    loglevels = {
-        0: logging.WARN,
-        1: logging.INFO,
-        2: logging.DEBUG,
-    }
-    # Because this function can be called in a task executed in a subprocess,
-    # it should not reconfigure logging if it has been already configured
-    # in the same process.
-    logging.basicConfig(format=logformat, level=loglevels[verbose])
-
-
-@contextmanager
-def timed(logger, message):
-    """Context manager to log the execution time using the specified logger."""
-    start_time = time.monotonic()
-    try:
-        yield
-    finally:
-        elapsed = time.monotonic() - start_time
-        logger.info("%s: %.2f seconds", message, elapsed)
-
-
 @click.command()
 @click.argument("circuit")
 @click.option("-s", "--strategies", required=True, help="Path to strategies config (YAML)")
@@ -278,7 +221,8 @@ def app(circuit, strategies, output, verbose, seed, jobs):  # noqa: D301
     # Ignore Missing parameter(s) in Docstring with darglint
     # noqa: DAR101
     """
-    setup_logging(verbose)
+    level = {0: logging.WARN, 1: logging.INFO, 2: logging.DEBUG}[verbose]
+    setup_logging(level=level)
     L.info("Configuration: circuit=%s, seed=%s, jobs=%s", circuit, seed, jobs)
     strategies = load_yaml(strategies)
 
@@ -293,5 +237,5 @@ def app(circuit, strategies, output, verbose, seed, jobs):  # noqa: D301
 
     with timed(L, "Recipe generation"):
         circuit = Circuit(circuit)
-        recipe = generate_recipe(circuit, strategies, jobs, base_seed=seed, verbose=verbose)
+        recipe = generate_recipe(circuit, strategies, jobs, base_seed=seed)
         write_recipe(output, recipe, comment=comment)

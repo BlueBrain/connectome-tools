@@ -1,15 +1,16 @@
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
+from bluepy import Circuit
 from bluepy.enums import Segment, Synapse
-from mock import Mock, patch
+from mock import MagicMock, Mock, patch
 
 import connectome_tools.stats as test_module
 
 
 @patch("neurom.get")
 def test_bouton_density_1(nm_get):
-    circuit = Mock()
+    circuit = MagicMock(Circuit)
     circuit.connectome.efferent_synapses.return_value = [(1, 0), (2, 0), (2, 1)]
     nm_get.return_value = [10.0]
     actual = test_module.bouton_density(circuit, 42, synapses_per_bouton=1.5)
@@ -19,7 +20,7 @@ def test_bouton_density_1(nm_get):
 def test_bouton_density_2():
     mock_mask = Mock()
     mock_mask.lookup.return_value = np.array([False])
-    circuit = Mock()
+    circuit = MagicMock(Circuit)
     circuit.atlas.load_data.return_value = mock_mask
     circuit.morph.segment_points.return_value = pd.DataFrame(
         data=[
@@ -44,7 +45,7 @@ def test_bouton_density_3():
 
     mock_mask = Mock()
     mock_mask.lookup.side_effect = _mock_lookup
-    circuit = Mock()
+    circuit = MagicMock(Circuit)
     circuit.atlas.load_data.return_value = mock_mask
     circuit.morph.segment_points.return_value = pd.DataFrame(
         data=[
@@ -98,7 +99,7 @@ def test_bouton_density_3():
 
 @patch("neurom.get")
 def test_bouton_density_4(nm_get):
-    circuit = Mock()
+    circuit = MagicMock(Circuit)
     projection = Mock()
     projection.efferent_synapses.return_value = [(2, 1), (3, 1), (4, 2), (5, 2), (6, 2), (7, 3)]
     circuit.projection.return_value = projection
@@ -112,26 +113,26 @@ def test_bouton_density_4(nm_get):
 
 @patch(test_module.__name__ + "._calc_bouton_density", side_effect=[42.0, 43.0])
 def test_sample_bouton_density_1(mock_get):
-    circuit = Mock()
+    circuit = MagicMock(Circuit)
     circuit.cells.ids.return_value = [1, 2, 3]
     npt.assert_equal(test_module.sample_bouton_density(circuit, n=2), [42.0, 43.0])
 
 
 @patch(test_module.__name__ + "._calc_bouton_density", side_effect=[42.0, 43.0])
 def test_sample_bouton_density_2(mock_get):
-    circuit = Mock()
+    circuit = MagicMock(Circuit)
     circuit.cells.ids.return_value = []
     npt.assert_equal(test_module.sample_bouton_density(circuit, n=2), [])
 
 
 def test_sample_pathway_synapse_count_1():
-    circuit = Mock()
+    circuit = MagicMock(Circuit)
     circuit.connectome.iter_connections.return_value = [(0, 0, 42), (0, 0, 43), (0, 0, 44)]
     npt.assert_equal(test_module.sample_pathway_synapse_count(circuit, n=2), [42, 43])
 
 
 def test_sample_pathway_synapse_count_2():
-    circuit = Mock()
+    circuit = MagicMock(Circuit)
     projection = Mock()
     projection.iter_connections.return_value = [(0, 0, 101), (0, 0, 77), (0, 0, 2)]
     circuit.projection.return_value = projection

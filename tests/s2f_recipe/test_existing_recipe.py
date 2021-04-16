@@ -30,7 +30,7 @@ def test_prepare():
         },
     }
 
-    task_generator = test_module.prepare(circuit, recipe_path=recipe_path)
+    task_generator = test_module.Executor().prepare(circuit, recipe_path=recipe_path)
     result_generator = (task() for task in task_generator)
     actual = dict(chain.from_iterable(item.value for item in result_generator))
 

@@ -7,7 +7,7 @@ from mock import MagicMock, mock_open, patch
 from parameterized import param, parameterized
 
 from connectome_tools.apps import s2f_recipe as test_module
-from connectome_tools.s2f_recipe.utils import Task
+from connectome_tools.utils import Task
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "../data")
 
@@ -128,13 +128,13 @@ def test_validate_params(_, pathways_dict, expected_is_valid, expected_missing, 
 @parameterized.expand([param(jobs=1), param(jobs=2)])
 @patch(test_module.__name__ + ".open")
 @patch(test_module.__name__ + ".Circuit")
-@patch(test_module.__name__ + ".override_mtype.prepare")
-@patch(test_module.__name__ + ".generalized_cv.prepare")
-@patch(test_module.__name__ + ".experimental_syns_con.prepare")
-@patch(test_module.__name__ + ".existing_recipe.prepare")
-@patch(test_module.__name__ + ".estimate_syns_con.prepare")
-@patch(test_module.__name__ + ".estimate_individual_bouton_reduction.prepare")
-@patch(test_module.__name__ + ".estimate_bouton_reduction.prepare")
+@patch.object(test_module.override_mtype.Executor, "prepare")
+@patch.object(test_module.generalized_cv.Executor, "prepare")
+@patch.object(test_module.experimental_syns_con.Executor, "prepare")
+@patch.object(test_module.existing_recipe.Executor, "prepare")
+@patch.object(test_module.estimate_syns_con.Executor, "prepare")
+@patch.object(test_module.estimate_individual_bouton_reduction.Executor, "prepare")
+@patch.object(test_module.estimate_bouton_reduction.Executor, "prepare")
 def test_app(
     estimate_bouton_reduction,
     estimate_individual_bouton_reduction,
