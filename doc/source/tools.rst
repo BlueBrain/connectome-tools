@@ -93,14 +93,14 @@ Options:
 
 For better performance, it's recommended to run the script specifying multiple concurrent jobs.
 
-The output is an XML file of form, as `documented here <https://bbpteam.epfl.ch/documentation/projects/Circuit%20Documentation/latest/recipe.html#connectionrules>`_:
+Since version 0.6.0 the output is an XML file of form:
 
 ::
 
     <ConnectionRules>
-        <mTypeRule from="from_1" to="to_1" cv_syns_connection="0.348" bouton_reduction_factor="0.459" mean_syns_connection="4.341" />
-        <mTypeRule from="from_2" to="to_2" cv_syns_connection="0.348" bouton_reduction_factor="0.184" mean_syns_connection="3.470" />
-        <mTypeRule from="from_3" to="to_3" bouton_reduction_factor="1.000" p_A="1.000" pMu_A="0.000"/>
+        <rule fromMType="from_1" toMType="to_1" cv_syns_connection="0.348" bouton_reduction_factor="0.459" mean_syns_connection="4.341" />
+        <rule fromMType="from_2" toMType="to_2" cv_syns_connection="0.348" bouton_reduction_factor="0.184" mean_syns_connection="3.470" />
+        <rule fromMType="from_3" toMType="to_3" bouton_reduction_factor="1.000" p_A="1.000" pMu_A="0.000"/>
         ...
     </ConnectionRules>
 
@@ -154,7 +154,7 @@ The sequence of strategies applied along with their arguments is defined by YAML
         mean_syns_connection: 1.0
         cv_syns_connection: 1.0
 
-Each strategy deduces one or several ``<mTypeRule>`` parameters for a subset of pathways.
+Each strategy deduces one or several ``<rule>`` parameters for a subset of pathways.
 
 Values defined by latter strategies take precedence over the earlier ones.
 

@@ -3,15 +3,22 @@ from itertools import chain
 
 from bluepy import Circuit
 from mock import MagicMock
+from parameterized import param, parameterized
 
 import connectome_tools.s2f_recipe.existing_recipe as test_module
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "../data")
 
 
-def test_prepare():
+@parameterized.expand(
+    [
+        param(recipe_name="s2f_recipe_2.xml"),
+        param(recipe_name="s2f_recipe_2_old.xml"),
+    ]
+)
+def test_prepare(recipe_name):
     circuit = MagicMock(Circuit)
-    recipe_path = os.path.join(TEST_DATA_DIR, "s2f_recipe_2.xml")
+    recipe_path = os.path.join(TEST_DATA_DIR, recipe_name)
     expected = {
         ("L6_CHC", "L6_BTC"): {
             "bouton_reduction_factor": 1.0,

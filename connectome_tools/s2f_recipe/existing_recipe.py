@@ -28,11 +28,27 @@ class Executor(BaseExecutor):
 
 
 def _execute(recipe_path):
+    # The parser is backward compatible, but it will break if both the old and the new formats
+    # are used in the same file, because the final order of the rules could be different.
+    # At the moment, it will break also if the rules in the new format contain selection attributes
+    # different from fromMType/toMType (e.g. fromEType/toEType, fromRegion/toRegion...).
     tree = ET.parse(recipe_path)
-    return [
+    # old format (circuit-documentation 0.0.19)
+    old_rules = [
         (
             (elem.attrib.pop("from"), elem.attrib.pop("to")),
             {k: float(v) for k, v in elem.attrib.iteritems()},
         )
         for elem in tree.findall("mTypeRule")
     ]
+    # new format (circuit-documentation 0.0.20)
+    new_rules = [
+        (
+            (elem.attrib.pop("fromMType"), elem.attrib.pop("toMType")),
+            {k: float(v) for k, v in elem.attrib.iteritems()},
+        )
+        for elem in tree.findall("rule")
+    ]
+    if new_rules and old_rules:
+        raise ValueError("Rules in different formats cannot be used in the same file")
+    return new_rules or old_rules

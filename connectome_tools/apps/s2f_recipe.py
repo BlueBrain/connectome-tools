@@ -185,11 +185,11 @@ def write_recipe(output_path, recipe, comment=None):
         root.addprevious(ET.Comment(comment))
     for pathway, params in sorted(recipe.items()):
         attr = OrderedDict()
-        attr["from"] = pathway[0]
-        attr["to"] = pathway[1]
+        attr["fromMType"] = pathway[0]
+        attr["toMType"] = pathway[1]
         for param, value in params.items():
             attr[param] = "{:.3f}".format(value)
-        ET.SubElement(root, "mTypeRule", attr)
+        ET.SubElement(root, "rule", attr)
 
     tree = ET.ElementTree(root)
     with open(output_path, "wb") as f:

@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version 0.6.0
+-------------
+
+New Features
+~~~~~~~~~~~~
+- Update names used in the recipe to use the new format. [NSETM-1451]
+
+
 Version 0.5.1
 -------------
 
