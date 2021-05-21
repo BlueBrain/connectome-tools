@@ -7,10 +7,10 @@ import logging
 
 import click
 import numpy as np
-from bluepy import Cell, Circuit
+from bluepy import Circuit
 
 from connectome_tools import stats
-from connectome_tools.utils import runalone
+from connectome_tools.utils import cell_group, runalone
 
 L = logging.getLogger(__name__)
 
@@ -29,13 +29,6 @@ def _format_sample(sample, short=False):
         return ftoa(np.nanmean(sample)), ftoa(np.nanstd(sample)), str(size), values
     else:
         return NA_VALUE, NA_VALUE, NA_VALUE, NA_VALUE
-
-
-def _cell_group(mtype, target=None):
-    result = {Cell.MTYPE: mtype}
-    if target is not None:
-        result["$target"] = target
-    return result
 
 
 @click.group()
@@ -65,8 +58,8 @@ def nsyn_per_connection(circuit, sample_size, pre, post, projection, short):
         sample = stats.sample_pathway_synapse_count(
             circuit,
             n=sample_size,
-            pre=_cell_group(pre_mtype, target=pre),
-            post=_cell_group(post_mtype, target=post),
+            pre=cell_group(pre_mtype, target=pre),
+            post=cell_group(post_mtype, target=post),
             projection=projection,
         )
         mean, std, size, values = _format_sample(sample, short)
@@ -100,7 +93,7 @@ def bouton_density(
         if mtype == "*":
             group = sample_target
         else:
-            group = _cell_group(mtype, target=sample_target)
+            group = cell_group(mtype, target=sample_target)
         sample = stats.sample_bouton_density(
             circuit,
             n=sample_size,

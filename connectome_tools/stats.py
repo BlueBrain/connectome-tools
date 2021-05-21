@@ -131,6 +131,9 @@ def _sample_bouton_density_parallel(
     """Sample bouton density in parallel."""
     # The gids are split in chunks to reduce the number of tasks submitted to the subprocesses.
     n_chunks = n_jobs if n_jobs > 0 else os.cpu_count() or 1
+    # minimum number of gids to be processed in a single job
+    min_gids_per_job = int(os.getenv("MIN_GIDS_PER_JOB", "1"))
+    n_chunks = min(n_chunks, len(gids) // min_gids_per_job)
     L.info(
         "Sampling bouton density using jobs=%s and splitting %s gids in %s chunks",
         n_jobs,

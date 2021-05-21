@@ -9,7 +9,6 @@ between m-types (e.g. pyramidal cells have lower density)
 import logging
 
 import numpy as np
-from bluepy import Circuit
 
 from connectome_tools.dataset import read_bouton_density
 from connectome_tools.s2f_recipe import BOUTON_REDUCTION_FACTOR
@@ -41,12 +40,10 @@ class Executor(BaseExecutor):
             (Task) task to be executed.
         """
         # pylint: disable=arguments-differ
-        yield Task(
-            _execute, circuit.config, bio_data, sample, n_jobs=self.jobs, task_group=__name__
-        )
+        yield Task(_execute, circuit, bio_data, sample, n_jobs=self.jobs, task_group=__name__)
 
 
-def _execute(circuit_config, bio_data, sample, n_jobs):
+def _execute(circuit, bio_data, sample, n_jobs):
     if isinstance(bio_data, float):
         ref_value = bio_data
     else:
@@ -59,9 +56,8 @@ def _execute(circuit_config, bio_data, sample, n_jobs):
     else:
         if sample is None:
             sample = {}
-        circuit = Circuit(circuit_config)
         values = sample_bouton_density(
-            circuit,
+            circuit=circuit,
             n=sample.get("size", 100),
             group=sample.get("target", None),
             mask=sample.get("mask", None),

@@ -8,6 +8,7 @@ from functools import partial, wraps
 
 import numpy as np
 import psutil
+from bluepy import Cell
 from joblib import Parallel, delayed
 
 L = logging.getLogger(__name__)
@@ -131,3 +132,19 @@ class Task:
 
 
 TaskResult = namedtuple("TaskResult", ["id", "group", "value", "elapsed"])
+
+
+def cell_group(mtype, target=None):
+    """Return a group that can be used to select cell ids with BluePy.
+
+    Args:
+        mtype (str): mtype.
+        target (str): target/node_set.
+
+    Returns:
+        dict: cell group.
+    """
+    result = {Cell.MTYPE: mtype}
+    if target is not None:
+        result["$target"] = target
+    return result

@@ -12,35 +12,22 @@ from functools import partial
 
 import numpy as np
 import pandas as pd
-from bluepy import Cell, Circuit
 
 from connectome_tools.dataset import read_bouton_density
 from connectome_tools.s2f_recipe import BOUTON_REDUCTION_FACTOR
 from connectome_tools.s2f_recipe.utils import BaseExecutor
 from connectome_tools.stats import sample_bouton_density
-from connectome_tools.utils import Task
+from connectome_tools.utils import Task, cell_group
 
 L = logging.getLogger(__name__)
-
-
-def _estimate_bouton_density(
-    circuit_config, mtype, sample_size, sample_target, mask, assume_syns_bouton
-):
-    """Mean bouton density for given mtype."""
-    group = {Cell.MTYPE: mtype}
-    if sample_target is not None:
-        group["$target"] = sample_target
-    circuit = Circuit(circuit_config)
-    values = sample_bouton_density(
-        circuit, n=sample_size, group=group, mask=mask, synapses_per_bouton=assume_syns_bouton
-    )
-    return np.nanmean(values)
 
 
 class Executor(BaseExecutor):
     """Executor class for estimate_individual_bouton_reduction strategy."""
 
-    is_parallel = True
+    # is_parallel is False because `_execute` needs to be executed in the main process,
+    # while the function `sample_bouton_density` will make use of subprocesses
+    is_parallel = False
 
     def prepare(self, circuit, bio_data, sample=None):
         """Yield tasks that should be executed.
@@ -58,12 +45,7 @@ class Executor(BaseExecutor):
         # pylint: disable=arguments-differ
         mtypes = circuit.cells.mtypes
         if isinstance(bio_data, float):
-            bio_data = pd.DataFrame(
-                {
-                    "mtype": mtypes,
-                    "mean": bio_data,
-                }
-            )
+            bio_data = pd.DataFrame({"mtype": mtypes, "mean": bio_data})
         else:
             bio_data = read_bouton_density(bio_data, mtypes=mtypes)
 
@@ -75,18 +57,19 @@ class Executor(BaseExecutor):
                 sample = {}
             estimate = partial(
                 _estimate_bouton_density,
-                circuit_config=circuit.config,
-                sample_size=sample.get("size", 100),
-                sample_target=sample.get("target", None),
+                target=sample.get("target", None),
+                circuit=circuit,
+                n=sample.get("size", 100),
                 mask=sample.get("mask", None),
-                assume_syns_bouton=sample.get("assume_syns_bouton", 1.0),
+                synapses_per_bouton=sample.get("assume_syns_bouton", 1.0),
+                n_jobs=self.jobs,
             )
-
         for _, row in bio_data.iterrows():
             yield Task(_execute, row, estimate, task_group=__name__)
 
 
 def _execute(row, estimate):
+    """Return a list of one tuple (pathway, params) for a single mtype."""
     mtype, ref_value = row["mtype"], row["mean"]
     value = estimate(mtype=mtype)
     if np.isnan(value):
@@ -94,3 +77,10 @@ def _execute(row, estimate):
         return []
     L.info("Bouton density estimate for '%s': %.3g", mtype, value)
     return [((mtype, "*"), {BOUTON_REDUCTION_FACTOR: ref_value / value})]
+
+
+def _estimate_bouton_density(mtype, target, **kwargs):
+    """Return the mean bouton density for the given mtype."""
+    group = cell_group(mtype, target=target)
+    values = sample_bouton_density(group=group, **kwargs)
+    return np.nanmean(values)

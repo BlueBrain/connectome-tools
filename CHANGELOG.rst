@@ -12,7 +12,15 @@ New Features
 Improvements
 ~~~~~~~~~~~~
 - Parallelize strategy ``estimate_bouton_reduction`` in ``s2f-recipe``. [NSETM-1435]
+- Change the parallelization of the strategy ``estimate_individual_bouton_reduction``
+  in ``s2f-recipe``. [NSETM-1435]
 
+  Now the values for each pathway are computed sequentially,
+  but the computation of the value for a single pathway is parallelized.
+
+  The gids are split in chunks to reduce the number of tasks submitted to the subprocesses,
+  and it's possible to specify the minimum number of gids to be processed in a single job
+  setting the env variable ``MIN_GIDS_PER_JOB`` (default 1).
 
 Version 0.4.1
 -------------

@@ -18,7 +18,7 @@ from connectome_tools.dataset import read_nsyn
 from connectome_tools.s2f_recipe import MEAN_SYNS_CONNECTION
 from connectome_tools.s2f_recipe.utils import BaseExecutor
 from connectome_tools.stats import sample_pathway_synapse_count
-from connectome_tools.utils import Task
+from connectome_tools.utils import Task, cell_group
 
 L = logging.getLogger(__name__)
 
@@ -32,13 +32,6 @@ def _choose_formula(formulae, pathway, syn_class_map):
         return formulae[("*", "*")]
 
 
-def _cell_group(mtype, target=None):
-    result = {Cell.MTYPE: mtype}
-    if target is not None:
-        result["$target"] = target
-    return result
-
-
 def _estimate_nsyn(circuit_config, pathway, sample_size, pre, post):
     """Mean nsyn for given mtype."""
     pre_mtype, post_mtype = pathway
@@ -46,8 +39,8 @@ def _estimate_nsyn(circuit_config, pathway, sample_size, pre, post):
     values = sample_pathway_synapse_count(
         circuit,
         n=sample_size,
-        pre=_cell_group(pre_mtype, target=pre),
-        post=_cell_group(post_mtype, target=post),
+        pre=cell_group(pre_mtype, target=pre),
+        post=cell_group(post_mtype, target=post),
     )
     # avoid RuntimeWarning: Mean of empty slice.
     return values.mean() if values.size else np.nan
