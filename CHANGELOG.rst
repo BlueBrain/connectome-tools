@@ -1,6 +1,15 @@
 Changelog
 =========
 
+Version 0.5.1
+-------------
+
+Improvements
+~~~~~~~~~~~~
+
+- Check for duplicate rows in .tsv files (bouton density data and nsyn). [NSETM-1512]
+
+
 Version 0.5.0
 -------------
 

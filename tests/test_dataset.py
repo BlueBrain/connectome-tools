@@ -2,10 +2,11 @@ import os
 
 import numpy as np
 import pandas as pd
+import pytest
 from pandas.testing import assert_frame_equal
 from parameterized import param, parameterized
 
-from connectome_tools.dataset import read_bouton_density, read_nsyn
+from connectome_tools.dataset import _remove_duplicates, read_bouton_density, read_nsyn
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
@@ -17,22 +18,20 @@ TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
             mtypes=None,
             expected=pd.DataFrame(
                 [
-                    ["*", 42.0, None, None, None],
-                    ["L1_DAC", 10.0, 0.0, 1.0, None],
-                    ["L23_MC", 30.0, 0.0, 1.0, None],
-                    ["SO_OLM", 50.0, 0.0, 1.0, None],
+                    ["*", 42.0, np.NaN, np.NaN, np.NaN],
+                    ["L1_DAC", 10.0, 0.0, 1.0, np.NaN],
+                    ["L23_MC", 30.0, 0.0, 1.0, np.NaN],
+                    ["SO_OLM", 50.0, 0.0, 1.0, np.NaN],
                 ],
                 columns=["mtype", "mean", "std", "size", "sample"],
-                dtype=np.float64,
             ),
         ),
         param(
             _="filter_mtypes",
             mtypes={"L1_DAC"},
             expected=pd.DataFrame(
-                [["L1_DAC", 10.0, 0.0, 1.0, None]],
+                [["L1_DAC", 10.0, 0.0, 1.0, np.NaN]],
                 columns=["mtype", "mean", "std", "size", "sample"],
-                dtype=np.float64,
             ),
         ),
     ]
@@ -53,11 +52,10 @@ def test_read_bouton_density(_, mtypes, expected):
             expected=pd.DataFrame(
                 [
                     ["SLM_PPA", "SLM_PPA", 16.2, 8.77, 5.0, "1,16,16,20,28"],
-                    ["SLM_PPA", "SO_BP", None, None, None, None],
+                    ["SLM_PPA", "SO_BP", np.NaN, np.NaN, np.NaN, np.NaN],
                     ["SLM_PPA", "SP_AA", 3.0, 1.63, 3.0, "1,3,5"],
                 ],
                 columns=["from", "to", "mean", "std", "size", "sample"],
-                dtype=np.float64,
             ),
         ),
         param(
@@ -69,7 +67,6 @@ def test_read_bouton_density(_, mtypes, expected):
                     ["SLM_PPA", "SP_AA", 3.0, 1.63, 3.0, "1,3,5"],
                 ],
                 columns=["from", "to", "mean", "std", "size", "sample"],
-                dtype=np.float64,
             ),
         ),
     ]
@@ -80,3 +77,53 @@ def test_read_nsyn(_, mtypes, expected):
     actual = read_nsyn(filepath, mtypes=mtypes)
 
     assert_frame_equal(actual.reset_index(drop=True), expected.reset_index(drop=True))
+
+
+def test__remove_duplicates_without_duplicates():
+    df = pd.DataFrame(
+        [
+            ["SLM_PPA", "SLM_PPA", 16.2, 8.77, 5.0, "1,16,16,20,28"],
+            ["SLM_PPA", "SP_AA", 3.0, 1.63, 3.0, "1,3,5"],
+        ],
+        columns=["from", "to", "mean", "std", "size", "sample"],
+    )
+
+    actual = _remove_duplicates(df, keys=["from", "to"], filepath="dummy")
+
+    assert_frame_equal(df, actual)
+
+
+def test__remove_duplicates_with_duplicates_and_same_values():
+    df = pd.DataFrame(
+        [
+            ["SLM_PPA", "SLM_PPA", 16.2, 8.77, 5.0, "1,16,16,20,28"],
+            ["SLM_PPA", "SP_AA", 3.0, 1.63, 3.0, "1,3,5"],
+            ["SLM_PPA", "SP_AA", 3.0, 1.63, 3.0, "1,3,5"],
+        ],
+        columns=["from", "to", "mean", "std", "size", "sample"],
+    )
+    expected = pd.DataFrame(
+        [
+            ["SLM_PPA", "SLM_PPA", 16.2, 8.77, 5.0, "1,16,16,20,28"],
+            ["SLM_PPA", "SP_AA", 3.0, 1.63, 3.0, "1,3,5"],
+        ],
+        columns=["from", "to", "mean", "std", "size", "sample"],
+    )
+
+    actual = _remove_duplicates(df, keys=["from", "to"], filepath="dummy")
+
+    assert_frame_equal(expected, actual)
+
+
+def test__remove_duplicates_with_duplicates_and_different_values():
+    df = pd.DataFrame(
+        [
+            ["SLM_PPA", "SLM_PPA", 16.2, 8.77, 5.0, "1,16,16,20,28"],
+            ["SLM_PPA", "SP_AA", 3.0, 1.63, 3.0, "1,3,5"],
+            ["SLM_PPA", "SP_AA", 6.0, 1.63, 3.0, "1,3,5"],
+        ],
+        columns=["from", "to", "mean", "std", "size", "sample"],
+    )
+
+    with pytest.raises(ValueError, match="Duplicate rows with different values"):
+        _remove_duplicates(df, keys=["from", "to"], filepath="dummy")
