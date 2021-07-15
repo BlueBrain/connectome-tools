@@ -28,7 +28,7 @@ setup(
     },
     license="BBP-internal-confidential",
     install_requires=[
-        "click>=7.0,<8.0",
+        "click>=7.0,<9.0",
         "equation>=1.2",
         "joblib>=0.16.0",
         "lxml>=3.3",
@@ -36,11 +36,9 @@ setup(
         "pandas>=1.0.0",
         "psutil>=5.7.2",
         "pyyaml>=5.3.1",
-        "bluepy==2.2.0",
+        "bluepy>=2.3,<3.0",
+        "morphio>=3.0.1,<4.0.0",
         "voxcell>=3.0,<4.0",
-        # FIXME: remove neurom and morph-tool after upgrading to bluepy >= 2.3.0
-        "neurom==1.8.0",
-        "morph-tool==2.4.1",
     ],
     packages=find_packages(),
     python_requires=">=3.6",

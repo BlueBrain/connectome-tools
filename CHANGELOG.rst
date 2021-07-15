@@ -9,6 +9,11 @@ Improvements
 
 - Check for duplicate rows in .tsv files (bouton density data and nsyn). [NSETM-1512]
 
+Bug Fixes
+~~~~~~~~~
+- Fix section ID numbering in the function that calculates the bouton density,
+  needed for compatibility with BluePy 2.3.0. [NSETM-1477]
+
 
 Version 0.5.0
 -------------
@@ -16,7 +21,6 @@ Version 0.5.0
 New Features
 ~~~~~~~~~~~~
 - Add parameter ``n_jobs`` in ``stats.sample_bouton_density`` for parallel execution.
-
 
 Improvements
 ~~~~~~~~~~~~

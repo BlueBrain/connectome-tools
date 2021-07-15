@@ -4,9 +4,10 @@ import itertools
 import logging
 import os
 
-import neurom as nm
 import numpy as np
-from bluepy import Circuit, Segment, Synapse
+import pandas as pd
+from bluepy import Circuit, Section, Segment, Synapse
+from morphio import SectionType
 from voxcell import ROIMask
 
 from connectome_tools.utils import Task, run_parallel
@@ -32,6 +33,7 @@ def _load_mask(circuit, mask):
 
 def _calc_bouton_density(circuit, gid, projection, synapses_per_bouton, mask):
     """Calculate bouton density for a given `gid`."""
+    # pylint: disable=too-many-locals
     if projection is None:
         conn_obj = circuit.connectome
     else:
@@ -39,12 +41,13 @@ def _calc_bouton_density(circuit, gid, projection, synapses_per_bouton, mask):
     if mask is None:
         # count all efferent synapses and total axon length
         synapse_count = len(conn_obj.efferent_synapses(gid))
-        axon_length = nm.get(
-            "neurite_lengths", circuit.morph.get(gid, False), neurite_type=nm.AXON
-        )[0]
+        # total length of the segments
+        all_pts = circuit.morph.segment_points(gid, transform=False, neurite_type=SectionType.axon)
+        axon_length = _segment_lengths(all_pts).sum()
+
     else:
-        # find all segments which endpoints fall into the region of interest
-        all_pts = circuit.morph.segment_points(gid, transform=True, neurite_type=nm.AXON)
+        # Find all segments which endpoints fall into the region of interest.
+        all_pts = circuit.morph.segment_points(gid, transform=True, neurite_type=SectionType.axon)
         mask1 = mask.lookup(all_pts[[Segment.X1, Segment.Y1, Segment.Z1]].values, outer_value=False)
         mask2 = mask.lookup(all_pts[[Segment.X2, Segment.Y2, Segment.Z2]].values, outer_value=False)
         filtered = all_pts[mask1 & mask2]
@@ -56,16 +59,29 @@ def _calc_bouton_density(circuit, gid, projection, synapses_per_bouton, mask):
         # total length for those filtered segments
         axon_length = _segment_lengths(filtered).sum()
 
-        # find axon segments with synapses; count synapses per each such segment
+        # Find axon segments with synapses; count synapses per each such segment.
         INDEX_COLS = [Synapse.PRE_SECTION_ID, Synapse.PRE_SEGMENT_ID]
         syn_per_segment = (
             conn_obj.efferent_synapses(gid, properties=INDEX_COLS).groupby(INDEX_COLS).size()
         )
 
+        # Starting from Bluepy 2.3.0, MorphIO is used in place of NeuroM, and the section ids
+        # of the MultiIndex in the DataFrame returned by ``circuit.morph.segment_points``
+        # are returned in the same order they are read from file, but skipping the soma
+        # because MorphIO never considers the soma as a section.
+        #
+        # For this reason, assuming that the soma has section id 0 in the file,
+        # the resulting section ids of all the other sections is 1 less than the ones in the file.
+        #
+        # As a consequence, the section ids of the filtered points need to be incremented
+        # to be consistent with the values returned by ``circuit.connectome.efferent_synapses``,
+        # that are loaded using libsonata.
+        df = filtered.index.to_frame(index=False)
+        df[Section.ID] += 1
+        index = pd.MultiIndex.from_frame(df)
+
         # count synapses on filtered segments
-        synapse_count = syn_per_segment.loc[
-            syn_per_segment.index.intersection(filtered.index)
-        ].sum()
+        synapse_count = syn_per_segment.loc[syn_per_segment.index.intersection(index)].sum()
 
     return (1.0 * synapse_count / synapses_per_bouton) / axon_length
 
