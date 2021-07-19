@@ -1,0 +1,5 @@
+<ConnectionRules>
+    <rule fromMType="SLM_PPA" toMType="SLM_PPA" fromRegion="SSp-ll@right" cv_syns_connection="0.348" bouton_reduction_factor="0.459" mean_syns_connection="4.341" />
+    <rule fromMType="SLM_PPA" toMType="SP_AA" fromRegion="SSp-ll@right" cv_syns_connection="0.348" bouton_reduction_factor="0.184" mean_syns_connection="3.470" />
+    <rule fromMType="SLM_PPA" toMType="SP_AA" fromRegion="SSp-ll@left" cv_syns_connection="0.348" bouton_reduction_factor="0.179" mean_syns_connection="3.844" />
+</ConnectionRules>

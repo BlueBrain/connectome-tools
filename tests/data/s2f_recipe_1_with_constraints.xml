@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ConnectionRules>
+  <rule fromMType="L1_DAC" toMType="L1_DAC" fromRegion="SSp-ll@right" mean_syns_connection="7.500" bouton_reduction_factor="5.000" cv_syns_connection="0.320"/>
+  <rule fromMType="L1_DAC" toMType="L4_CHC" fromRegion="SSp-ll@right" mean_syns_connection="8.000" bouton_reduction_factor="5.000" cv_syns_connection="0.320"/>
+  <rule fromMType="L1_DAC" toMType="SO_OLM" fromRegion="SSp-ll@right" mean_syns_connection="7.000" bouton_reduction_factor="5.000" cv_syns_connection="0.320"/>
+  <rule fromMType="L4_CHC" toMType="L1_DAC" fromRegion="SSp-ll@right" bouton_reduction_factor="1.000" p_A="1.000" pMu_A="0.000"/>
+  <rule fromMType="L4_CHC" toMType="L4_CHC" fromRegion="SSp-ll@right" bouton_reduction_factor="1.000" p_A="1.000" pMu_A="0.000"/>
+  <rule fromMType="L4_CHC" toMType="SO_OLM" fromRegion="SSp-ll@right" bouton_reduction_factor="1.000" p_A="1.000" pMu_A="0.000"/>
+  <rule fromMType="SO_OLM" toMType="L1_DAC" fromRegion="SSp-ll@right" mean_syns_connection="6.500" bouton_reduction_factor="11.000" cv_syns_connection="0.320"/>
+  <rule fromMType="SO_OLM" toMType="L4_CHC" fromRegion="SSp-ll@right" mean_syns_connection="2.000" bouton_reduction_factor="11.000" cv_syns_connection="0.320"/>
+  <rule fromMType="SO_OLM" toMType="SO_OLM" fromRegion="SSp-ll@right" mean_syns_connection="4.500" bouton_reduction_factor="11.000" cv_syns_connection="0.320"/>
+</ConnectionRules>

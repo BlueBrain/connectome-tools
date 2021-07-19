@@ -119,6 +119,7 @@ Available strategies:
     - ``experimental_syns_con``
     - ``generalized_cv``
     - ``override_mtype``
+    - ``add_constraints``
 
 The sequence of strategies applied along with their arguments is defined by YAML file, for example:
 
@@ -153,6 +154,8 @@ The sequence of strategies applied along with their arguments is defined by YAML
         bouton_reduction_factor: 1.0
         mean_syns_connection: 1.0
         cv_syns_connection: 1.0
+    - add_constraints:
+        fromRegion: mc2_Column
 
 Each strategy deduces one or several ``<rule>`` parameters for a subset of pathways.
 
@@ -370,6 +373,22 @@ Example 2:
         bouton_reduction_factor: 1.0
         p_A: 1.0
         pMu_A: 0.0
+
+
+add_constraints
+~~~~~~~~~~~~~~~
+
+Set generic constraints that will be added to the generated rules for all the pathways.
+It can be used to specify one or more selection attributes such as ``fromRegion`` and ``toRegion``.
+Note that no checks are made, and that the constraints must be added accordingly
+with the rest of the strategies.
+
+Example:
+
+::
+
+    - add_constraints:
+        fromRegion: mc2_Column
 
 
 Troubleshooting

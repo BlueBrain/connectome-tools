@@ -125,7 +125,25 @@ def test_validate_params(_, pathways_dict, expected_is_valid, expected_missing, 
     assert pathways_dict == expected_dict
 
 
-@parameterized.expand([param(jobs=1), param(jobs=2)])
+@parameterized.expand(
+    [
+        param(
+            jobs=1,
+            s2f_config_file="s2f_config_1.yaml",
+            expected_recipe_file="s2f_recipe_1.xml",
+        ),
+        param(
+            jobs=2,
+            s2f_config_file="s2f_config_1.yaml",
+            expected_recipe_file="s2f_recipe_1.xml",
+        ),
+        param(
+            jobs=1,
+            s2f_config_file="s2f_config_1_with_constraints.yaml",
+            expected_recipe_file="s2f_recipe_1_with_constraints.xml",
+        ),
+    ]
+)
 @patch(test_module.__name__ + ".open")
 @patch(test_module.__name__ + ".Circuit")
 @patch.object(test_module.override_mtype.Executor, "prepare")
@@ -146,6 +164,8 @@ def test_app(
     mock_circuit,
     mock_file,
     jobs,
+    s2f_config_file,
+    expected_recipe_file,
 ):
     # mock strategies
     estimate_bouton_reduction.return_value = task_generator(
@@ -183,13 +203,13 @@ def test_app(
     mtypes = {"L1_DAC", "SO_OLM", "L4_CHC"}
 
     # mock open, used to read the configuration, and to write the result
-    s2f_config_path = os.path.join(TEST_DATA_DIR, "s2f_config_1.yaml")
+    s2f_config_path = os.path.join(TEST_DATA_DIR, s2f_config_file)
     config_reader = open(s2f_config_path)
     output_writer = mock_open()()
     mock_file.side_effect = [config_reader, output_writer]
 
     # file containing the expected result
-    output_path = os.path.join(TEST_DATA_DIR, "s2f_recipe_1.xml")
+    output_path = os.path.join(TEST_DATA_DIR, expected_recipe_file)
 
     mock_circuit.return_value = circuit = MagicMock(Circuit)
     circuit.cells.mtypes = mtypes

@@ -6,7 +6,8 @@ Version 0.6.0
 
 New Features
 ~~~~~~~~~~~~
-- Update names used in the recipe to use the new format. [NSETM-1451]
+- Update the names used in the recipe to use the new format. [NSETM-1451]
+- Allow to specify the selection attributes in the new strategy ``add_constraints``. [NSETM-1450].
 
 
 Version 0.5.1

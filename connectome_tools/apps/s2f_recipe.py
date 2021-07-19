@@ -18,6 +18,7 @@ from connectome_tools.s2f_recipe import (
     MEAN_SYNS_CONNECTION,
     P_A,
     PMU_A,
+    add_constraints,
     estimate_bouton_reduction,
     estimate_individual_bouton_reduction,
     estimate_syns_con,
@@ -54,6 +55,7 @@ DISPATCH = {
     "existing_recipe": existing_recipe.Executor,
     "generalized_cv": generalized_cv.Executor,
     "override_mtype": override_mtype.Executor,
+    "add_constraints": add_constraints.Executor,
 }
 
 
@@ -98,7 +100,8 @@ def execute_strategies(circuit, strategies, jobs, base_seed):
     """Execute each strategy sequentially."""
     strategy_results = []
     for entry in strategies:
-        assert len(entry) == 1
+        # entry must be a dict containing only one strategy
+        assert len(entry) == 1, "Only one key can be specified for the strategy"
         strategy, kwargs = next(iter(entry.items()))
         executor = DISPATCH[strategy](jobs, base_seed)
         results = executor.run(circuit, **kwargs)
@@ -188,7 +191,8 @@ def write_recipe(output_path, recipe, comment=None):
         attr["fromMType"] = pathway[0]
         attr["toMType"] = pathway[1]
         for param, value in params.items():
-            attr[param] = "{:.3f}".format(value)
+            # most of the params are numeric, but not the selection attributes
+            attr[param] = "{:.3f}".format(value) if isinstance(value, float) else value
         ET.SubElement(root, "rule", attr)
 
     tree = ET.ElementTree(root)
