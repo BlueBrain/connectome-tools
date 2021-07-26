@@ -3,10 +3,9 @@ from itertools import chain
 
 from bluepy import Circuit
 from mock import MagicMock
+from utils import TEST_DATA_DIR
 
 import connectome_tools.s2f_recipe.experimental_syns_con as test_module
-
-TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "../data")
 
 
 def test_prepare():

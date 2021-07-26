@@ -6,10 +6,9 @@ from bluepy import Circuit
 from mock import MagicMock, patch
 from parameterized import param, parameterized
 from pytest import approx
+from utils import TEST_DATA_DIR
 
 import connectome_tools.s2f_recipe.estimate_syns_con as test_module
-
-TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "../data")
 
 
 @parameterized.expand(

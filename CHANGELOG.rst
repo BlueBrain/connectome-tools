@@ -7,7 +7,10 @@ Version 0.6.0
 New Features
 ~~~~~~~~~~~~
 - Update the names used in the recipe to use the new format. [NSETM-1451]
-- Allow to specify the selection attributes in the new strategy ``add_constraints``. [NSETM-1450].
+- Allow to specify the selection attributes in the new strategy ``add_constraints``. [NSETM-1450]
+- Add ``s2f-recipe-merge`` to run multiple ``s2f-recipe`` commands split by region
+  and merge the results. [NSETM-1450]
+- Drop support for python 3.6 and 3.7.
 
 
 Version 0.5.1
@@ -22,6 +25,8 @@ Bug Fixes
 ~~~~~~~~~
 - Fix section ID numbering in the function that calculates the bouton density,
   needed for compatibility with BluePy 2.3.0. [NSETM-1477]
+- Sum the length of all the axons to calculate the bouton density, in the unlikely case
+  of neurons with multiple axons.
 
 
 Version 0.5.0

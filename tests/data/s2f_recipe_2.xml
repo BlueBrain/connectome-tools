@@ -1,3 +1,4 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <ConnectionRules>
     <rule fromMType="SLM_PPA" toMType="SLM_PPA" cv_syns_connection="0.348" bouton_reduction_factor="0.459" mean_syns_connection="4.341" />
     <rule fromMType="SLM_PPA" toMType="SP_AA" cv_syns_connection="0.348" bouton_reduction_factor="0.184" mean_syns_connection="3.470" />

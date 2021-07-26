@@ -5,10 +5,9 @@ import pytest
 from bluepy import Circuit
 from mock import MagicMock
 from parameterized import param, parameterized
+from utils import TEST_DATA_DIR
 
 import connectome_tools.s2f_recipe.existing_recipe as test_module
-
-TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "../data")
 
 
 @parameterized.expand(

@@ -1,0 +1,14 @@
+---
+version: 1
+executor:
+  slurm_nodes: 1
+  slurm_ntasks_per_node: 1
+  slurm_array_parallelism: 2  # number of map tasks that will be executed in parallel
+  slurm_job_name: 's2f_recipe_test'
+  slurm_partition: 'prod_small'
+  slurm_mem: 0
+  slurm_time: '00:10:00'
+  slurm_constraint: 'cpu'
+  slurm_exclusive: true
+  slurm_additional_parameters:
+    account: 'proj30'

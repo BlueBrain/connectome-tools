@@ -1,33 +1,15 @@
-import os
+from pathlib import Path
 
-import lxml.etree as ET
 from bluepy import Circuit
 from click.testing import CliRunner
-from mock import MagicMock, mock_open, patch
+from mock import MagicMock, patch
 from parameterized import param, parameterized
+from utils import TEST_DATA_DIR, tmp_cwd, xml_to_regular_dict
 
 from connectome_tools.apps import s2f_recipe as test_module
 from connectome_tools.utils import Task
 
-TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "../data")
-
 SAME = "SAME"
-
-
-def canonicalize_xml(xml_data=None, from_file=None):
-    """Normalise the XML data in a way that allows byte-by-byte comparisons.
-
-    Note: python 3.8 provides xml.etree.ElementTree.canonicalize.
-
-    Args:
-        xml_data (str): XML data string (alternative to from_file).
-        from_file (str): file path (alternative to xml_data).
-
-    Returns:
-        str: the canonical form of the provided XML data.
-    """
-    etree = ET.fromstring(xml_data) if xml_data is not None else ET.parse(from_file)
-    return ET.tostring(etree, method="c14n2", with_comments=False, strip_text=True)
 
 
 def task_generator(data):
@@ -144,7 +126,6 @@ def test_validate_params(_, pathways_dict, expected_is_valid, expected_missing, 
         ),
     ]
 )
-@patch(test_module.__name__ + ".open")
 @patch(test_module.__name__ + ".Circuit")
 @patch.object(test_module.override_mtype.Executor, "prepare")
 @patch.object(test_module.generalized_cv.Executor, "prepare")
@@ -162,7 +143,6 @@ def test_app(
     generalized_cv,
     override_mtype,
     mock_circuit,
-    mock_file,
     jobs,
     s2f_config_file,
     expected_recipe_file,
@@ -202,43 +182,24 @@ def test_app(
     )
     mtypes = {"L1_DAC", "SO_OLM", "L4_CHC"}
 
-    # mock open, used to read the configuration, and to write the result
-    s2f_config_path = os.path.join(TEST_DATA_DIR, s2f_config_file)
-    config_reader = open(s2f_config_path)
-    output_writer = mock_open()()
-    mock_file.side_effect = [config_reader, output_writer]
-
     # file containing the expected result
-    output_path = os.path.join(TEST_DATA_DIR, expected_recipe_file)
+    output_path = Path(TEST_DATA_DIR, expected_recipe_file)
+    expected = xml_to_regular_dict(output_path)
 
     mock_circuit.return_value = circuit = MagicMock(Circuit)
     circuit.cells.mtypes = mtypes
 
-    runner = CliRunner()
-    result = runner.invoke(
-        test_module.app,
-        [
-            "-s",
-            "s2f_config_placeholder.yaml",
-            "-o",
-            "s2f_recipe_placeholder.xml",
-            "--seed",
-            "0",
-            "--jobs",
-            jobs,
-            "CircuitConfig",
-        ],
-        catch_exceptions=False,
-    )
-
-    output_writer.write.assert_called_once()
-
-    # Inspect the actual args used
-    actual_xml = output_writer.write.call_args.args[0]
-    actual_xml = canonicalize_xml(actual_xml)
-    expected_xml = canonicalize_xml(from_file=output_path)
-    # Compare the canonicalized XML content
-    assert actual_xml == expected_xml
+    with tmp_cwd() as tmp_dir:
+        config_path = Path(TEST_DATA_DIR, s2f_config_file)
+        recipe_path = Path(tmp_dir, "s2f_recipe_result.xml")
+        runner = CliRunner()
+        result = runner.invoke(
+            test_module.app,
+            ["-s", config_path, "-o", recipe_path, "--seed", "0", "--jobs", jobs, "CircuitConfig"],
+            catch_exceptions=False,
+        )
+        actual = xml_to_regular_dict(recipe_path)
 
     # note: stdout is not printed, but it can be accessed in result.output
     assert result.exit_code == 0
+    assert actual == expected

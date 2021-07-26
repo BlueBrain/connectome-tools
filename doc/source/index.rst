@@ -48,7 +48,7 @@ Alternatively, ``connectome-tools`` is also distributed as a Python package avai
 
     $ pip install -i https://bbpteam.epfl.ch/repository/devpi/simple/ connectome-tools
 
-Only Python 3.6+ is supported at the moment.
+Only Python 3.8+ is supported at the moment.
 
 
 Acknowledgments

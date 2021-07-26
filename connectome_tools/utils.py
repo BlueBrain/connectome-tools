@@ -1,17 +1,25 @@
 """Common utilities."""
 import logging
+import os
 import sys
 import time
 from collections import namedtuple
 from contextlib import contextmanager
 from functools import partial, wraps
 
+import click
 import numpy as np
 import psutil
+import yaml
 from bluepy import Cell
 from joblib import Parallel, delayed
 
 L = logging.getLogger(__name__)
+
+FILE_PATH = click.Path(dir_okay=False, resolve_path=True)
+DIR_PATH = click.Path(dir_okay=True, resolve_path=True)
+EXISTING_FILE_PATH = click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True)
+EXISTING_DIR_PATH = click.Path(exists=True, readable=True, dir_okay=True, resolve_path=True)
 
 _help_link = (
     "https://bbpteam.epfl.ch/documentation/projects"
@@ -148,3 +156,23 @@ def cell_group(mtype, target=None):
     if target is not None:
         result["$target"] = target
     return result
+
+
+def load_yaml(filepath):
+    """Load YAML file."""
+    with open(filepath) as f:
+        return yaml.safe_load(f)
+
+
+def clean_slurm_env():
+    """Remove PMI/SLURM variables that can cause issues when launching other slurm jobs.
+
+    These variable are unset because launching slurm jobs with submitit from a node
+    allocated using salloc would fail with the error:
+        srun: fatal: SLURM_MEM_PER_CPU, SLURM_MEM_PER_GPU, and SLURM_MEM_PER_NODE
+        are mutually exclusive.
+    """
+    for key in os.environ:
+        if key.startswith(("PMI_", "SLURM_")) and not key.endswith(("_ACCOUNT", "_PARTITION")):
+            L.debug("Deleting env variable %s", key)
+            del os.environ[key]

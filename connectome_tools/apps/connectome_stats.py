@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """Connectome statistics."""
 
 import itertools
@@ -32,6 +30,7 @@ def _format_sample(sample, short=False):
 
 
 @click.group()
+@click.version_option()
 @click.option("--seed", type=int, default=0, help="Random generator seed", show_default=True)
 @runalone
 def app(seed):

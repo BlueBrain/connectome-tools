@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from mock import Mock, patch
 from psutil import Process
@@ -50,3 +52,24 @@ def test_runalone():
         result = f()
         assert result == "DONE"
         mocked.assert_called_once()
+
+
+def test_clean_slurm_env():
+    with patch.dict(
+        os.environ,
+        dict(
+            SLURMD_NODENAME="r1i7n31",
+            SLURM_JOB_PARTITION="interactive",
+            SLURM_JOB_ACCOUNT="proj30",
+            SLURM_NODEID="0",
+            PMI_RANK="0",
+        ),
+        clear=True,
+    ):
+        test_module.clean_slurm_env()
+
+        assert os.environ == dict(
+            SLURMD_NODENAME="r1i7n31",
+            SLURM_JOB_PARTITION="interactive",
+            SLURM_JOB_ACCOUNT="proj30",
+        )

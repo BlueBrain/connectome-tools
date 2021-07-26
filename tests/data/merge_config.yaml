@@ -1,0 +1,53 @@
+---
+version: 1
+regions:
+  - strategies:
+      - estimate_syns_con:
+          formula: 7.95 * ((n - 1.67) ** 0.5)
+          formula_ee: 1.61 * n
+          max_value: 25.0
+          sample:
+            size: 100
+            pre: SSp-ll
+            post: SSp-ll
+      - estimate_bouton_reduction:
+          bio_data: 0.2345
+          sample:
+            size: 100
+            target: SSp-ll
+            assume_syns_bouton: 1.15
+      - estimate_individual_bouton_reduction:
+          bio_data: 0.2345
+          sample:
+            size: 100
+            target: SSp-ll
+            assume_syns_bouton: 1.15
+      - generalized_cv:
+          cv: 0.32
+      - add_constraints:
+          fromRegion: SS
+  - strategies:
+      - estimate_syns_con:
+          formula: 7.95 * ((n - 1.67) ** 0.5)
+          formula_ee: 1.61 * n
+          max_value: 25.0
+          sample:
+            size: 100
+            pre: SSp-bfd
+            post: SSp-bfd
+      - estimate_bouton_reduction:
+          bio_data: 0.2345
+          sample:
+            size: 100
+            target: SSp-bfd
+            assume_syns_bouton: 1.15
+      - estimate_individual_bouton_reduction:
+          bio_data: 0.2345
+          sample:
+            size: 100
+            target: SSp-bfd
+            assume_syns_bouton: 1.15
+      - generalized_cv:
+          cv: 0.32
+      - add_constraints:
+          fromRegion: SSp-bfd
