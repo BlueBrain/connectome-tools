@@ -1,0 +1,200 @@
+%YAML 1.1
+---
+$schema: 'http://json-schema.org/draft-07/schema#'
+$id: 'strategies.yaml'
+type: array
+uniqueItems: true
+minItems: 1
+items:
+  oneOf:
+    - $ref: '#/$defs/estimate_syns_con'
+    - $ref: '#/$defs/estimate_bouton_reduction'
+    - $ref: '#/$defs/estimate_individual_bouton_reduction'
+    - $ref: '#/$defs/existing_recipe'
+    - $ref: '#/$defs/experimental_syns_con'
+    - $ref: '#/$defs/generalized_cv'
+    - $ref: '#/$defs/override_mtype'
+    - $ref: '#/$defs/add_constraints'
+$defs:
+  estimate_syns_con:
+    type: object
+    minProperties: 1
+    maxProperties: 1
+    additionalProperties: false
+    properties:
+      estimate_syns_con:
+        type: object
+        additionalProperties: false
+        required:
+          - formula
+        properties:
+          formula:
+            type: string
+          formula_ee:
+            type: string
+          formula_ei:
+            type: string
+          formula_ie:
+            type: string
+          formula_ii:
+            type: string
+          max_value:
+            type: number
+          sample:
+            oneOf:
+              - type: object
+                additionalProperties: false
+                properties:
+                  size:
+                    type: integer
+                  pre:
+                    type: string
+                  post:
+                    type: string
+              - type: string
+  estimate_bouton_reduction:
+    type: object
+    minProperties: 1
+    maxProperties: 1
+    additionalProperties: false
+    properties:
+      estimate_bouton_reduction:
+        type: object
+        additionalProperties: false
+        required:
+          - bio_data
+        properties:
+          bio_data:
+            oneOf:
+              - type: number
+              - type: string
+          sample:
+            oneOf:
+              - type: object
+                additionalProperties: false
+                properties:
+                  size:
+                    type: integer
+                  target:
+                    type: string
+                  mask:
+                    type: string
+                  assume_syns_bouton:
+                    type: number
+              - type: string
+  estimate_individual_bouton_reduction:
+    type: object
+    minProperties: 1
+    maxProperties: 1
+    additionalProperties: false
+    properties:
+      estimate_individual_bouton_reduction:
+        type: object
+        additionalProperties: false
+        required:
+          - bio_data
+        properties:
+          bio_data:
+            oneOf:
+              - type: number
+              - type: string
+          sample:
+            oneOf:
+              - type: object
+                additionalProperties: false
+                properties:
+                  size:
+                    type: integer
+                  target:
+                    type: string
+                  mask:
+                    type: string
+                  assume_syns_bouton:
+                    type: number
+              - type: string
+  existing_recipe:
+    type: object
+    minProperties: 1
+    maxProperties: 1
+    additionalProperties: false
+    properties:
+      existing_recipe:
+        type: object
+        additionalProperties: false
+        required:
+          - recipe_path
+        properties:
+          recipe_path:
+            type: string
+  experimental_syns_con:
+    type: object
+    minProperties: 1
+    maxProperties: 1
+    additionalProperties: false
+    properties:
+      experimental_syns_con:
+        type: object
+        additionalProperties: false
+        required:
+          - bio_data
+        properties:
+          bio_data:
+            type: string
+  generalized_cv:
+    type: object
+    minProperties: 1
+    maxProperties: 1
+    additionalProperties: false
+    properties:
+      generalized_cv:
+        type: object
+        additionalProperties: false
+        required:
+          - cv
+        properties:
+          cv:
+            type: number
+  override_mtype:
+    type: object
+    minProperties: 1
+    maxProperties: 1
+    additionalProperties: false
+    properties:
+      override_mtype:
+        type: object
+        required:
+          - mtype_pattern
+        oneOf:
+          - additionalProperties: false
+            properties:
+              mtype_pattern:
+                type: string
+              bouton_reduction_factor:
+                type: number
+              mean_syns_connection:
+                type: number
+              cv_syns_connection:
+                type: number
+          - additionalProperties: false
+            properties:
+              mtype_pattern:
+                type: string
+              bouton_reduction_factor:
+                type: number
+              p_A:
+                type: number
+              pMu_A:
+                type: number
+  add_constraints:
+    type: object
+    minProperties: 1
+    maxProperties: 1
+    additionalProperties: false
+    properties:
+      add_constraints:
+        type: object
+        minProperties: 1
+        additionalProperties: false
+        patternProperties:
+          ^(from|to)(Region|EType|SType)$:
+            type: string

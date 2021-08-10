@@ -24,8 +24,8 @@ def test_run(run_mock):
         tmp_path = Path(tmp_dir)
         workdir = tmp_path / WORKDIR
         recipe_path = tmp_path / "builderConnectivityRecipeAllPathways.xml"
-        circuit_config_path = tmp_path / "CircuitConfig"
-        circuit_config_path.touch()  # CircuitConfig must exist
+        circuit = tmp_path / "CircuitConfig"
+        circuit.touch()  # CircuitConfig must exist
         result = runner.invoke(
             test_module.run,
             [
@@ -42,7 +42,7 @@ def test_run(run_mock):
                 "--jobs",
                 "1",
                 "-vv",
-                str(circuit_config_path),
+                str(circuit),
             ],
             catch_exceptions=False,
         )

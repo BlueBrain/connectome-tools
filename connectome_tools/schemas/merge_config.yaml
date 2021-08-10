@@ -1,0 +1,23 @@
+%YAML 1.1
+---
+$schema: 'http://json-schema.org/draft-07/schema#'
+$id: 'merge_config.yaml'
+type: object
+additionalProperties: false
+required:
+  - version
+  - regions
+properties:
+  version:
+    type: integer
+  regions:
+    type: array
+    uniqueItems: true
+    items:
+      type: object
+      additionalProperties: false
+      required:
+        - strategies
+      properties:
+        strategies:
+          $ref: 'strategies.yaml'

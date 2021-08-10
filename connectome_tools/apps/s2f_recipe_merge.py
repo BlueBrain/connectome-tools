@@ -10,9 +10,11 @@ from connectome_tools.utils import (
     EXISTING_FILE_PATH,
     FILE_PATH,
     clean_slurm_env,
+    load_yaml,
     runalone,
     setup_logging,
     timed,
+    validate_config,
 )
 
 L = logging.getLogger("s2f-recipe-merge")
@@ -59,17 +61,31 @@ def cli():
     help="Maximum number of concurrently running jobs (if -1 all CPUs are used)",
     show_default=True,
 )
+@click.option(
+    "--skip-validation",
+    is_flag=True,
+    help="Do not validate the configuration, only for internal use",
+)
 @runalone
-def run(circuit, config, executor_config, output, workdir, verbose, seed, jobs):
+def run(circuit, config, executor_config, output, workdir, verbose, seed, jobs, skip_validation):
     """S2F recipe generation with tasks split and merged by region."""
+    # pylint: disable=too-many-arguments
     level = (logging.WARNING, logging.INFO, logging.DEBUG)[min(verbose, 2)]
     setup_logging(level=level)
     clean_slurm_env()
+    config = load_yaml(config)
+    executor_config = load_yaml(executor_config)
+    if not skip_validation:
+        validate_config(config, schema_name="merge_config")
+        validate_config(executor_config, schema_name="executor_config")
+    else:
+        L.warning("Skipped configuration validation as requested")
+
     with timed(L, "Recipe generation"):
         task = CreateFullRecipe(
-            main_config=Path(config).resolve(),
-            executor_config=Path(executor_config).resolve(),
-            circuit_config=Path(circuit).resolve(),
+            main_config=config,
+            executor_config=executor_config,
+            circuit=Path(circuit).resolve(),
             workdir=Path(workdir).resolve(),
             output=Path(output).resolve(),
             seed=seed,

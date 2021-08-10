@@ -7,6 +7,7 @@ from utils import TEST_DATA_DIR, canonicalize_xml, tmp_cwd, xml_to_regular_dict
 
 import connectome_tools.merge as test_module
 from connectome_tools.merge import RECIPES_DIR, SLURM_DIR, WORKDIR
+from connectome_tools.utils import load_yaml
 from connectome_tools.version import __version__
 
 
@@ -46,7 +47,7 @@ def test_create_partial_recipe_run(s2f_recipe_main_mock):
     task = test_module.CreatePartialRecipe(
         strategies=[],
         base_path=Path(),
-        circuit_config=Path(),
+        circuit=Path(),
         seed=0,
         jobs=1,
         log_level=logging.INFO,
@@ -60,7 +61,7 @@ def test_create_partial_recipe_properties():
     task = test_module.CreatePartialRecipe(
         strategies=[{"add_constraints": {"toRegion": "PP2/3", "fromRegion": "SS2/3"}}],
         base_path=Path("/fake/absolute/path/to/recipes"),
-        circuit_config=Path("/fake/absolute/path/to/circuitConfig"),
+        circuit=Path("/fake/absolute/path/to/circuitConfig"),
         seed=0,
         jobs=1,
         log_level=logging.INFO,
@@ -78,7 +79,7 @@ def test_create_partial_recipe_properties_without_constraints():
     task = test_module.CreatePartialRecipe(
         strategies=[],
         base_path=Path("/fake/absolute/path/to/recipes"),
-        circuit_config=Path("/fake/absolute/path/to/circuitConfig"),
+        circuit=Path("/fake/absolute/path/to/circuitConfig"),
         seed=0,
         jobs=1,
         log_level=logging.INFO,
@@ -101,8 +102,8 @@ def test_create_full_recipe_run(execute_pending_tasks_mock):
         tmp_path = Path(tmp_dir)
         workdir = tmp_path / WORKDIR
         recipe_path = tmp_path / "builderConnectivityRecipeAllPathways.xml"
-        circuit_config_path = tmp_path / "CircuitConfig"
-        circuit_config_path.touch()  # CircuitConfig must exist
+        circuit = tmp_path / "CircuitConfig"
+        circuit.touch()  # CircuitConfig must exist
 
         def _execute_pending_tasks(pending_tasks, *args, **kwargs):
             for n, task in enumerate(pending_tasks, 1):
@@ -113,9 +114,9 @@ def test_create_full_recipe_run(execute_pending_tasks_mock):
         execute_pending_tasks_mock.side_effect = _execute_pending_tasks
 
         task = test_module.CreateFullRecipe(
-            main_config=merge_config_path,
-            executor_config=executor_config_path,
-            circuit_config=circuit_config_path,
+            main_config=load_yaml(merge_config_path),
+            executor_config=load_yaml(executor_config_path),
+            circuit=circuit,
             workdir=workdir,
             output=recipe_path,
             seed=0,
@@ -134,7 +135,5 @@ def test_create_full_recipe_run(execute_pending_tasks_mock):
         # compare the xml after canonicalization (including comments)
         actual_str = canonicalize_xml(recipe_path)
         expected_str = canonicalize_xml(expected_recipe)
-        expected_str = expected_str.format(
-            version=__version__, circuit=circuit_config_path, config=merge_config_path
-        )
+        expected_str = expected_str.format(version=__version__, circuit=circuit)
         assert actual_str == expected_str

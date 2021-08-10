@@ -31,6 +31,7 @@ setup(
         "click>=7.0,<9.0",
         "equation>=1.2",
         "joblib>=1.0.1",
+        "jsonschema>=3.2.0,<4.0.0",
         "lxml>=3.3",
         "numpy>=1.9",
         "pandas>=1.0.0",
@@ -42,6 +43,7 @@ setup(
         "voxcell>=3.0,<4.0",
     ],
     packages=find_packages(),
+    include_package_data=True,
     python_requires=">=3.8",
     extras_require={"docs": ["sphinx", "sphinx-bluebrain-theme"]},
     classifiers=[

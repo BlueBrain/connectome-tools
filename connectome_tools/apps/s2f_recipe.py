@@ -25,7 +25,7 @@ from connectome_tools.s2f_recipe import (
     generalized_cv,
     override_mtype,
 )
-from connectome_tools.utils import load_yaml, runalone, setup_logging, timed
+from connectome_tools.utils import load_yaml, runalone, setup_logging, timed, validate_config
 from connectome_tools.version import __version__
 
 L = logging.getLogger("s2f-recipe")
@@ -223,8 +223,13 @@ def main(circuit, strategies, output, seed, jobs):
     help="Maximum number of concurrently running jobs (if -1 all CPUs are used)",
     show_default=True,
 )
+@click.option(
+    "--skip-validation",
+    is_flag=True,
+    help="Do not validate the configuration, only for internal use",
+)
 @runalone
-def app(circuit, strategies, output, verbose, seed, jobs):  # noqa: D301
+def app(circuit, strategies, output, verbose, seed, jobs, skip_validation):  # noqa: D301
     """S2F recipe generation.
 
     See the official documentation for more information
@@ -238,6 +243,10 @@ def app(circuit, strategies, output, verbose, seed, jobs):  # noqa: D301
     setup_logging(level=level)
     L.info("Configuration: circuit=%s, seed=%s, jobs=%s", circuit, seed, jobs)
     strategies = load_yaml(strategies)
+    if not skip_validation:
+        validate_config(strategies, schema_name="strategies")
+    else:
+        L.warning("Skipped configuration validation as requested")
 
     with timed(L, "Recipe generation"):
         main(circuit, strategies, output, seed, jobs)
