@@ -11,6 +11,7 @@ New Features
 - Add ``s2f-recipe-merge`` to run multiple ``s2f-recipe`` commands split by region
   and merge the results. [NSETM-1450]
 - Drop support for python 3.6 and 3.7.
+- Update the documentation.
 
 
 Version 0.5.1

@@ -15,13 +15,16 @@ Introduction
 
 It relies on `BluePy <https://bbpteam.epfl.ch/documentation/projects/bluepy/latest/>`_ for accessing circuit data.
 
-At the moment two tools are provided:
+At the moment these tools are provided:
 
 **connectome-stats**
     Sampling some connectome statistics from the circuit.
 
 **s2f-recipe**
     Writing synapse pruning recipe used by `Functionalizer <https://bbpteam.epfl.ch/documentation/projects/functionalizer/latest/>`_ / `Spykfunc <https://bbpteam.epfl.ch/documentation/projects/spykfunc/latest/index.html>`_
+
+**s2f-recipe-merge**
+    Wrapping and executing ``s2f-recipe`` for different regions, merging the results into a single recipe.
 
 
 Installation

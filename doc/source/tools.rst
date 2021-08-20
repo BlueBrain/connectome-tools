@@ -38,6 +38,7 @@ Options:
     -t, --sample-target TEXT    Sample target [default: ``None``]
     --mask TEXT                 Region of interest [default: ``None``]
     --assume-syns-bouton FLOAT  Synapse count per bouton  [default: ``1.0``]
+    --projection TEXT           Projection name [default: ``None``]
     --short                     Omit sampled values from the output [default: ``False``]
 
 Optional ``--mask`` parameter references atlas dataset with volumetric mask defining axon region of interest.
@@ -65,6 +66,7 @@ Options:
   -n, --sample-size INTEGER  Sample size  [default: ``100``]
   --pre TEXT                 Presynaptic target [default: ``None``]
   --post TEXT                Postsynaptic target [default: ``None``]
+  --projection TEXT          Projection name [default: ``None``]
   --short                    Omit sampled values  [default: ``False``]
 
 If there are only ``K`` < ``SAMPLE_SIZE`` samples available, ``K`` samples will be used.
@@ -378,10 +380,20 @@ Example 2:
 add_constraints
 ~~~~~~~~~~~~~~~
 
-Set generic constraints that will be added to the generated rules for all the pathways.
+Set generic constraints that will be blindly added to the generated rules for all the pathways.
 It can be used to specify one or more selection attributes such as ``fromRegion`` and ``toRegion``.
+
 Note that no checks are made, and that the constraints must be added accordingly
 with the rest of the strategies.
+
+The allowed constraints are:
+
+- fromRegion
+- toRegion
+- fromEType
+- toEType
+- fromSType
+- toSType
 
 Example:
 
@@ -389,6 +401,124 @@ Example:
 
     - add_constraints:
         fromRegion: mc2_Column
+
+
+s2f-recipe-merge
+----------------
+
+Execute `s2f-recipe`_ for different regions, merging the results into a single recipe.
+The partial recipes are concatenated in the same order as they are specified in the configuration file.
+
+
+Usage:
+
+.. code:: console
+
+    $ s2f-recipe-merge [OPTIONS] COMMAND [ARGS]
+
+Commands:
+
+    - ``run``: S2F recipe generation with tasks split and merged by region.
+    - ``clean``: Delete all the partial recipes and slurm logs.
+
+
+s2f-recipe-merge run
+~~~~~~~~~~~~~~~~~~~~
+
+Use the given configuration files to run ``s2f-recipe`` and produce the recipe for the given circuit.
+
+The partial recipes for each region and the log files are written into the working directory,
+and they are reused if the script is stopped and restarted using the same configuration.
+
+.. code:: console
+
+    $ s2f-recipe-merge run -c MERGE_CONFIG -e EXECUTOR_CONFIG -o OUTPUT [--seed SEED] [-v] <CircuitConfig>
+
+Options:
+
+    -c, --config FILE           Path to the merge config file (YAML)  [required]
+    -e, --executor-config FILE  Path to the executor config file (YAML) [required]
+    -o, --output FILE           Path to the output file (XML)  [required]
+    -w, --workdir PATH          Path to the working directory  [default: ``.s2f_recipe``]
+    -v, --verbose               -v for INFO, -vv for DEBUG
+    --seed INTEGER              Pseudo-random generator seed  [default: ``0``]
+    -j, --jobs INTEGER          Maximum number of concurrently running jobs (if -1 all CPUs are used)  [default: ``-1``]
+
+
+merge config
+++++++++++++
+
+The merge configuration file should contain the strategies for each region.
+
+Each block of strategies must be compatible with the format used by ``s2f-recipe``,
+and should contain the `add_constraints`_ strategy to specify the correct region,
+that will be added blindly to all the rules of that region.
+
+Example:
+
+.. code-block:: yaml
+
+    version: 1
+    regions:
+      - strategies:
+        - ...
+        - add_constraints:
+            fromRegion: Mosaic
+      - strategies:
+        - ...
+        - add_constraints:
+            fromRegion: S1HL
+
+
+executor config
++++++++++++++++
+
+The executor configuration file should contain the slurm parameters used to run ``s2f-recipe``.
+
+Each script is executed on a different node, and it's possible to define the maximum number of
+nodes reserved at the same time.
+
+Example:
+
+.. code-block:: yaml
+
+    version: 1
+    executor:
+      slurm_nodes: 1
+      slurm_ntasks_per_node: 1
+      slurm_array_parallelism: 10  # number of map tasks that will be executed in parallel
+      slurm_job_name: 's2f_recipe_merge'
+      slurm_partition: 'prod'
+      slurm_mem: 0
+      slurm_time: '24:00:00'
+      slurm_constraint: 'cpu'
+      slurm_exclusive: true
+      slurm_additional_parameters:
+        account: 'projXX'
+
+In particular, these parameters should be customized:
+
+- ``slurm_array_parallelism``: number of maximum concurrent nodes to be reserved.
+- ``slurm_job_name``: custom job name.
+- ``slurm_time``: the maximum allowed time per job.
+- ``account``: the correct projXX.
+
+
+
+s2f-recipe-merge clean
+~~~~~~~~~~~~~~~~~~~~~~
+
+Delete all the partial recipes and slurm logs in the given working directory.
+
+This can be useful to remove the temporary files when they are not needed anymore, for example after
+the final recipe has been generated successfully, or to start again with a clean working directory.
+
+.. code:: console
+
+    $ s2f-recipe-merge clean [-w WORKDIR] [-v]
+
+Options:
+    -w, --workdir PATH  Path to the working directory to clean  [default: ``.s2f_recipe``]
 
 
 Troubleshooting
