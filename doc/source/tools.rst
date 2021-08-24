@@ -489,7 +489,7 @@ Example:
       slurm_array_parallelism: 10  # number of map tasks that will be executed in parallel
       slurm_job_name: 's2f_recipe_merge'
       slurm_partition: 'prod'
-      slurm_mem: 0
+      slurm_mem: '0G'
       slurm_time: '24:00:00'
       slurm_constraint: 'cpu'
       slurm_exclusive: true

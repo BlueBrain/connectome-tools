@@ -164,7 +164,7 @@ def cell_group(mtype, target=None):
 
 def load_yaml(filepath):
     """Load YAML file."""
-    with open(filepath) as f:
+    with open(filepath, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 

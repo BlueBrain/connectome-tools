@@ -6,7 +6,7 @@ executor:
   slurm_array_parallelism: 2  # number of map tasks that will be executed in parallel
   slurm_job_name: 's2f_recipe_test'
   slurm_partition: 'prod_small'
-  slurm_mem: 0
+  slurm_mem: '0G'
   slurm_time: '00:10:00'
   slurm_constraint: 'cpu'
   slurm_exclusive: true
