@@ -490,7 +490,7 @@ Example:
       slurm_job_name: 's2f_recipe_merge'
       slurm_partition: 'prod'
       slurm_mem: '0G'
-      slurm_time: '24:00:00'
+      slurm_time: 1440  # 24 hours = 1440 minutes
       slurm_constraint: 'cpu'
       slurm_exclusive: true
       slurm_additional_parameters:
@@ -498,10 +498,10 @@ Example:
 
 In particular, these parameters should be customized:
 
-- ``slurm_array_parallelism``: number of maximum concurrent nodes to be reserved.
-- ``slurm_job_name``: custom job name.
-- ``slurm_time``: the maximum allowed time per job.
-- ``account``: the correct projXX.
+- ``slurm_array_parallelism`` (int): number of maximum concurrent nodes to be reserved.
+- ``slurm_job_name`` (str): custom job name.
+- ``slurm_time`` (int): the maximum allowed time per job, in minutes.
+- ``account`` (str): the correct projXX.
 
 
 

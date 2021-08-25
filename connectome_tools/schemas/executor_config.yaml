@@ -12,3 +12,37 @@ properties:
     type: integer
   executor:
     type: object
+    properties:
+      slurm_nodes:
+        description: Amount of nodes to be allocated for each job.
+        type: integer
+      slurm_ntasks_per_node:
+        description: Number of tasks per node.
+        type: integer
+      slurm_array_parallelism:
+        description: Maximum number of simultaneously running jobs.
+        type: integer
+      slurm_job_name:
+        description: Arbitrary name for the job allocation.
+        type: string
+      slurm_partition:
+        description: Request a specific partition for the resource allocation.
+        type: string
+      slurm_mem:
+        description: Specify the real memory required per node (0G to reserve all the node memory).
+        type: string
+      slurm_time:
+        description: Set a limit on the total run time of the job allocation, in minutes.
+        type: integer
+      slurm_constraint:
+        description: Node features required.
+        type: string
+      slurm_exclusive:
+        description: If true, the job allocation can not share nodes with other running jobs.
+        type: boolean
+      slurm_additional_parameters:
+        type: object
+        properties:
+          account:
+            description: Charge resources used by this job to specified account.
+            type: string

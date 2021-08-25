@@ -7,7 +7,7 @@ executor:
   slurm_job_name: 's2f_recipe_test'
   slurm_partition: 'prod_small'
   slurm_mem: '0G'
-  slurm_time: '00:10:00'
+  slurm_time: 10  # minutes
   slurm_constraint: 'cpu'
   slurm_exclusive: true
   slurm_additional_parameters:
