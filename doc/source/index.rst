@@ -5,6 +5,7 @@
    Home <self>
    datasets
    tools
+   troubleshooting
    changelog
 
 

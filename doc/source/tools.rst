@@ -521,37 +521,6 @@ Options:
     -w, --workdir PATH  Path to the working directory to clean  [default: ``.s2f_recipe``]
 
 
-Troubleshooting
-===============
-
-The tools ``s2f-recipe`` and ``connectome-stats`` should not be executed using ``srun``, because ``srun`` could launch multiple instances of them.
-
-Starting from version `0.3.4`, the script will terminate if it detects that another instance is running.
-
-If you are running the command using a sbatch script, verify that ``srun`` is not used.
-
-This is an example of a minimal script for ``s2f-recipe``, running one instance of the program on a
-single exclusive node, without using ``srun``:
-
-.. code-block:: bash
-
-    #!/bin/bash
-    #SBATCH --job-name="<job-name>"
-    #SBATCH --qos="<qos>"
-    #SBATCH --time="<time>"
-    #SBATCH --nodes=1
-    #SBATCH --mem=0
-    #SBATCH --exclusive
-    #SBATCH --constraint=cpu
-    #SBATCH --partition="<partition>"
-    #SBATCH --account="<projXX>"
-    set -eu
-
-    module load "archive/<YYYY-MM>"
-    module load connectome-tools
-
-    s2f-recipe <OPTIONS AND ARGUMENTS>
-
 
 .. _bouton_reduction_factor: https://bbpteam.epfl.ch/documentation/projects/Circuit%20Documentation/latest/recipe.html#bouton-reduction-factor
 .. _mean_syns_connection: https://bbpteam.epfl.ch/documentation/projects/Circuit%20Documentation/latest/recipe.html#mean-syns-connection

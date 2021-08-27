@@ -66,11 +66,17 @@ def runalone(func):
 def timed(logger, message):
     """Context manager to log the execution time using the specified logger."""
     start_time = time.monotonic()
+    status = None
     try:
         yield
+    except BaseException:
+        status = "FAILED"
+        raise
+    else:
+        status = "DONE"
     finally:
         elapsed = time.monotonic() - start_time
-        logger.info("%s: %.2f seconds", message, elapsed)
+        logger.info("%s: %.2f seconds [%s]", message, elapsed, status)
 
 
 def setup_logging(level):
