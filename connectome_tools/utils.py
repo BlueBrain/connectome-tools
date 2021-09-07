@@ -25,6 +25,10 @@ DIR_PATH = click.Path(dir_okay=True, resolve_path=True)
 EXISTING_FILE_PATH = click.Path(exists=True, readable=True, dir_okay=False, resolve_path=True)
 EXISTING_DIR_PATH = click.Path(exists=True, readable=True, dir_okay=True, resolve_path=True)
 
+# resource paths relative to the package root
+SCHEMA_PATH = Path("data/schemas")
+DEFAULT_CONFIG_PATH = Path("data/default_config")
+
 _help_link = (
     "https://bbpteam.epfl.ch/documentation/projects"
     "/connectome-tools/latest/index.html#troubleshooting"
@@ -180,7 +184,7 @@ def load_yaml_url(url):
         return yaml.safe_load(f)
 
 
-def validate_config(config, schema_name, schema_dir="schemas"):
+def validate_config(config, schema_name):
     """Validate a configuration using the given schema name.
 
     To be able to resolve any reference, the schema $id should be omitted
@@ -189,9 +193,8 @@ def validate_config(config, schema_name, schema_dir="schemas"):
     Args:
         config (object): configuration to be validated.
         schema_name (str): name of the schema file without .yaml extension.
-        schema_dir (str): directory of the schema file relative to the package root.
     """
-    resource_name = f"{schema_dir}/{schema_name}.yaml"
+    resource_name = str(SCHEMA_PATH / f"{schema_name}.yaml")
     schema_path = Path(pkg_resources.resource_filename(__name__, resource_name)).resolve()
     # Define a custom resolver to resolve any local reference, and
     # a custom handler to load any reference in yaml format instead of json.

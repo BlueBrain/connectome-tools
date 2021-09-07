@@ -1,0 +1,14 @@
+version: 1
+executor:
+  slurm_nodes: 1
+  slurm_ntasks_per_node: 1
+  slurm_array_parallelism: 10  # FIX: number of maximum concurrent nodes to be reserved (int)
+  slurm_job_name: 's2f_recipe_merge'  # FIX: custom job name (str)
+  slurm_partition: 'prod'
+  slurm_mem: '0G'
+  slurm_time: 1440  # FIX: maximum allowed time per job, in minutes (int)
+  slurm_constraint: 'cpu'
+  slurm_exclusive: true
+  slurm_srun_args: ['--mpi=none']  # needed to avoid the MPI error: MPT ERROR: PMI2_Init
+  slurm_additional_parameters:
+    account: 'projXX'  # FIX: the correct projXX (str)

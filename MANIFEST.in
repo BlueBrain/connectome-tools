@@ -1,4 +1,4 @@
-graft connectome_tools/schemas
+graft connectome_tools/data
 graft tests
 
 global-exclude *.py[co] .DS_Store

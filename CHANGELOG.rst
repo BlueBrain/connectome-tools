@@ -1,6 +1,17 @@
 Changelog
 =========
 
+Version 0.6.1
+-------------
+
+New Features
+~~~~~~~~~~~~
+- Allow to specify the parameter ``slurm_srun_args`` to be able to execute ``srun --mpi=none``
+  and avoid the MPI error ``MPT ERROR: PMI2_Init`` when using spack modules.
+- Define a default value for the executor parameters.
+- Update the documentation.
+
+
 Version 0.6.0
 -------------
 

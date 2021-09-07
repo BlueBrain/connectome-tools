@@ -13,11 +13,12 @@ from typing import Dict, List
 from urllib.parse import quote_plus
 
 import lxml.etree as ET
+import pkg_resources
 import submitit
 import yaml
 
 from connectome_tools.apps import s2f_recipe
-from connectome_tools.utils import setup_logging
+from connectome_tools.utils import DEFAULT_CONFIG_PATH, load_yaml, setup_logging, validate_config
 from connectome_tools.version import __version__
 
 L = logging.getLogger(__name__)
@@ -63,6 +64,15 @@ def _write_xml_tree(path, tree):
         tree.write(f, pretty_print=True, xml_declaration=True, encoding="utf-8")
 
 
+def _default_executor_params():
+    """Return the default parameters to be used when launching slurm jobs."""
+    resource_name = str(DEFAULT_CONFIG_PATH / "executor_config.yaml")
+    path = Path(pkg_resources.resource_filename(__name__, resource_name)).resolve()
+    executor_config = load_yaml(path)
+    validate_config(executor_config, schema_name="executor_config")
+    return executor_config["executor"]
+
+
 def execute_pending_tasks(pending_tasks, executor_params, folder, cluster=None):
     """Submit the specified tasks to Slurm and wait for their completion.
 
@@ -77,6 +87,7 @@ def execute_pending_tasks(pending_tasks, executor_params, folder, cluster=None):
         int: number of failed tasks.
     """
     executor = submitit.AutoExecutor(folder=folder, cluster=cluster)
+    executor.update_parameters(**_default_executor_params())
     executor.update_parameters(**executor_params)
     L.info("Submitting jobs...")
     jobs = executor.map_array(lambda t: t.run(), pending_tasks)

@@ -478,31 +478,26 @@ The executor configuration file should contain the slurm parameters used to run 
 Each script is executed on a different node, and it's possible to define the maximum number of
 nodes reserved at the same time.
 
-Example:
+Default configuration:
+
+.. literalinclude:: ../../connectome_tools/data/default_config/executor_config.yaml
+   :language: yaml
+
+| The parameters marked with ``FIX`` should be overridden by the user configuration.
+| A minimal user configuration could include just those keys like in the following example:
 
 .. code-block:: yaml
 
     version: 1
     executor:
-      slurm_nodes: 1
-      slurm_ntasks_per_node: 1
-      slurm_array_parallelism: 10  # number of map tasks that will be executed in parallel
-      slurm_job_name: 's2f_recipe_merge'
-      slurm_partition: 'prod'
-      slurm_mem: '0G'
-      slurm_time: 1440  # 24 hours = 1440 minutes
-      slurm_constraint: 'cpu'
-      slurm_exclusive: true
+      slurm_array_parallelism: 20  # number of maximum concurrent nodes to be reserved (int)
+      slurm_job_name: 's2f_recipe_merge'  # custom job name (str)
+      slurm_time: 1440  # maximum allowed time per job, in minutes (int)
       slurm_additional_parameters:
-        account: 'projXX'
+        account: 'projXX'  # correct projXX (str)
 
-In particular, these parameters should be customized:
-
-- ``slurm_array_parallelism`` (int): number of maximum concurrent nodes to be reserved.
-- ``slurm_job_name`` (str): custom job name.
-- ``slurm_time`` (int): the maximum allowed time per job, in minutes.
-- ``account`` (str): the correct projXX.
-
+Other slurm parameters can be added if needed.
+For example, it's possible to specify a longjob qos with ``slurm_qos: 'longjob'``.
 
 
 s2f-recipe-merge clean

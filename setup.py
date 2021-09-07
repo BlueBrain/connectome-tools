@@ -37,7 +37,8 @@ setup(
         "pandas>=1.0.0",
         "psutil>=5.7.2",
         "pyyaml>=5.3.1",
-        "submitit>=1.3.3",
+        # require a version of submitit that provides the slurm srun_args parameter
+        "submitit @ git+https://github.com/facebookincubator/submitit.git@6f9e1f67178b08b050576fe6bc02e4555568128a",
         "bluepy>=2.3,<3.0",
         "morphio>=3.0.1,<4.0.0",
         "voxcell>=3.0,<4.0",
