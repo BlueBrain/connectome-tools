@@ -1,6 +1,21 @@
 Changelog
 =========
 
+Version 0.6.2
+-------------
+
+Bug Fixes
+~~~~~~~~~
+- In ``s2f-recipe-merge``, add an initial delay after submitting Slurm jobs to allow ``sacct``
+  to return the correct status of the submitted jobs. [NSETM-1678]
+- The initial delay can be controlled with the env variable ``SUBMIT_JOBS_INITIAL_SLEEP``.
+- The poll frequency can be controlled with the env variable ``SUBMIT_JOBS_POLL_FREQUENCY``.
+- Fix linting.
+
+Improvements
+~~~~~~~~~~~~
+- Bump versions of submitit and jsonschema.
+
 Version 0.6.1
 -------------
 

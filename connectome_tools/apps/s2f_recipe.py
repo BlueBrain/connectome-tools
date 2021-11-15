@@ -184,7 +184,7 @@ def write_recipe(output_path, recipe, comment=None):
         attr["toMType"] = pathway[1]
         for param, value in params.items():
             # most of the params are numeric, but not the selection attributes
-            attr[param] = "{:.3f}".format(value) if isinstance(value, float) else value
+            attr[param] = f"{value:.3f}" if isinstance(value, float) else value
         ET.SubElement(root, "rule", attr)
 
     tree = ET.ElementTree(root)

@@ -3,8 +3,10 @@ import dataclasses
 import hashlib
 import json
 import logging
+import os
 import shutil
 import sys
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from functools import cached_property
@@ -92,8 +94,14 @@ def execute_pending_tasks(pending_tasks, executor_params, folder, cluster=None):
     L.info("Submitting jobs...")
     jobs = executor.map_array(lambda t: t.run(), pending_tasks)
     L.info("Waiting for %s jobs to complete...", len(jobs))
+    # initial delay to allow sacct to return the status of the submitted jobs [NSETM-1678]
+    initial_sleep = float(os.getenv("SUBMIT_JOBS_INITIAL_SLEEP", "10"))
+    poll_frequency = float(os.getenv("SUBMIT_JOBS_POLL_FREQUENCY", "10"))
+    L.debug("SUBMIT_JOBS_INITIAL_SLEEP=%s", initial_sleep)
+    L.debug("SUBMIT_JOBS_POLL_FREQUENCY=%s", poll_frequency)
+    time.sleep(initial_sleep)
     failures = 0
-    for n, job in enumerate(submitit.helpers.as_completed(jobs, poll_frequency=10), 1):
+    for n, job in enumerate(submitit.helpers.as_completed(jobs, poll_frequency=poll_frequency), 1):
         try:
             # don't need the result, but check if the job is successful
             job.results()

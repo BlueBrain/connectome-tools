@@ -1,23 +1,27 @@
 #!/usr/bin/env python
 # pylint: disable=missing-docstring
+import importlib.util
 import sys
 
 from setuptools import find_packages, setup
-
-from connectome_tools.version import __version__
-
-if sys.version_info < (3, 8):
-    sys.exit("Sorry, Python < 3.8 is not supported")
 
 # read the contents of the README file
 with open("README.rst", encoding="utf-8") as f:
     README = f.read()
 
+spec = importlib.util.spec_from_file_location(
+    "connectome_tools.version",
+    "connectome_tools/version.py",
+)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+VERSION = module.__version__
+
 setup(
     name="connectome-tools",
     author="BlueBrain NSE",
     author_email="bbp-ou-nse@groupes.epfl.ch",
-    version=__version__,
+    version=VERSION,
     description="Connectome statistics; S2F recipe generation",
     long_description=README,
     long_description_content_type="text/x-rst",
@@ -31,14 +35,13 @@ setup(
         "click>=7.0,<9.0",
         "equation>=1.2",
         "joblib>=1.0.1",
-        "jsonschema>=3.2.0,<4.0.0",
+        "jsonschema>=3.2.0,<5.0.0",
         "lxml>=3.3",
         "numpy>=1.9",
         "pandas>=1.0.0",
         "psutil>=5.7.2",
         "pyyaml>=5.3.1",
-        # require a version of submitit that provides the slurm srun_args parameter
-        "submitit @ git+https://github.com/facebookincubator/submitit.git@6f9e1f67178b08b050576fe6bc02e4555568128a",
+        "submitit>=1.4,<2.0",
         "bluepy>=2.3,<3.0",
         "morphio>=3.0.1,<4.0.0",
         "voxcell>=3.0,<4.0",
