@@ -94,7 +94,10 @@ class Executor(BaseExecutor):
 
         if isinstance(sample, str):
             dset = read_nsyn(sample).set_index(["from", "to"])
-            estimate = lambda pathway: dset.loc[pathway]["mean"]
+
+            def estimate(pathway):
+                return dset.loc[pathway]["mean"]
+
         else:
             if sample is None:
                 sample = {}

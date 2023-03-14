@@ -11,7 +11,7 @@ import connectome_tools.utils as test_module
 
 _this_process = Mock(
     Process,
-    **{"as_dict.return_value": {"pid": 1, "name": "N1", "username": "U1", "cmdline": "CMD1"}}
+    **{"as_dict.return_value": {"pid": 1, "name": "N1", "username": "U1", "cmdline": "CMD1"}},
 )
 
 
@@ -78,7 +78,7 @@ def test_validate_strategies_failure_1():
     schema_name = "strategies"
     config = test_module.load_yaml(TEST_DATA_DIR / config_file)
     config.append({"unknown_strategy": {}})
-    expected_error = "Additional properties are not allowed ('unknown_strategy' was unexpected)"
+    expected_error = "{'unknown_strategy': {}} is not valid under any of the given schemas"
 
     with pytest.raises(ValidationError, match=re.escape(expected_error)):
         test_module.validate_config(config, schema_name)
@@ -124,8 +124,13 @@ def test_validate_strategies_failure_5():
     schema_name = "strategies"
     config = test_module.load_yaml(TEST_DATA_DIR / config_file)
     override_mtype = config[5]["override_mtype"]
-    override_mtype["mean_syns_connection"] = override_mtype.pop("p_A")
-    expected_error = "Additional properties are not allowed ('pMu_A' was unexpected)"
+    # invalidate the configuration: remove p_A and add mean_syns_connection
+    del override_mtype["p_A"]
+    override_mtype["mean_syns_connection"] = 1.0
+    expected_error = (
+        "{'mtype_pattern': 'CHC', 'bouton_reduction_factor': 1.0, "
+        "'pMu_A': 0.0, 'mean_syns_connection': 1.0} is not valid under any of the given schemas"
+    )
 
     with pytest.raises(ValidationError, match=re.escape(expected_error)):
         test_module.validate_config(config, schema_name)

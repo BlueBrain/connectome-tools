@@ -51,7 +51,10 @@ class Executor(BaseExecutor):
 
         if isinstance(sample, str):
             dset = read_bouton_density(sample).set_index("mtype")
-            estimate = lambda mtype: dset.loc[mtype]["mean"]
+
+            def estimate(mtype):
+                return dset.loc[mtype]["mean"]
+
         else:
             if sample is None:
                 sample = {}

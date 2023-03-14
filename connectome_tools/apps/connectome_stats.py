@@ -17,7 +17,10 @@ NA_VALUE = "N/A"
 
 def _format_sample(sample, short=False):
     """Get string representation for sample and its mean / std / size."""
-    ftoa = lambda x: f"{x:.3g}"
+
+    def ftoa(x):
+        return f"{x:.3g}"
+
     size = len(sample)
     if size > 0:
         if short:
