@@ -26,10 +26,11 @@ def _get_segment_points(data, index_tuples=None):
     )
 
 
-def test_bouton_density_1_without_mask():
+@patch.object(test_module, "_segment_points")
+def test_bouton_density_1_without_mask(mock_segment_points):
     circuit = MagicMock(Circuit)
     circuit.connectome.efferent_synapses.return_value = [1, 2, 3]  # List of synapse IDs
-    circuit.morph.segment_points.return_value = _get_segment_points(
+    mock_segment_points.return_value = _get_segment_points(
         data=[
             [1.0, 1.0, 1.0, 3.0, 3.0, 3.0],
             [1.0, 1.0, 1.0, 4.0, 4.0, 4.0],
@@ -52,16 +53,17 @@ def test_bouton_density_1_without_mask():
     actual = test_module.bouton_density(circuit, gid=42, synapses_per_bouton=1.5)
 
     assert circuit.connectome.efferent_synapses.call_count == 1
-    assert circuit.morph.segment_points.call_count == 1
+    assert mock_segment_points.call_count == 1
     npt.assert_almost_equal(actual, expected)
 
 
-def test_bouton_density_2_with_empty_mask():
+@patch.object(test_module, "_segment_points")
+def test_bouton_density_2_with_empty_mask(mock_segment_points):
     mock_mask = Mock()
     mock_mask.lookup.return_value = np.array([False])
     circuit = MagicMock(Circuit)
     circuit.atlas.load_data.return_value = mock_mask
-    circuit.morph.segment_points.return_value = _get_segment_points(
+    mock_segment_points.return_value = _get_segment_points(
         data=[
             [0.0, 1.0, 1.0, 0.0, 2.0, 2.0],  # both endpoints out of ROI
         ]
@@ -70,7 +72,8 @@ def test_bouton_density_2_with_empty_mask():
     npt.assert_equal(actual, np.nan)
 
 
-def test_bouton_density_3_with_mask():
+@patch.object(test_module, "_segment_points")
+def test_bouton_density_3_with_mask(mock_segment_points):
     def _mock_lookup(points, outer_value):
         return np.all(points > 0, axis=-1)
 
@@ -78,7 +81,7 @@ def test_bouton_density_3_with_mask():
     mock_mask.lookup.side_effect = _mock_lookup
     circuit = MagicMock(Circuit)
     circuit.atlas.load_data.return_value = mock_mask
-    circuit.morph.segment_points.return_value = _get_segment_points(
+    mock_segment_points.return_value = _get_segment_points(
         data=[
             [0.0, 0.0, 0.0, 1.0, 1.0, 1.0],  # first endpoint out of ROI
             [1.0, 1.0, 1.0, 3.0, 3.0, 3.0],  # both endpoints within ROI
@@ -119,12 +122,13 @@ def test_bouton_density_3_with_mask():
     npt.assert_almost_equal(actual, expected)
 
 
-def test_bouton_density_4_without_mask_with_projection():
+@patch.object(test_module, "_segment_points")
+def test_bouton_density_4_without_mask_with_projection(mock_segment_points):
     circuit = MagicMock(Circuit)
     projection = MagicMock(Connectome)
     projection.efferent_synapses.return_value = [1, 2, 3, 4, 5, 6]
     circuit.projection.return_value = projection
-    circuit.morph.segment_points.return_value = _get_segment_points(
+    mock_segment_points.return_value = _get_segment_points(
         data=[
             [1.0, 1.0, 1.0, 3.0, 3.0, 3.0],
             [1.0, 1.0, 1.0, 4.0, 4.0, 4.0],
@@ -149,7 +153,7 @@ def test_bouton_density_4_without_mask_with_projection():
     )
     circuit.projection.assert_called_with("test_projection")
     assert projection.efferent_synapses.call_count == 1
-    assert circuit.morph.segment_points.call_count == 1
+    assert mock_segment_points.call_count == 1
     npt.assert_almost_equal(actual, expected)
 
 

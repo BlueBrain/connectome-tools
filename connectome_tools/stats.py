@@ -24,6 +24,60 @@ def _segment_lengths(segments):
     )
 
 
+def _segment_points(morph, neurite_type=None):
+    """
+    Get segment points for given `morph`.
+
+    Args:
+        morph: morph of interest
+        neurite_type (morphio.SectionType): neurite type of interest
+
+    Returns:
+        pandas DataFrame multi-indexed by (Section.ID, Segment.ID);
+        and Segment.[X|Y|Z][1|2] as columns.
+
+    Note: soma is returned as a spherical segment
+    """
+    index = []
+    chunks = []
+    if neurite_type is None:
+        it = morph.iter()
+    else:
+        it = (x for x in morph.iter() if x.type == neurite_type)
+
+    for sec in it:
+        pts = sec.points
+        chunk = np.zeros((len(pts) - 1, 6))
+        chunk[:, 0:3] = pts[:-1]
+        chunk[:, 3:6] = pts[1:]
+        chunks.append(chunk)
+
+        # MorphIO doesn't consider the soma a section; makes sure we match the
+        # section ids from the edge file (whether nrn.h5 or SONATA)
+        index.extend((sec.id + 1, seg_id) for seg_id in range(len(pts) - 1))
+
+    # MorphIO doesn't consider the soma as as segment, manually make a spherical one
+    if morph.soma and neurite_type in (None, SectionType.all, SectionType.soma):
+        index.append((0, 0))
+        chunk = np.concatenate((morph.soma.center, morph.soma.center))[np.newaxis]
+        chunks.append(chunk)
+
+    if index:
+        result = pd.DataFrame(
+            data=np.concatenate(chunks),
+            index=pd.MultiIndex.from_tuples(index, names=[Section.ID, Segment.ID]),
+            columns=[
+                Segment.X1, Segment.Y1, Segment.Z1,
+                Segment.X2, Segment.Y2, Segment.Z2,
+            ]
+        )
+    else:
+        # no sections with specified neurite type
+        result = pd.DataFrame()
+
+    return result
+
+
 def _load_mask(circuit, mask):
     if mask is None:
         return None
@@ -42,12 +96,14 @@ def _calc_bouton_density(circuit, gid, projection, synapses_per_bouton, mask):
         # count all efferent synapses and total axon length
         synapse_count = len(conn_obj.efferent_synapses(gid))
         # total length of the segments
-        all_pts = circuit.morph.segment_points(gid, transform=False, neurite_type=SectionType.axon)
+        all_pts = _segment_points(circuit.morph.get(gid, transform=False),
+                                  neurite_type=SectionType.axon)
         axon_length = _segment_lengths(all_pts).sum()
 
     else:
         # Find all segments which endpoints fall into the region of interest.
-        all_pts = circuit.morph.segment_points(gid, transform=True, neurite_type=SectionType.axon)
+        all_pts = _segment_points(circuit.morph.get(gid, transform=True),
+                                  neurite_type=SectionType.axon)
         mask1 = mask.lookup(all_pts[[Segment.X1, Segment.Y1, Segment.Z1]].values, outer_value=False)
         mask2 = mask.lookup(all_pts[[Segment.X2, Segment.Y2, Segment.Z2]].values, outer_value=False)
         filtered = all_pts[mask1 & mask2]
