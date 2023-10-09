@@ -137,6 +137,7 @@ class CreatePartialRecipe:
     strategies: List
     base_path: Path
     circuit: Path
+    edge_population: str
     seed: int
     jobs: int
     log_level: int
@@ -163,6 +164,7 @@ class CreatePartialRecipe:
         # - should allow to identify if the task is the same, so it's not re-executed
         params = (
             str(self.circuit.resolve()),
+            self.edge_population,
             self.strategies,
             self.seed,
         )
@@ -186,6 +188,7 @@ class CreatePartialRecipe:
         )
         s2f_recipe.main(
             circuit=str(self.circuit),
+            population=self.edge_population,
             strategies=self.strategies,
             output=self.output,
             seed=self.seed,
@@ -204,6 +207,7 @@ class CreateFullRecipe:
     main_config: Dict
     executor_config: Dict
     circuit: Path
+    edge_population: str
     workdir: Path
     output: Path
     seed: int
@@ -231,6 +235,7 @@ class CreateFullRecipe:
                 strategies=params["strategies"],
                 base_path=self._recipes_path,
                 circuit=self.circuit,
+                edge_population=self.edge_population,
                 seed=self.seed,  # all the tasks will use the same seed
                 jobs=self.jobs,
                 log_level=self.log_level,

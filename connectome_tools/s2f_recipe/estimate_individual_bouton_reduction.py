@@ -17,7 +17,7 @@ from connectome_tools.dataset import read_bouton_density
 from connectome_tools.s2f_recipe import BOUTON_REDUCTION_FACTOR
 from connectome_tools.s2f_recipe.utils import BaseExecutor
 from connectome_tools.stats import sample_bouton_density
-from connectome_tools.utils import Task, cell_group
+from connectome_tools.utils import Task, cell_group, get_mtypes_from_edge_population
 
 L = logging.getLogger(__name__)
 
@@ -29,11 +29,11 @@ class Executor(BaseExecutor):
     # while the function `sample_bouton_density` will make use of subprocesses
     is_parallel = False
 
-    def prepare(self, circuit, bio_data, sample=None):
+    def prepare(self, circuit, edge_population, bio_data, sample=None):
         """Yield tasks that should be executed.
 
         Args:
-            circuit (bluepy.Circuit): circuit instance.
+            circuit (bluepysnap.Circuit): circuit instance.
             bio_data: reference value (float)
                 or name of the .tsv file containing bouton density data (str).
             sample: sample configuration (dict)
@@ -43,7 +43,7 @@ class Executor(BaseExecutor):
             (Task) task to be executed.
         """
         # pylint: disable=arguments-differ
-        mtypes = circuit.cells.mtypes
+        mtypes = get_mtypes_from_edge_population(circuit.edges[edge_population])
         if isinstance(bio_data, float):
             bio_data = pd.DataFrame({"mtype": mtypes, "mean": bio_data})
         else:
@@ -62,6 +62,7 @@ class Executor(BaseExecutor):
                 _estimate_bouton_density,
                 target=sample.get("target", None),
                 circuit=circuit,
+                population=edge_population,
                 n=sample.get("size", 100),
                 mask=sample.get("mask", None),
                 synapses_per_bouton=sample.get("assume_syns_bouton", 1.0),

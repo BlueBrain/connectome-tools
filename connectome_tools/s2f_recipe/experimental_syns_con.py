@@ -8,7 +8,7 @@ has been experimentally determined.
 from connectome_tools.dataset import read_nsyn
 from connectome_tools.s2f_recipe import MEAN_SYNS_CONNECTION
 from connectome_tools.s2f_recipe.utils import BaseExecutor
-from connectome_tools.utils import Task
+from connectome_tools.utils import Task, get_mtypes_from_edge_population
 
 
 class Executor(BaseExecutor):
@@ -16,18 +16,23 @@ class Executor(BaseExecutor):
 
     is_parallel = False
 
-    def prepare(self, circuit, bio_data):
+    def prepare(self, circuit, edge_population, bio_data):
         """Yield tasks that should be executed.
 
         Args:
-            circuit (bluepy.Circuit): circuit instance.
+            circuit (bluepysnap.Circuit): circuit instance.
             bio_data (str): name of the .tsv file containing experimental nsyn data.
 
         Yields:
             (Task) task to be executed.
         """
         # pylint: disable=arguments-differ
-        yield Task(_execute, bio_data, mtypes=circuit.cells.mtypes, task_group=__name__)
+        yield Task(
+            _execute,
+            bio_data,
+            mtypes=get_mtypes_from_edge_population(circuit.edges[edge_population]),
+            task_group=__name__,
+        )
 
 
 def _execute(bio_data, mtypes):

@@ -18,7 +18,7 @@ class Executor(BaseExecutor):
 
     is_parallel = False
 
-    def prepare(self, _, recipe_path):
+    def prepare(self, _, __, recipe_path):
         """Yield tasks that should be executed.
 
         Args:

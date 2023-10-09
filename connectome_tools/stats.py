@@ -10,6 +10,7 @@ import pandas as pd
 from bluepysnap import Circuit
 from morphio import SectionType
 from voxcell import ROIMask
+from voxcell.nexus.voxelbrain import Atlas
 
 from connectome_tools.utils import Task, run_parallel
 
@@ -90,8 +91,9 @@ def _load_mask(circuit, mask):
     if mask is None:
         return None
     else:
-        # return circuit.atlas.load_data(mask, cls=ROIMask)
-        raise NotImplementedError("Atlas method not implemented yet")
+        atlas = Atlas.open("/gpfs/bbp.cscs.ch/project/proj55/iavarone/releases/atlases/O1-323/")
+        return atlas.load_data(mask, cls=ROIMask)
+        # raise NotImplementedError("Atlas method not implemented yet")
 
 
 def _calc_bouton_density(edge_population, gid, synapses_per_bouton, mask):

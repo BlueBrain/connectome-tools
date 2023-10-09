@@ -15,7 +15,7 @@ import numpy as np
 import pkg_resources
 import psutil
 import yaml
-from bluepy import Cell
+from bluepysnap.query import NODE_SET_KEY
 from joblib import Parallel, delayed
 
 L = logging.getLogger(__name__)
@@ -157,7 +157,7 @@ TaskResult = namedtuple("TaskResult", ["id", "group", "value", "elapsed"])
 
 
 def cell_group(mtype, target=None):
-    """Return a group that can be used to select cell ids with BluePy.
+    """Return a group that can be used to select cell ids with SNAP.
 
     Args:
         mtype (str): mtype.
@@ -166,9 +166,9 @@ def cell_group(mtype, target=None):
     Returns:
         dict: cell group.
     """
-    result = {Cell.MTYPE: mtype}
+    result = {"mtype": mtype}
     if target is not None:
-        result["$target"] = target
+        result[NODE_SET_KEY] = target
     return result
 
 
@@ -217,3 +217,12 @@ def clean_slurm_env():
         if key.startswith(("PMI_", "SLURM_")) and not key.endswith(("_ACCOUNT", "_PARTITION")):
             L.debug("Deleting env variable %s", key)
             del os.environ[key]
+
+
+def get_mtypes_from_edge_population(pop):
+    mtypes = set()
+    for node_pop in [pop.source, pop.target]:
+        if "mtype" in node_pop.property_names:
+            mtypes |= node_pop.property_values("mtype")
+
+    return sorted(mtypes)

@@ -35,6 +35,7 @@ def cli():
     help="Path to the merge config file (YAML)",
     type=EXISTING_FILE_PATH,
 )
+@click.option("--population", required=True, help="Edge population name")
 @click.option(
     "-e",
     "--executor-config",
@@ -67,7 +68,18 @@ def cli():
     help="Do not validate the configuration, only for internal use",
 )
 @runalone
-def run(circuit, config, executor_config, output, workdir, verbose, seed, jobs, skip_validation):
+def run(
+    circuit,
+    population,
+    config,
+    executor_config,
+    output,
+    workdir,
+    verbose,
+    seed,
+    jobs,
+    skip_validation,
+):
     """S2F recipe generation with tasks split and merged by region."""
     # pylint: disable=too-many-arguments
     level = (logging.WARNING, logging.INFO, logging.DEBUG)[min(verbose, 2)]
@@ -86,6 +98,7 @@ def run(circuit, config, executor_config, output, workdir, verbose, seed, jobs, 
             main_config=config,
             executor_config=executor_config,
             circuit=Path(circuit).resolve(),
+            edge_population=population,
             workdir=Path(workdir).resolve(),
             output=Path(output).resolve(),
             seed=seed,

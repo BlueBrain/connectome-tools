@@ -26,11 +26,11 @@ class Executor(BaseExecutor):
     # while the function `sample_bouton_density` will make use of subprocesses
     is_parallel = False
 
-    def prepare(self, circuit, bio_data, sample=None):
+    def prepare(self, circuit, edge_population, bio_data, sample=None):
         """Yield tasks that should be executed.
 
         Args:
-            circuit (bluepy.Circuit): circuit instance.
+            circuit (bluepysnap.Circuit): circuit instance.
             bio_data: reference value (float)
                 or name of the .tsv file containing bouton density data (str).
             sample: sample configuration (dict)
@@ -40,10 +40,18 @@ class Executor(BaseExecutor):
             (Task) task to be executed.
         """
         # pylint: disable=arguments-differ
-        yield Task(_execute, circuit, bio_data, sample, n_jobs=self.jobs, task_group=__name__)
+        yield Task(
+            _execute,
+            circuit,
+            edge_population,
+            bio_data,
+            sample,
+            n_jobs=self.jobs,
+            task_group=__name__,
+        )
 
 
-def _execute(circuit, bio_data, sample, n_jobs):
+def _execute(circuit, edge_population, bio_data, sample, n_jobs):
     if isinstance(bio_data, float):
         ref_value = bio_data
     else:
@@ -58,6 +66,7 @@ def _execute(circuit, bio_data, sample, n_jobs):
             sample = {}
         values = sample_bouton_density(
             circuit=circuit,
+            population=edge_population,
             n=sample.get("size", 100),
             group=sample.get("target", None),
             mask=sample.get("mask", None),
