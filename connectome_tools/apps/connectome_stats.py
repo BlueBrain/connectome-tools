@@ -32,10 +32,8 @@ def _format_sample(sample, short=False):
         return NA_VALUE, NA_VALUE, NA_VALUE, NA_VALUE
 
 
-def _get_mtypes_from_edge_pop(pop):
-    source = pop.source.property_values("mtype") if "mtype" in pop.source.property_names else set()
-    target = pop.target.property_values("mtype") if "mtype" in pop.source.property_names else set()
-    return sorted(source), sorted(target)
+def _get_node_population_mtypes(population):
+    return population.property_values("mtype") if "mtype" in population.property_names else set()
 
 
 @click.group()
@@ -55,17 +53,20 @@ def app(seed):
 @click.option("--pre", default=None, help="Presynaptic target", show_default=True)
 @click.option("--post", default=None, help="Postsynaptic target", show_default=True)
 @click.option("--short", is_flag=True, default=False, help="Omit sampled values", show_default=True)
-def nsyn_per_connection(circuit, population, sample_size, pre, post, short):
+def nsyn_per_connection(
+    circuit, population, sample_size, pre, post, short
+):  # pylint: disable = too-many-locals
     """Mean connection synapse count per pathway."""
     circuit = Circuit(circuit)
-    pre_mtypes, post_mtypes = _get_mtypes_from_edge_pop(circuit.edges[population])
+    edge_population = circuit.edges[population]
+    pre_mtypes = _get_node_population_mtypes(edge_population.source)
+    post_mtypes = _get_node_population_mtypes(edge_population.target)
 
     click.echo("\t".join(["from", "to", "mean", "std", "size", "sample"]))
 
     for pre_mtype, post_mtype in itertools.product(pre_mtypes, post_mtypes):
         sample = stats.sample_pathway_synapse_count(
-            circuit,
-            population,
+            edge_population,
             n=sample_size,
             pre=cell_group(pre_mtype, target=pre),
             post=cell_group(post_mtype, target=post),
@@ -90,10 +91,11 @@ def nsyn_per_connection(circuit, population, sample_size, pre, post, short):
 @click.option("--short", is_flag=True, default=False, help="Omit sampled values", show_default=True)
 def bouton_density(
     circuit, population, sample_size, sample_target, mask, assume_syns_bouton, short
-):
+):  # pylint: disable = too-many-locals
     """Mean bouton density per mtype."""
     circuit = Circuit(circuit)
-    mtypes, _ = _get_mtypes_from_edge_pop(circuit.edges[population])
+    edge_population = circuit.edges[population]
+    mtypes = _get_node_population_mtypes(edge_population.source)
 
     click.echo("\t".join(["mtype", "mean", "std", "size", "sample"]))
 
@@ -103,8 +105,7 @@ def bouton_density(
         else:
             group = cell_group(mtype, target=sample_target)
         sample = stats.sample_bouton_density(
-            circuit,
-            population,
+            edge_population,
             n=sample_size,
             group=group,
             mask=mask,

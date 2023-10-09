@@ -16,11 +16,11 @@ class Executor(BaseExecutor):
 
     is_parallel = False
 
-    def prepare(self, circuit, edge_population, mtype_pattern, **kwargs):
+    def prepare(self, edge_population, mtype_pattern, **kwargs):
         """Yield tasks that should be executed.
 
         Args:
-            circuit (bluepysnap.Circuit): circuit instance.
+            edge_population (bluepysnap.EdgePopulation): edge population instance.
             mtype_pattern (str): substring of mtype used for matching.
             kwargs (dict): arguments to be set when mtype_pattern is a substring of mtype.
 
@@ -28,13 +28,8 @@ class Executor(BaseExecutor):
             (Task) task to be executed.
         """
         # pylint: disable=arguments-differ
-        yield Task(
-            _execute,
-            get_mtypes_from_edge_population(circuit.edges[edge_population]),
-            mtype_pattern,
-            task_group=__name__,
-            **kwargs,
-        )
+        mtypes = get_mtypes_from_edge_population(edge_population)
+        yield Task(_execute, mtypes, mtype_pattern, task_group=__name__, **kwargs)
 
 
 def _execute(mtypes, mtype_pattern, **kwargs):

@@ -12,7 +12,7 @@ class Executor(BaseExecutor):
 
     is_parallel = False
 
-    def prepare(self, _, __, **constraints):
+    def prepare(self, _, **constraints):
         """Yield tasks that should be executed.
 
         Args:

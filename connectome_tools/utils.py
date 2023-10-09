@@ -219,9 +219,10 @@ def clean_slurm_env():
             del os.environ[key]
 
 
-def get_mtypes_from_edge_population(pop):
+def get_mtypes_from_edge_population(population):
+    """Get all unique mtypes from edge population instance."""
     mtypes = set()
-    for node_pop in [pop.source, pop.target]:
+    for node_pop in [population.source, population.target]:
         if "mtype" in node_pop.property_names:
             mtypes |= node_pop.property_values("mtype")
 

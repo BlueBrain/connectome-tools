@@ -3,11 +3,9 @@
 import itertools
 import logging
 import os
-from enum import Enum
 
 import numpy as np
 import pandas as pd
-from bluepysnap import Circuit
 from morphio import SectionType
 from voxcell import ROIMask
 from voxcell.nexus.voxelbrain import Atlas
@@ -37,8 +35,7 @@ def _segment_lengths(segments):
 
 
 def _segment_points(morph, neurite_type=None):
-    """
-    Get segment points for given `morph`.
+    """Get segment points for given `morph`.
 
     Args:
         morph: morph of interest
@@ -87,7 +84,7 @@ def _segment_points(morph, neurite_type=None):
     return result
 
 
-def _load_mask(circuit, mask):
+def _load_mask(mask):
     if mask is None:
         return None
     else:
@@ -152,19 +149,17 @@ def _calc_bouton_density(edge_population, gid, synapses_per_bouton, mask):
     return (1.0 * synapse_count / synapses_per_bouton) / axon_length
 
 
-def bouton_density(circuit, population, gid, synapses_per_bouton=1.0, mask=None):
+def bouton_density(population, gid, synapses_per_bouton=1.0, mask=None):
     """Calculate bouton density for a given `gid`."""
-    mask = _load_mask(circuit, mask)
-    return _calc_bouton_density(circuit.edges[population], gid, synapses_per_bouton, mask)
+    mask = _load_mask(mask)
+    return _calc_bouton_density(population, gid, synapses_per_bouton, mask)
 
 
-def sample_bouton_density(
-    circuit, population, n, group=None, synapses_per_bouton=1.0, mask=None, n_jobs=1
-):
+def sample_bouton_density(population, n, group=None, synapses_per_bouton=1.0, mask=None, n_jobs=1):
     """Sample bouton density.
 
     Args:
-        circuit: circuit instance
+        population: edge population instance
         n: sample size
         group: cell group
         synapses_per_bouton: assumed number of synapses per bouton
@@ -175,39 +170,30 @@ def sample_bouton_density(
         numpy array of length min(n, N) with bouton density per cell,
         where N is the total number cells in the specified cell group.
     """
-    gids = circuit.edges[population].source.ids(group)
+    gids = population.source.ids(group)
     if len(gids) > n:
         gids = np.random.choice(gids, size=n, replace=False)
     elif len(gids) == 0:
         L.warning("No GID matching selection for group '%s'", group)
         return np.empty(0)
     if n_jobs == 1:
-        return _sample_bouton_density_task(circuit, population, gids, synapses_per_bouton, mask)
+        return _sample_bouton_density_task(population, gids, synapses_per_bouton, mask)
     else:
         return _sample_bouton_density_parallel(
-            circuit, population, gids, synapses_per_bouton, mask, n_jobs=n_jobs
+            population, gids, synapses_per_bouton, mask, n_jobs=n_jobs
         )
 
 
-# TODO: should be able to pass circuit as an object (pickleable)
-def _sample_bouton_density_task(
-    circuit_or_config, population, gids, synapses_per_bouton=1.0, mask=None
-):
+def _sample_bouton_density_task(population, gids, synapses_per_bouton=1.0, mask=None):
     """Sample bouton density task."""
-    # If executed in a subprocess, a configuration should be passed instead of a circuit instance.
-    if isinstance(circuit_or_config, Circuit):
-        circuit = circuit_or_config
-    else:
-        circuit = Circuit(circuit_or_config)
-    mask = _load_mask(circuit, mask)
-    edge_population = circuit.edges[population]
+    mask = _load_mask(mask)
     return np.array(
-        [_calc_bouton_density(edge_population, gid, synapses_per_bouton, mask) for gid in gids]
+        [_calc_bouton_density(population, gid, synapses_per_bouton, mask) for gid in gids]
     )
 
 
 def _sample_bouton_density_parallel(
-    circuit, population, gids, synapses_per_bouton=1.0, mask=None, n_jobs=-1
+    population, gids, synapses_per_bouton=1.0, mask=None, n_jobs=-1
 ):
     """Sample bouton density in parallel."""
     # The gids are split in chunks to reduce the number of tasks submitted to the subprocesses.
@@ -224,7 +210,6 @@ def _sample_bouton_density_parallel(
     tasks = [
         Task(
             _sample_bouton_density_task,
-            circuit._circuit_config_path,
             population,
             chunk,
             synapses_per_bouton=synapses_per_bouton,
@@ -238,12 +223,11 @@ def _sample_bouton_density_parallel(
     return np.concatenate([result.value for result in results])
 
 
-def sample_pathway_synapse_count(circuit, population, n, pre=None, post=None, unique_gids=False):
+def sample_pathway_synapse_count(population, n, pre=None, post=None, unique_gids=False):
     """Sample synapse count for pathway connections.
 
     Args:
-        circuit: circuit instance
-        population (str): edge population name
+        population: edge population instance
         n: sample size
         pre: presynaptic cell group
         post: postsynaptic cell group
@@ -253,7 +237,7 @@ def sample_pathway_synapse_count(circuit, population, n, pre=None, post=None, un
         numpy array of length min(n, N) with synapse number per connection,
         where N is the total number of connections satisfying the constraints.
     """
-    it = circuit.edges[population].iter_connections(
+    it = population.iter_connections(
         pre, post, shuffle=True, unique_node_ids=unique_gids, return_edge_count=True
     )
     return np.array([p[2] for p in itertools.islice(it, n)])

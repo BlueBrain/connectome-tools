@@ -95,7 +95,7 @@ def validate_params(pathway_dict):
         return False, ALTERNATIVE_PARAMS_2.difference(pathway_dict)
 
 
-def execute_strategies(circuit, population, strategies, jobs, base_seed):
+def execute_strategies(edge_population, strategies, jobs, base_seed):
     """Execute each strategy sequentially."""
     strategy_results = []
     for entry in strategies:
@@ -104,7 +104,7 @@ def execute_strategies(circuit, population, strategies, jobs, base_seed):
         strategy, kwargs = next(iter(entry.items()))
         print(strategy)
         executor = DISPATCH[strategy](jobs, base_seed)
-        results = executor.run(circuit, population, **kwargs)
+        results = executor.run(edge_population, **kwargs)
         strategy_results.extend(results)
     return strategy_results
 
@@ -146,7 +146,8 @@ def generate_recipe(circuit, population, strategies, jobs, base_seed):
     """Generate S2F recipe for `circuit` using `strategies`.
 
     Args:
-        circuit: BluePy Circuit
+        circuit: bluepysnap Circuit
+        population: Edge population name
         strategies: List of dictionaries, each one representing a strategy.
             Example of a single strategy::
             {
@@ -168,12 +169,11 @@ def generate_recipe(circuit, population, strategies, jobs, base_seed):
         The recipe generated, i.e. a dictionary containing (pre_mtype, post_mtype) as key,
         and a dictionary of parameters as value.
     """
-    mtypes = get_mtypes_from_edge_population(circuit.edges[population])
+    edge_population = circuit.edges[population]
+    mtypes = get_mtypes_from_edge_population(edge_population)
 
     L.info("Execute strategies")
-    task_results = execute_strategies(
-        circuit, population, strategies, jobs=jobs, base_seed=base_seed
-    )
+    task_results = execute_strategies(edge_population, strategies, jobs=jobs, base_seed=base_seed)
 
     L.info("Assemble the recipe")
     recipe = init_recipe(task_results, mtypes)

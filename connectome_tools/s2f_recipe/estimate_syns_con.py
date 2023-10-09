@@ -12,7 +12,6 @@ from functools import partial
 
 import numpy as np
 import pandas as pd
-from bluepysnap import Circuit
 from bluepysnap.bbp import Cell
 from Equation import Expression
 
@@ -34,13 +33,10 @@ def _choose_formula(formulae, pathway, syn_class_map):
         return formulae[("*", "*")]
 
 
-# TODO: should be able to pass circuit as an object (pickleable)
-def _estimate_nsyn(circuit_config, population, pathway, sample_size, pre, post):
+def _estimate_nsyn(population, pathway, sample_size, pre, post):
     """Mean nsyn for given mtype."""
     pre_mtype, post_mtype = pathway
-    circuit = Circuit(circuit_config)
     values = sample_pathway_synapse_count(
-        circuit,
         population,
         n=sample_size,
         pre=cell_group(pre_mtype, target=pre),
@@ -57,7 +53,6 @@ class Executor(BaseExecutor):
 
     def prepare(
         self,
-        circuit,
         edge_population,
         formula,
         formula_ee=None,
@@ -70,7 +65,7 @@ class Executor(BaseExecutor):
         """Yield tasks that should be executed.
 
         Args:
-            circuit (bluepysnap.Circuit): circuit instance.
+            edge_population (bluepysnap.EdgePopulation): edge population instance.
             formula (str): default formula.
             formula_ee (str): formula for EXC-EXC pathways, it can be None to use the default.
             formula_ei (str): formula for EXC-INH pathways, it can be None to use the default.
@@ -95,8 +90,6 @@ class Executor(BaseExecutor):
         if formula_ii is not None:
             formulae[("INH", "INH")] = Expression(formula_ii)
 
-        mtypes = get_mtypes_from_edge_population(circuit.edges[edge_population])
-
         if isinstance(sample, str):
             dset = read_nsyn(sample).set_index(["from", "to"])
 
@@ -108,28 +101,28 @@ class Executor(BaseExecutor):
                 sample = {}
             estimate = partial(
                 _estimate_nsyn,
-                circuit_config=circuit._circuit_config_path,
                 population=edge_population,
                 sample_size=sample.get("size", 100),
                 pre=sample.get("pre", None),
                 post=sample.get("post", None),
             )
 
-        syn_class_map = _get_syn_class_map(circuit, edge_population)
+        syn_class_map = _get_syn_class_map(edge_population)
 
+        # TODO: this could be changed to source - target
+        mtypes = get_mtypes_from_edge_population(edge_population)
         for pathway in itertools.product(mtypes, mtypes):
             yield Task(
                 _execute, pathway, estimate, formulae, syn_class_map, max_value, task_group=__name__
             )
 
 
-def _get_syn_class_map(circuit, edge_population):
+def _get_syn_class_map(edge_population):
     # TODO: a better way to get mtype -> synapse_class mapping (from the recipe directly?)
     dfs = []
     properties = [Cell.MTYPE, Cell.SYNAPSE_CLASS]
-    edge_pop = circuit.edges[edge_population]
 
-    for node_population in (edge_pop.source, edge_pop.target):
+    for node_population in (edge_population.source, edge_population.target):
         if not set(properties) - node_population.property_names:
             dfs.append(node_population.get(properties=properties))
 
