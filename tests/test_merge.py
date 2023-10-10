@@ -48,6 +48,7 @@ def test_create_partial_recipe_run(s2f_recipe_main_mock):
         strategies=[],
         base_path=Path(),
         circuit=Path(),
+        edge_population="Foo",
         seed=0,
         jobs=1,
         log_level=logging.INFO,
@@ -62,16 +63,17 @@ def test_create_partial_recipe_properties():
         strategies=[{"add_constraints": {"toRegion": "PP2/3", "fromRegion": "SS2/3"}}],
         base_path=Path("/fake/absolute/path/to/recipes"),
         circuit=Path("/fake/absolute/path/to/circuitConfig"),
+        edge_population="Foo",
         seed=0,
         jobs=1,
         log_level=logging.INFO,
     )
 
     assert task.name == "fromRegion:SS2/3,toRegion:PP2/3"
-    assert task.checksum == "4eece99e4a033783bb92a2000a161c4e"
+    assert task.checksum == "58ba4557b59d20799dad060fa799255f"
     assert task.output == Path(
         "/fake/absolute/path/to/recipes/"
-        "recipe_fromRegion%3ASS2%2F3%2CtoRegion%3APP2%2F3_4eece99e4a033783bb92a2000a161c4e.xml"
+        "recipe_fromRegion%3ASS2%2F3%2CtoRegion%3APP2%2F3_58ba4557b59d20799dad060fa799255f.xml"
     )
 
 
@@ -80,16 +82,17 @@ def test_create_partial_recipe_properties_without_constraints():
         strategies=[],
         base_path=Path("/fake/absolute/path/to/recipes"),
         circuit=Path("/fake/absolute/path/to/circuitConfig"),
+        edge_population="Foo",
         seed=0,
         jobs=1,
         log_level=logging.INFO,
     )
 
     assert task.name == "MISSING_CONSTRAINTS"
-    assert task.checksum == "6b719f4c5395c21418fae503d862585b"
+    assert task.checksum == "bfbb7f0106ddc068cfd7b233a5031566"
     assert task.output == Path(
         "/fake/absolute/path/to/recipes/"
-        "recipe_MISSING_CONSTRAINTS_6b719f4c5395c21418fae503d862585b.xml"
+        "recipe_MISSING_CONSTRAINTS_bfbb7f0106ddc068cfd7b233a5031566.xml"
     )
 
 
@@ -117,6 +120,7 @@ def test_create_full_recipe_run(execute_pending_tasks_mock):
             main_config=load_yaml(merge_config_path),
             executor_config=load_yaml(executor_config_path),
             circuit=circuit,
+            edge_population="Foo",
             workdir=workdir,
             output=recipe_path,
             seed=0,

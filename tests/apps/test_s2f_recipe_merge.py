@@ -29,6 +29,8 @@ def test_run(run_mock):
         result = runner.invoke(
             test_module.run,
             [
+                "--population",
+                "Foo",
                 "--config",
                 str(merge_config_path),
                 "--executor-config",

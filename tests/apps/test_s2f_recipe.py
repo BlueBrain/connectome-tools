@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from bluepy import Circuit
+from bluepysnap.edges import EdgePopulation
 from click.testing import CliRunner
 from mock import MagicMock, patch
 from parameterized import param, parameterized
@@ -134,7 +134,9 @@ def test_validate_params(_, pathways_dict, expected_is_valid, expected_missing, 
 @patch.object(test_module.estimate_syns_con.Executor, "prepare")
 @patch.object(test_module.estimate_individual_bouton_reduction.Executor, "prepare")
 @patch.object(test_module.estimate_bouton_reduction.Executor, "prepare")
+@patch.object(test_module, "get_mtypes_from_edge_population")
 def test_app(
+    mock_get_mtypes,
     estimate_bouton_reduction,
     estimate_individual_bouton_reduction,
     estimate_syns_con,
@@ -180,14 +182,14 @@ def test_app(
     override_mtype.return_value = task_generator(
         [[(("L4_CHC", "*"), {"bouton_reduction_factor": 1.0, "p_A": 1.0, "pMu_A": 0.0})]]
     )
-    mtypes = {"L1_DAC", "SO_OLM", "L4_CHC"}
+    mock_get_mtypes.return_value = {"L1_DAC", "SO_OLM", "L4_CHC"}
 
     # file containing the expected result
     output_path = Path(TEST_DATA_DIR, expected_recipe_file)
     expected = xml_to_regular_dict(output_path)
 
-    mock_circuit.return_value = circuit = MagicMock(Circuit)
-    circuit.cells.mtypes = mtypes
+    population = MagicMock(EdgePopulation)
+    mock_circuit.edges = {"Foo": population}
 
     with tmp_cwd() as tmp_dir:
         config_path = Path(TEST_DATA_DIR, s2f_config_file)
@@ -195,7 +197,19 @@ def test_app(
         runner = CliRunner()
         result = runner.invoke(
             test_module.app,
-            ["-s", config_path, "-o", recipe_path, "--seed", "0", "--jobs", jobs, "CircuitConfig"],
+            [
+                "-s",
+                config_path,
+                "-o",
+                recipe_path,
+                "--seed",
+                "0",
+                "--jobs",
+                jobs,
+                "--population",
+                "Foo",
+                "CircuitConfig",
+            ],
             catch_exceptions=False,
         )
         actual = xml_to_regular_dict(recipe_path)

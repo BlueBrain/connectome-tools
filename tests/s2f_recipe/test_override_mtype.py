@@ -1,7 +1,7 @@
 from itertools import chain
 
-from bluepy import Circuit
-from mock import MagicMock
+from bluepysnap.edges import EdgePopulation
+from mock import MagicMock, patch
 from parameterized import param, parameterized
 
 import connectome_tools.s2f_recipe.override_mtype as test_module
@@ -53,11 +53,12 @@ import connectome_tools.s2f_recipe.override_mtype as test_module
         ),
     ]
 )
-def test_prepare(_, kwargs, expected):
-    circuit = MagicMock(Circuit)
-    circuit.cells.mtypes = {"L6_TPC:C", "L4_CHC"}
+@patch.object(test_module, "get_mtypes_from_edge_population")
+def test_prepare(mock_get_mtypes, _, kwargs, expected):
+    population = MagicMock(EdgePopulation)
+    mock_get_mtypes.return_value = {"L6_TPC:C", "L4_CHC"}
 
-    task_generator = test_module.Executor().prepare(circuit, **kwargs)
+    task_generator = test_module.Executor().prepare(population, **kwargs)
     result_generator = (task() for task in task_generator)
     actual = dict(chain.from_iterable(item.value for item in result_generator))
 
