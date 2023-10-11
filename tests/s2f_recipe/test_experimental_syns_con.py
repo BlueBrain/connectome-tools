@@ -8,7 +8,7 @@ from utils import TEST_DATA_DIR
 import connectome_tools.s2f_recipe.experimental_syns_con as test_module
 
 
-@patch.object(test_module, "get_mtypes_from_edge_population")
+@patch.object(test_module, "get_edge_population_mtypes")
 def test_prepare(mock_get_mtypes):
     population = MagicMock(EdgePopulation)
     mock_get_mtypes.return_value = {"SLM_PPA", "SP_AA"}

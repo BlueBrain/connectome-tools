@@ -26,7 +26,7 @@ from connectome_tools.s2f_recipe import (
     override_mtype,
 )
 from connectome_tools.utils import (
-    get_mtypes_from_edge_population,
+    get_edge_population_mtypes,
     load_yaml,
     runalone,
     setup_logging,
@@ -146,13 +146,12 @@ def clean_recipe(recipe, mtypes):
             del recipe[pathway]
 
 
-# TODO: No need to pass both circuit and population #
-def generate_recipe(circuit, population, atlas_path, strategies, jobs, base_seed):
-    """Generate S2F recipe for `circuit` using `strategies`.
+def generate_recipe(edge_population, atlas_path, strategies, jobs, base_seed):
+    """Generate S2F recipe for `edge_population` using `strategies`.
 
     Args:
-        circuit: bluepysnap Circuit
-        population: Edge population name
+        edge_population: Edge population instance
+        atlas_path: Path to the atlas directory
         strategies: List of dictionaries, each one representing a strategy.
             Example of a single strategy::
             {
@@ -174,8 +173,7 @@ def generate_recipe(circuit, population, atlas_path, strategies, jobs, base_seed
         The recipe generated, i.e. a dictionary containing (pre_mtype, post_mtype) as key,
         and a dictionary of parameters as value.
     """
-    edge_population = circuit.edges[population]
-    mtypes = get_mtypes_from_edge_population(edge_population)
+    mtypes = get_edge_population_mtypes(edge_population)
 
     L.info("Execute strategies")
     task_results = execute_strategies(
@@ -221,8 +219,8 @@ def main(circuit, population, atlas_path, strategies, output, seed, jobs):
 
     np.random.seed(seed)
 
-    circuit = Circuit(circuit)
-    recipe = generate_recipe(circuit, population, atlas_path, strategies, jobs, base_seed=seed)
+    edge_population = Circuit(circuit).edges[population]
+    recipe = generate_recipe(edge_population, atlas_path, strategies, jobs, base_seed=seed)
     write_recipe(output, recipe, comment=comment)
 
 
@@ -251,7 +249,7 @@ def main(circuit, population, atlas_path, strategies, output, seed, jobs):
 @runalone
 def app(
     circuit, population, atlas_path, strategies, output, verbose, seed, jobs, skip_validation
-):  # noqa: D301
+):  # noqa: D301, pylint: disable=too-many-arguments
     """S2F recipe generation.
 
     See the official documentation for more information

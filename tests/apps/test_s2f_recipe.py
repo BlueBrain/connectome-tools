@@ -134,7 +134,7 @@ def test_validate_params(_, pathways_dict, expected_is_valid, expected_missing, 
 @patch.object(test_module.estimate_syns_con.Executor, "prepare")
 @patch.object(test_module.estimate_individual_bouton_reduction.Executor, "prepare")
 @patch.object(test_module.estimate_bouton_reduction.Executor, "prepare")
-@patch.object(test_module, "get_mtypes_from_edge_population")
+@patch.object(test_module, "get_edge_population_mtypes")
 def test_app(
     mock_get_mtypes,
     estimate_bouton_reduction,

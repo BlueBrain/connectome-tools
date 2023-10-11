@@ -19,7 +19,7 @@ from connectome_tools.dataset import read_nsyn
 from connectome_tools.s2f_recipe import MEAN_SYNS_CONNECTION
 from connectome_tools.s2f_recipe.utils import BaseExecutor
 from connectome_tools.stats import sample_pathway_synapse_count
-from connectome_tools.utils import Task, cell_group, get_mtypes_from_edge_population
+from connectome_tools.utils import Task, cell_group, get_edge_population_mtypes
 
 L = logging.getLogger(__name__)
 
@@ -110,7 +110,7 @@ class Executor(BaseExecutor):
         syn_class_map = _get_syn_class_map(edge_population)
 
         # TODO: this could be changed to source - target
-        mtypes = get_mtypes_from_edge_population(edge_population)
+        mtypes = get_edge_population_mtypes(edge_population)
         for pathway in itertools.product(mtypes, mtypes):
             yield Task(
                 _execute, pathway, estimate, formulae, syn_class_map, max_value, task_group=__name__
@@ -126,10 +126,12 @@ def _get_syn_class_map(edge_population):
         if not set(properties) - node_population.property_names:
             dfs.append(node_population.get(properties=properties))
 
-    if not dfs:
-        raise ValueError("EMPTY LIST")  # TODO: change
+    if len(dfs) > 0:
+        return dict(pd.concat(dfs).drop_duplicates().to_numpy())
 
-    return dict(pd.concat(dfs).drop_duplicates().to_numpy())
+    raise ValueError(
+        f"Edge population source and target nodes are missing properties: {''.join(properties)} "
+    )
 
 
 def _execute(pathway, estimate, formulae, syn_class_map, max_value):

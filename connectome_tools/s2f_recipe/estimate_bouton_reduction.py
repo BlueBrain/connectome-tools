@@ -33,6 +33,7 @@ class Executor(BaseExecutor):
             edge_population (bluepysnap.EdgePopulation): edge population instance.
             bio_data: reference value (float)
                 or name of the .tsv file containing bouton density data (str).
+            atlas_path (str): Path to the atlas directory
             sample: sample configuration (dict)
                 or name of the .tsv file containing bouton density data (str).
 

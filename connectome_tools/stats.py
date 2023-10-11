@@ -34,54 +34,39 @@ def _segment_lengths(segments):
     )
 
 
-def _segment_points(morph, neurite_type=None):
-    """Get segment points for given `morph`.
+def _axon_points(morph):
+    """Get axon points for given `morph`.
 
     Args:
         morph: morph of interest
-        neurite_type (morphio.SectionType): neurite type of interest
 
     Returns:
         pandas DataFrame multi-indexed by (SECTION_ID, SEGMENT_ID);
         and SEGMENT_START_COLS and SEGMENT_END_COLS as columns.
-
-    Note: soma is returned as a spherical segment
     """
     index = []
     chunks = []
-    if neurite_type is None:
-        it = morph.iter()
-    else:
-        it = (x for x in morph.iter() if x.type == neurite_type)
 
-    for sec in it:
-        pts = sec.points
-        chunk = np.zeros((len(pts) - 1, 6))
-        chunk[:, 0:3] = pts[:-1]
-        chunk[:, 3:6] = pts[1:]
-        chunks.append(chunk)
+    for sec in morph.iter():
+        if sec.type == SectionType.axon:
+            pts = sec.points
+            chunk = np.zeros((len(pts) - 1, 6))
+            chunk[:, 0:3] = pts[:-1]
+            chunk[:, 3:6] = pts[1:]
+            chunks.append(chunk)
 
-        # MorphIO doesn't consider the soma a section; makes sure we match the
-        # section ids from the edge file
-        index.extend((sec.id + 1, seg_id) for seg_id in range(len(pts) - 1))
-
-    # MorphIO doesn't consider the soma as as segment, manually make a spherical one
-    if morph.soma and neurite_type in (None, SectionType.all, SectionType.soma):
-        index.append((0, 0))
-        chunk = np.concatenate((morph.soma.center, morph.soma.center))[np.newaxis]
-        chunks.append(chunk)
+            # MorphIO doesn't consider the soma a section; makes sure we match the
+            # section ids from the edge file
+            index.extend((sec.id + 1, seg_id) for seg_id in range(len(pts) - 1))
 
     if index:
-        result = pd.DataFrame(
+        return pd.DataFrame(
             data=np.concatenate(chunks),
             index=pd.MultiIndex.from_tuples(index, names=[SECTION_ID, SEGMENT_ID]),
             columns=[*SEGMENT_START_COLS, *SEGMENT_END_COLS],
         )
-    else:
-        # no sections with specified neurite type
-        result = pd.DataFrame()
 
-    return result
+    return pd.DataFrame()
 
 
 def _load_mask(mask, atlas_path):
@@ -101,17 +86,15 @@ def _calc_bouton_density(edge_population, gid, synapses_per_bouton, mask):
         # count all efferent synapses and total axon length
         synapse_count = len(edge_population.efferent_edges(gid))
         # total length of the segments
-        all_pts = _segment_points(
-            edge_population.source.morph.get(gid, transform=False, extension="h5"),
-            neurite_type=SectionType.axon,
+        all_pts = _axon_points(
+            edge_population.source.morph.get(gid, transform=False, extension="h5")
         )
         axon_length = _segment_lengths(all_pts).sum()
 
     else:
         # Find all segments which endpoints fall into the region of interest.
-        all_pts = _segment_points(
-            edge_population.source.morph.get(gid, transform=True, extension="h5"),
-            neurite_type=SectionType.axon,
+        all_pts = _axon_points(
+            edge_population.source.morph.get(gid, transform=True, extension="h5")
         )
         mask1 = mask.lookup(all_pts[SEGMENT_START_COLS].values, outer_value=False)
         mask2 = mask.lookup(all_pts[SEGMENT_END_COLS].values, outer_value=False)
@@ -167,6 +150,7 @@ def sample_bouton_density(
         group: cell group
         synapses_per_bouton: assumed number of synapses per bouton
         mask (str): region of interest mask
+        atlas_path (str): Path to the atlas directory
         n_jobs (int): number of parallel jobs (1 for single process, -1 to use all the cpus)
 
     Returns:

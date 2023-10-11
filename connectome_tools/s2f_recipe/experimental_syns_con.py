@@ -8,7 +8,7 @@ has been experimentally determined.
 from connectome_tools.dataset import read_nsyn
 from connectome_tools.s2f_recipe import MEAN_SYNS_CONNECTION
 from connectome_tools.s2f_recipe.utils import BaseExecutor
-from connectome_tools.utils import Task, get_mtypes_from_edge_population
+from connectome_tools.utils import Task, get_edge_population_mtypes
 
 
 class Executor(BaseExecutor):
@@ -27,7 +27,7 @@ class Executor(BaseExecutor):
             (Task) task to be executed.
         """
         # pylint: disable=arguments-differ
-        mtypes = get_mtypes_from_edge_population(edge_population)
+        mtypes = get_edge_population_mtypes(edge_population)
         yield Task(_execute, bio_data, mtypes=mtypes, task_group=__name__)
 
 

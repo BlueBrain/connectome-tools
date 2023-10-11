@@ -21,7 +21,7 @@ def mock_sample_bouton_density(population, **kwargs):
 
 
 @patch.object(test_module, "sample_bouton_density", side_effect=mock_sample_bouton_density)
-@patch.object(test_module, "get_mtypes_from_edge_population")
+@patch.object(test_module, "get_edge_population_mtypes")
 def test_1(mock_get_mtypes, _):
     population = MagicMock(EdgePopulation)
     mock_get_mtypes.return_value = ["L1_DAC", "L23_MC", "L5_TPC"]
@@ -29,7 +29,7 @@ def test_1(mock_get_mtypes, _):
         ("L23_MC", "*"): {"bouton_reduction_factor": 5.0},
         ("L5_TPC", "*"): {"bouton_reduction_factor": 10.0},
     }
-    task_generator = test_module.Executor().prepare(population, bio_data=10.0)
+    task_generator = test_module.Executor().prepare(population, bio_data=10.0, atlas_path="Foo")
     result_generator = (task() for task in task_generator)
     actual = dict(chain.from_iterable(item.value for item in result_generator))
 
@@ -37,7 +37,7 @@ def test_1(mock_get_mtypes, _):
 
 
 @patch.object(test_module, "sample_bouton_density", side_effect=mock_sample_bouton_density)
-@patch.object(test_module, "get_mtypes_from_edge_population")
+@patch.object(test_module, "get_edge_population_mtypes")
 def test_2(mock_get_mtypes, _):
     population = MagicMock(EdgePopulation)
     mock_get_mtypes.return_value = ["L1_DAC", "L23_MC", "L5_TPC"]
@@ -45,7 +45,7 @@ def test_2(mock_get_mtypes, _):
         ("L23_MC", "*"): {"bouton_reduction_factor": 15.0},
     }
     bio_data = os.path.join(TEST_DATA_DIR, "bouton_density.tsv")
-    task_generator = test_module.Executor().prepare(population, bio_data=bio_data)
+    task_generator = test_module.Executor().prepare(population, bio_data=bio_data, atlas_path="Foo")
     result_generator = (task() for task in task_generator)
     actual = dict(chain.from_iterable(item.value for item in result_generator))
 

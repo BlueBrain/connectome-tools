@@ -8,7 +8,7 @@ import numpy as np
 from bluepysnap import Circuit
 
 from connectome_tools import stats
-from connectome_tools.utils import cell_group, runalone
+from connectome_tools.utils import cell_group, get_node_population_mtypes, runalone
 
 L = logging.getLogger(__name__)
 
@@ -30,11 +30,6 @@ def _format_sample(sample, short=False):
         return ftoa(np.nanmean(sample)), ftoa(np.nanstd(sample)), str(size), values
     else:
         return NA_VALUE, NA_VALUE, NA_VALUE, NA_VALUE
-
-
-def _get_node_population_mtypes(population):
-    mtypes = population.property_values("mtype") if "mtype" in population.property_names else set()
-    return sorted(mtypes)
 
 
 @click.group()
@@ -60,8 +55,8 @@ def nsyn_per_connection(
     """Mean connection synapse count per pathway."""
     circuit = Circuit(circuit)
     edge_population = circuit.edges[population]
-    pre_mtypes = _get_node_population_mtypes(edge_population.source)
-    post_mtypes = _get_node_population_mtypes(edge_population.target)
+    pre_mtypes = get_node_population_mtypes(edge_population.source)
+    post_mtypes = get_node_population_mtypes(edge_population.target)
 
     click.echo("\t".join(["from", "to", "mean", "std", "size", "sample"]))
 
@@ -97,7 +92,7 @@ def bouton_density(
     """Mean bouton density per mtype."""
     circuit = Circuit(circuit)
     edge_population = circuit.edges[population]
-    mtypes = _get_node_population_mtypes(edge_population.source)
+    mtypes = get_node_population_mtypes(edge_population.source)
 
     click.echo("\t".join(["mtype", "mean", "std", "size", "sample"]))
 

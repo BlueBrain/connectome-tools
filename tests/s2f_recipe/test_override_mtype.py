@@ -53,7 +53,7 @@ import connectome_tools.s2f_recipe.override_mtype as test_module
         ),
     ]
 )
-@patch.object(test_module, "get_mtypes_from_edge_population")
+@patch.object(test_module, "get_edge_population_mtypes")
 def test_prepare(mock_get_mtypes, _, kwargs, expected):
     population = MagicMock(EdgePopulation)
     mock_get_mtypes.return_value = {"L6_TPC:C", "L4_CHC"}
