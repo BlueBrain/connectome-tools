@@ -26,7 +26,7 @@ class Executor(BaseExecutor):
     # while the function `sample_bouton_density` will make use of subprocesses
     is_parallel = False
 
-    def prepare(self, edge_population, bio_data, sample=None):
+    def prepare(self, edge_population, bio_data, atlas_path, sample=None):
         """Yield tasks that should be executed.
 
         Args:
@@ -43,6 +43,7 @@ class Executor(BaseExecutor):
         yield Task(
             _execute,
             edge_population,
+            atlas_path,
             bio_data,
             sample,
             n_jobs=self.jobs,
@@ -50,7 +51,7 @@ class Executor(BaseExecutor):
         )
 
 
-def _execute(edge_population, bio_data, sample, n_jobs):
+def _execute(edge_population, atlas_path, bio_data, sample, n_jobs):
     if isinstance(bio_data, float):
         ref_value = bio_data
     else:
@@ -66,6 +67,7 @@ def _execute(edge_population, bio_data, sample, n_jobs):
         values = sample_bouton_density(
             population=edge_population,
             n=sample.get("size", 100),
+            atlas_path=atlas_path,
             group=sample.get("target", None),
             mask=sample.get("mask", None),
             synapses_per_bouton=sample.get("assume_syns_bouton", 1.0),

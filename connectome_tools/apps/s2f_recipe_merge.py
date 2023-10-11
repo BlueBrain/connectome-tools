@@ -36,6 +36,7 @@ def cli():
     type=EXISTING_FILE_PATH,
 )
 @click.option("--population", required=True, help="Edge population name")
+@click.option("-a", "--atlas", "atlas_path", help="Path to circuit atlas directory")
 @click.option(
     "-e",
     "--executor-config",
@@ -71,6 +72,7 @@ def cli():
 def run(
     circuit,
     population,
+    atlas_path,
     config,
     executor_config,
     output,
@@ -99,6 +101,7 @@ def run(
             executor_config=executor_config,
             circuit=Path(circuit).resolve(),
             edge_population=population,
+            atlas_path=atlas_path,
             workdir=Path(workdir).resolve(),
             output=Path(output).resolve(),
             seed=seed,

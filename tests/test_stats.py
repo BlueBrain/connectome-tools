@@ -61,7 +61,7 @@ def test_bouton_density_2_with_empty_mask(mock_segment_points, mock_atlas):
         ]
     )
     population = MagicMock(EdgePopulation)
-    actual = test_module.bouton_density(population, 42, mask="Foo")
+    actual = test_module.bouton_density(population, 42, mask="Foo", atlas_path="Foo")
     npt.assert_equal(actual, np.nan)
 
 
@@ -112,7 +112,7 @@ def test_bouton_density_3_with_mask(mock_segment_points, mock_atlas):
             np.sqrt(48),  # length((12, 0))
         ]
     )
-    actual = test_module.bouton_density(population, 42, mask="Foo")
+    actual = test_module.bouton_density(population, 42, mask="Foo", atlas_path="Foo")
     npt.assert_almost_equal(actual, expected)
 
 

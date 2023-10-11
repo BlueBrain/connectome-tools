@@ -138,6 +138,7 @@ class CreatePartialRecipe:
     base_path: Path
     circuit: Path
     edge_population: str
+    atlas_path: str
     seed: int
     jobs: int
     log_level: int
@@ -189,6 +190,7 @@ class CreatePartialRecipe:
         s2f_recipe.main(
             circuit=str(self.circuit),
             population=self.edge_population,
+            atlas_path=self.atlas_path,
             strategies=self.strategies,
             output=self.output,
             seed=self.seed,
@@ -208,6 +210,7 @@ class CreateFullRecipe:
     executor_config: Dict
     circuit: Path
     edge_population: str
+    atlas_path: str
     workdir: Path
     output: Path
     seed: int
@@ -236,6 +239,7 @@ class CreateFullRecipe:
                 base_path=self._recipes_path,
                 circuit=self.circuit,
                 edge_population=self.edge_population,
+                atlas_path=self.atlas_path,
                 seed=self.seed,  # all the tasks will use the same seed
                 jobs=self.jobs,
                 log_level=self.log_level,

@@ -33,7 +33,8 @@ def _format_sample(sample, short=False):
 
 
 def _get_node_population_mtypes(population):
-    return population.property_values("mtype") if "mtype" in population.property_names else set()
+    mtypes = population.property_values("mtype") if "mtype" in population.property_names else set()
+    return sorted(mtypes)
 
 
 @click.group()
@@ -78,6 +79,7 @@ def nsyn_per_connection(
 @app.command()
 @click.argument("circuit")
 @click.option("--population", required=True, help="Edge population name")
+@click.option("-a", "--atlas", "atlas_path", help="Path to circuit atlas directory")
 @click.option("-n", "--sample-size", type=int, default=100, help="Sample size", show_default=True)
 @click.option("-t", "--sample-target", default=None, help="Sample target", show_default=True)
 @click.option("--mask", default=None, help="Region of interest", show_default=True)
@@ -90,7 +92,7 @@ def nsyn_per_connection(
 )
 @click.option("--short", is_flag=True, default=False, help="Omit sampled values", show_default=True)
 def bouton_density(
-    circuit, population, sample_size, sample_target, mask, assume_syns_bouton, short
+    circuit, population, atlas_path, sample_size, sample_target, mask, assume_syns_bouton, short
 ):  # pylint: disable = too-many-locals
     """Mean bouton density per mtype."""
     circuit = Circuit(circuit)
@@ -108,8 +110,9 @@ def bouton_density(
             edge_population,
             n=sample_size,
             group=group,
-            mask=mask,
             synapses_per_bouton=assume_syns_bouton,
+            mask=mask,
+            atlas_path=atlas_path,
         )
         mean, std, size, values = _format_sample(sample, short)
         click.echo("\t".join([mtype, mean, std, size, values]))

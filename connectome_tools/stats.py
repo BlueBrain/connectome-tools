@@ -84,13 +84,14 @@ def _segment_points(morph, neurite_type=None):
     return result
 
 
-def _load_mask(mask):
+def _load_mask(mask, atlas_path):
     if mask is None:
         return None
-    else:
-        atlas = Atlas.open("/gpfs/bbp.cscs.ch/project/proj55/iavarone/releases/atlases/O1-323/")
+    elif atlas_path:
+        atlas = Atlas.open(atlas_path)
         return atlas.load_data(mask, cls=ROIMask)
-        # raise NotImplementedError("Atlas method not implemented yet")
+
+    raise ValueError("Missing atlas path: using a mask requires atlas path to be defined")
 
 
 def _calc_bouton_density(edge_population, gid, synapses_per_bouton, mask):
@@ -149,13 +150,15 @@ def _calc_bouton_density(edge_population, gid, synapses_per_bouton, mask):
     return (1.0 * synapse_count / synapses_per_bouton) / axon_length
 
 
-def bouton_density(population, gid, synapses_per_bouton=1.0, mask=None):
+def bouton_density(population, gid, synapses_per_bouton=1.0, mask=None, atlas_path=None):
     """Calculate bouton density for a given `gid`."""
-    mask = _load_mask(mask)
+    mask = _load_mask(mask, atlas_path)
     return _calc_bouton_density(population, gid, synapses_per_bouton, mask)
 
 
-def sample_bouton_density(population, n, group=None, synapses_per_bouton=1.0, mask=None, n_jobs=1):
+def sample_bouton_density(
+    population, n, group=None, synapses_per_bouton=1.0, mask=None, atlas_path=None, n_jobs=1
+):
     """Sample bouton density.
 
     Args:
@@ -177,23 +180,25 @@ def sample_bouton_density(population, n, group=None, synapses_per_bouton=1.0, ma
         L.warning("No GID matching selection for group '%s'", group)
         return np.empty(0)
     if n_jobs == 1:
-        return _sample_bouton_density_task(population, gids, synapses_per_bouton, mask)
+        return _sample_bouton_density_task(population, gids, synapses_per_bouton, mask, atlas_path)
     else:
         return _sample_bouton_density_parallel(
-            population, gids, synapses_per_bouton, mask, n_jobs=n_jobs
+            population, gids, synapses_per_bouton, mask, atlas_path, n_jobs=n_jobs
         )
 
 
-def _sample_bouton_density_task(population, gids, synapses_per_bouton=1.0, mask=None):
+def _sample_bouton_density_task(
+    population, gids, synapses_per_bouton=1.0, mask=None, atlas_path=None
+):
     """Sample bouton density task."""
-    mask = _load_mask(mask)
+    mask = _load_mask(mask, atlas_path)
     return np.array(
         [_calc_bouton_density(population, gid, synapses_per_bouton, mask) for gid in gids]
     )
 
 
 def _sample_bouton_density_parallel(
-    population, gids, synapses_per_bouton=1.0, mask=None, n_jobs=-1
+    population, gids, synapses_per_bouton=1.0, mask=None, atlas_path=None, n_jobs=-1
 ):
     """Sample bouton density in parallel."""
     # The gids are split in chunks to reduce the number of tasks submitted to the subprocesses.
@@ -214,6 +219,7 @@ def _sample_bouton_density_parallel(
             chunk,
             synapses_per_bouton=synapses_per_bouton,
             mask=mask,
+            atlas_path=atlas_path,
             task_group="sample_bouton_density",
         )
         for chunk in np.array_split(gids, n_chunks)
