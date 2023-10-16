@@ -11,7 +11,7 @@ Usage:
 .. code-block:: console
 
     $ module load unstable connectome-tools
-    $ connectome-stats [OPTIONS] COMMAND [ARGS] <CircuitConfig>
+    $ connectome-stats [OPTIONS] COMMAND [ARGS] <circuit_config>
 
 Options:
 
@@ -28,27 +28,28 @@ connectome-stats bouton-density
 
 .. code:: console
 
-    $ connectome-stats --seed 0 bouton-density -t mc2_Column -n 5 --assume-syns-bouton 1.15 <CircuitConfig>
+    $ connectome-stats --seed 0 bouton-density -p <edge_population> -t mc2_Column -n 5 --assume-syns-bouton 1.15 <circuit_config>
 
 would produce a `bouton-density <#ref-dataset-bouton-density>`_ dataset for a given circuit.
 
 Options:
 
+    -p, --edge-population TEXT  Edge population name  [required]
+    -a, --atlas TEXT            Circuit atlas path [default: ``None``]
     -n, --sample-size INTEGER   Sample size  [default: ``100``]
-    -t, --sample-target TEXT    Sample target [default: ``None``]
+    -t, --node-set TEXT         Sample node set [default: ``None``]
     --mask TEXT                 Region of interest [default: ``None``]
     --assume-syns-bouton FLOAT  Synapse count per bouton  [default: ``1.0``]
-    --projection TEXT           Projection name [default: ``None``]
     --short                     Omit sampled values from the output [default: ``False``]
 
 Optional ``--mask`` parameter references atlas dataset with volumetric mask defining axon region of interest.
-If provided, only axonal segments within this region would be considered for each sampled cell (otherwise whole axon is considered, without any filtering). Please note that this parameter does *not* affect cell sampling (i.e., the choice of cell somata is affected only by ``--sample-target``).
+If provided, only axonal segments within this region would be considered for each sampled cell (otherwise whole axon is considered, without any filtering). Please note that this parameter does *not* affect cell sampling (i.e., the choice of cell somata is affected only by ``--node-set``).
 
-Circuit model source atlas defined in CircuitConfig is used for filtering segments. If VoxelBrain URL is provided there, please set ``BLUEPY_ATLAS_CACHE_DIR`` environment variable to define the folder for storing data fetched from VoxelBrain.
+Circuit model source atlas defined in CircuitConfig is used for filtering segments. If VoxelBrain URL is provided there, current working directory is used as atlas cache directory for storing data fetched from VoxelBrain.
 
 Please note also that using region filtering might affect the performance.
 
-It is generally recommended to limit sample target and / or region mask to circuit "center" to minimize border effects (for instance, using central hypercolumn in O1 mosaic circuit, as in the example above).
+It is generally recommended to limit sample node set and / or region mask to circuit "center" to minimize border effects (for instance, using central hypercolumn in O1 mosaic circuit, as in the example above).
 
 If there are only ``K`` < ``SAMPLE_SIZE`` samples available, ``K`` samples will be used.
 
@@ -57,16 +58,15 @@ connectome-stats nsyn-per-connection
 
 .. code:: console
 
-    $ connectome-stats --seed 0 nsyn-per-connection -n 5 <CircuitConfig>
+    $ connectome-stats --seed 0 nsyn-per-connection -p <edge_population> -n 5 <circuit_config>
 
 would produce a `nsyn-per-connection <#ref-dataset-nsyn-per-connection>`_ dataset for a given circuit.
 
 Options:
-
+  -p, --edge-population TEXT Edge population name  [required]
   -n, --sample-size INTEGER  Sample size  [default: ``100``]
-  --pre TEXT                 Presynaptic target [default: ``None``]
-  --post TEXT                Postsynaptic target [default: ``None``]
-  --projection TEXT          Projection name [default: ``None``]
+  --pre TEXT                 Presynaptic node set [default: ``None``]
+  --post TEXT                Postsynaptic node set [default: ``None``]
   --short                    Omit sampled values  [default: ``False``]
 
 If there are only ``K`` < ``SAMPLE_SIZE`` samples available, ``K`` samples will be used.
@@ -83,15 +83,17 @@ Usage:
 
 .. code:: console
 
-    s2f-recipe -s STRATEGIES -o OUTPUT [--seed SEED] [-v] <CircuitConfig>
+    s2f-recipe -p <edge_population> -s STRATEGIES -o OUTPUT [--seed SEED] [-v] <circuit_config>
 
 Options:
-    -s, --strategies TEXT  Path to strategies config (YAML)  [required]
-    -o, --output TEXT      Path to output file (XML)  [required]
-    -v, --verbose          -v for INFO, -vv for DEBUG
-    --seed INTEGER         Pseudo-random generator seed  [default: 0]
-    -j, --jobs INTEGER     Maximum number of concurrently running jobs (if -1
-                           all CPUs are used)  [default: -1]
+    -p, --edge-population TEXT  Edge population name  [required]
+    -a, --atlas TEXT            Circuit atlas path [default: ``None``]
+    -s, --strategies TEXT       Path to strategies config (YAML)  [required]
+    -o, --output TEXT           Path to output file (XML)  [required]
+    -v, --verbose               -v for INFO, -vv for DEBUG
+    --seed INTEGER              Pseudo-random generator seed  [default: 0]
+    -j, --jobs INTEGER          Maximum number of concurrently running jobs (if -1
+                                all CPUs are used)  [default: -1]
 
 For better performance, it's recommended to run the script specifying multiple concurrent jobs.
 
@@ -139,14 +141,14 @@ The sequence of strategies applied along with their arguments is defined by YAML
         bio_data: /gpfs/bbp.cscs.ch/project/proj64/entities/dev/datasets/bouton_density_20161102.tsv
         sample:
             size: 100
-            target: mc2_Column
+            node_set: mc2_Column
             mask: mc2_Column
             assume_syns_bouton: 1.2
     - estimate_individual_bouton_reduction:
         bio_data: /gpfs/bbp.cscs.ch/project/proj64/entities/dev/datasets/bouton_density_20161102.tsv
         sample:
             size: 100
-            target: mc2_Column
+            node_set: mc2_Column
             mask: mc2_Column
             assume_syns_bouton: 1.2
     - generalized_cv:
@@ -186,8 +188,8 @@ If **sample** is a set of parameters for sampling, it can include any of the fol
 **size**
     Sample size [default: ``100``]
 
-**target**
-    Sample target [default: ``None``]
+**node_set**
+    Sample node set [default: ``None``]
 
 **mask**
     | Region of interest [default: ``None``].
@@ -206,7 +208,7 @@ Example 1:
         bio_data: 0.432
         sample:
             size: 100
-            target: 'mc2_Column'
+            node_set: 'mc2_Column'
             mask: 'center'
             assume_syns_bouton: 1.2
 
@@ -268,10 +270,10 @@ Parameters:
 If **sample** is a set of parameters for sampling, it can include any of the following keys:
 
 **pre**
-    Presynaptic target [default: ``None``]
+    Presynaptic node set [default: ``None``]
 
 **post**
-    Postsynaptic target [default: ``None``]
+    Postsynaptic node set [default: ``None``]
 
 **size**
     Sample size [default: ``100``]
@@ -432,11 +434,13 @@ and they are reused if the script is stopped and restarted using the same config
 
 .. code:: console
 
-    $ s2f-recipe-merge run -c MERGE_CONFIG -e EXECUTOR_CONFIG -o OUTPUT [--seed SEED] [-v] <CircuitConfig>
+    $ s2f-recipe-merge run -c MERGE_CONFIG -p EXECUTOR_CONFIG -o OUTPUT [--seed SEED] [-v] <circuit_config>
 
 Options:
 
     -c, --config FILE           Path to the merge config file (YAML)  [required]
+    -p, --edge-population TEXT  Edge population name  [required]
+    -a, --atlas TEXT            Circuit atlas path [default: ``None``]
     -e, --executor-config FILE  Path to the executor config file (YAML) [required]
     -o, --output FILE           Path to the output file (XML)  [required]
     -w, --workdir PATH          Path to the working directory  [default: ``.s2f_recipe``]
