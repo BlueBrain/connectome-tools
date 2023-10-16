@@ -206,7 +206,7 @@ def test_app(
                 "0",
                 "--jobs",
                 jobs,
-                "--population",
+                "-p",
                 "Foo",
                 "CircuitConfig",
             ],

@@ -10,21 +10,12 @@ from morphio import SectionType
 from voxcell import ROIMask
 from voxcell.nexus.voxelbrain import Atlas
 
-from connectome_tools.utils import Task, run_parallel
+from connectome_tools.utils import Properties, Task, run_parallel
 
 L = logging.getLogger(__name__)
 
-
-PRE_SECTION_ID = "efferent_section_id"
-PRE_SEGMENT_ID = "efferent_segment_id"
-
-
-SECTION_ID = "section_id"
-SEGMENT_ID = "segment_id"
-
-
-SEGMENT_START_COLS = ["x1", "y1", "z1"]
-SEGMENT_END_COLS = ["x2", "y2", "z2"]
+SEGMENT_START_COLS = [Properties.SEGMENT_X1, Properties.SEGMENT_Y1, Properties.SEGMENT_Z1]
+SEGMENT_END_COLS = [Properties.SEGMENT_X2, Properties.SEGMENT_Y2, Properties.SEGMENT_Z2]
 
 
 def _segment_lengths(segments):
@@ -37,12 +28,14 @@ def _segment_lengths(segments):
 def _axon_points(morph):
     """Get axon points for given `morph`.
 
+    This code is a modified version of `bluepy.morphology.MorphHelper.segment_points`.
+
     Args:
         morph: morph of interest
 
     Returns:
-        pandas DataFrame multi-indexed by (SECTION_ID, SEGMENT_ID);
-        and SEGMENT_START_COLS and SEGMENT_END_COLS as columns.
+        pandas DataFrame multi-indexed by (Properties.SECTION_ID, Properties.SEGMENT_ID);
+        and SEGMENT_START_COLS + SEGMENT_END_COLS as columns.
     """
     index = []
     chunks = []
@@ -62,7 +55,9 @@ def _axon_points(morph):
     if index:
         return pd.DataFrame(
             data=np.concatenate(chunks),
-            index=pd.MultiIndex.from_tuples(index, names=[SECTION_ID, SEGMENT_ID]),
+            index=pd.MultiIndex.from_tuples(
+                index, names=[Properties.SECTION_ID, Properties.SEGMENT_ID]
+            ),
             columns=[*SEGMENT_START_COLS, *SEGMENT_END_COLS],
         )
 
@@ -81,10 +76,11 @@ def _load_mask(mask, atlas_path):
 
 def _calc_bouton_density(edge_population, gid, synapses_per_bouton, mask):
     """Calculate bouton density for a given `gid`."""
-    # pylint: disable=too-many-locals
     if mask is None:
         # count all efferent synapses and total axon length
-        synapse_count = len(edge_population.efferent_edges(gid))
+        synapse_count = sum(
+            n for *_, n in edge_population.iter_connections(source=gid, return_edge_count=True)
+        )
         # total length of the segments
         all_pts = _axon_points(
             edge_population.source.morph.get(gid, transform=False, extension="h5")
@@ -108,10 +104,8 @@ def _calc_bouton_density(edge_population, gid, synapses_per_bouton, mask):
         axon_length = _segment_lengths(filtered).sum()
 
         # Find axon segments with synapses; count synapses per each such segment.
-        INDEX_COLS = [PRE_SECTION_ID, PRE_SEGMENT_ID]
-        syn_per_segment = (
-            edge_population.efferent_edges(gid, properties=INDEX_COLS).groupby(INDEX_COLS).size()
-        )
+        cols = [Properties.PRE_SECTION_ID, Properties.PRE_SEGMENT_ID]
+        syn_per_segment = edge_population.efferent_edges(gid, properties=cols).groupby(cols).size()
 
         # The section ids of the MultiIndex in the DataFrame returned by ``_segment_points``
         # are returned in the same order they are read from file, but skipping the soma
@@ -124,7 +118,7 @@ def _calc_bouton_density(edge_population, gid, synapses_per_bouton, mask):
         # to be consistent with the values returned by ``edge_population.efferent_edges``,
         # that are loaded using libsonata.
         df = filtered.index.to_frame(index=False)
-        df[SECTION_ID] += 1
+        df[Properties.SECTION_ID] += 1
         index = pd.MultiIndex.from_frame(df)
 
         # count synapses on filtered segments
@@ -133,19 +127,19 @@ def _calc_bouton_density(edge_population, gid, synapses_per_bouton, mask):
     return (1.0 * synapse_count / synapses_per_bouton) / axon_length
 
 
-def bouton_density(population, gid, synapses_per_bouton=1.0, mask=None, atlas_path=None):
+def bouton_density(edge_population, gid, synapses_per_bouton=1.0, mask=None, atlas_path=None):
     """Calculate bouton density for a given `gid`."""
     mask = _load_mask(mask, atlas_path)
-    return _calc_bouton_density(population, gid, synapses_per_bouton, mask)
+    return _calc_bouton_density(edge_population, gid, synapses_per_bouton, mask)
 
 
 def sample_bouton_density(
-    population, n, group=None, synapses_per_bouton=1.0, mask=None, atlas_path=None, n_jobs=1
+    edge_population, n, group=None, synapses_per_bouton=1.0, mask=None, atlas_path=None, n_jobs=1
 ):
     """Sample bouton density.
 
     Args:
-        population: edge population instance
+        edge_population: edge population instance
         n: sample size
         group: cell group
         synapses_per_bouton: assumed number of synapses per bouton
@@ -157,32 +151,34 @@ def sample_bouton_density(
         numpy array of length min(n, N) with bouton density per cell,
         where N is the total number cells in the specified cell group.
     """
-    gids = population.source.ids(group)
+    gids = edge_population.source.ids(group)
     if len(gids) > n:
         gids = np.random.choice(gids, size=n, replace=False)
     elif len(gids) == 0:
         L.warning("No GID matching selection for group '%s'", group)
         return np.empty(0)
     if n_jobs == 1:
-        return _sample_bouton_density_task(population, gids, synapses_per_bouton, mask, atlas_path)
+        return _sample_bouton_density_task(
+            edge_population, gids, synapses_per_bouton, mask, atlas_path
+        )
     else:
         return _sample_bouton_density_parallel(
-            population, gids, synapses_per_bouton, mask, atlas_path, n_jobs=n_jobs
+            edge_population, gids, synapses_per_bouton, mask, atlas_path, n_jobs=n_jobs
         )
 
 
 def _sample_bouton_density_task(
-    population, gids, synapses_per_bouton=1.0, mask=None, atlas_path=None
+    edge_population, gids, synapses_per_bouton=1.0, mask=None, atlas_path=None
 ):
     """Sample bouton density task."""
     mask = _load_mask(mask, atlas_path)
     return np.array(
-        [_calc_bouton_density(population, gid, synapses_per_bouton, mask) for gid in gids]
+        [_calc_bouton_density(edge_population, gid, synapses_per_bouton, mask) for gid in gids]
     )
 
 
 def _sample_bouton_density_parallel(
-    population, gids, synapses_per_bouton=1.0, mask=None, atlas_path=None, n_jobs=-1
+    edge_population, gids, synapses_per_bouton=1.0, mask=None, atlas_path=None, n_jobs=-1
 ):
     """Sample bouton density in parallel."""
     # The gids are split in chunks to reduce the number of tasks submitted to the subprocesses.
@@ -199,7 +195,7 @@ def _sample_bouton_density_parallel(
     tasks = [
         Task(
             _sample_bouton_density_task,
-            population,
+            edge_population,
             chunk,
             synapses_per_bouton=synapses_per_bouton,
             mask=mask,
@@ -213,11 +209,11 @@ def _sample_bouton_density_parallel(
     return np.concatenate([result.value for result in results])
 
 
-def sample_pathway_synapse_count(population, n, pre=None, post=None, unique_gids=False):
+def sample_pathway_synapse_count(edge_population, n, pre=None, post=None, unique_gids=False):
     """Sample synapse count for pathway connections.
 
     Args:
-        population: edge population instance
+        edge_population: edge population instance
         n: sample size
         pre: presynaptic cell group
         post: postsynaptic cell group
@@ -227,7 +223,7 @@ def sample_pathway_synapse_count(population, n, pre=None, post=None, unique_gids
         numpy array of length min(n, N) with synapse number per connection,
         where N is the total number of connections satisfying the constraints.
     """
-    it = population.iter_connections(
+    it = edge_population.iter_connections(
         pre, post, shuffle=True, unique_node_ids=unique_gids, return_edge_count=True
     )
     return np.array([p[2] for p in itertools.islice(it, n)])

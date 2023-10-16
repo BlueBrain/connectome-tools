@@ -10,7 +10,7 @@ from utils import TEST_DATA_DIR
 import connectome_tools.s2f_recipe.estimate_individual_bouton_reduction as test_module
 
 
-def mock_sample_bouton_density(population, **kwargs):
+def mock_sample_bouton_density(edge_population, **kwargs):
     mtype = kwargs["group"]["mtype"]
     samples = {
         "L1_DAC": np.empty(0),

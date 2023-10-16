@@ -92,7 +92,7 @@ import connectome_tools.s2f_recipe.estimate_syns_con as test_module
 )
 @patch.object(test_module, "sample_pathway_synapse_count")
 @patch.object(test_module, "_get_syn_class_map")
-@patch.object(test_module, "get_edge_population_mtypes")
+@patch.object(test_module, "get_node_population_mtypes")
 def test_prepare(
     mock_get_mtypes, mock_syn_class, mock_synapse_count, _, mtypes, synapse_count, kwargs, expected
 ):

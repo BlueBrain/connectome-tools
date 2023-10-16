@@ -5,21 +5,19 @@ connection from the structural number of appositions per connection.
 For the prediction, an algebraic expression using 'n' (mean number of
 appositions) can be specified as a string (see below).
 """
-
 import itertools
 import logging
 from functools import partial
 
 import numpy as np
 import pandas as pd
-from bluepysnap.bbp import Cell
 from Equation import Expression
 
 from connectome_tools.dataset import read_nsyn
 from connectome_tools.s2f_recipe import MEAN_SYNS_CONNECTION
 from connectome_tools.s2f_recipe.utils import BaseExecutor
 from connectome_tools.stats import sample_pathway_synapse_count
-from connectome_tools.utils import Task, cell_group, get_edge_population_mtypes
+from connectome_tools.utils import Properties, Task, cell_group, get_node_population_mtypes
 
 L = logging.getLogger(__name__)
 
@@ -33,14 +31,14 @@ def _choose_formula(formulae, pathway, syn_class_map):
         return formulae[("*", "*")]
 
 
-def _estimate_nsyn(population, pathway, sample_size, pre, post):
+def _estimate_nsyn(edge_population, pathway, sample_size, pre, post):
     """Mean nsyn for given mtype."""
     pre_mtype, post_mtype = pathway
     values = sample_pathway_synapse_count(
-        population,
+        edge_population,
         n=sample_size,
-        pre=cell_group(pre_mtype, target=pre),
-        post=cell_group(post_mtype, target=post),
+        pre=cell_group(pre_mtype, node_set=pre),
+        post=cell_group(post_mtype, node_set=post),
     )
     # avoid RuntimeWarning: Mean of empty slice.
     return values.mean() if values.size else np.nan
@@ -61,7 +59,7 @@ class Executor(BaseExecutor):
         formula_ii=None,
         max_value=None,
         sample=None,
-    ):
+    ):  # pylint: disable=too-many-locals
         """Yield tasks that should be executed.
 
         Args:
@@ -101,7 +99,7 @@ class Executor(BaseExecutor):
                 sample = {}
             estimate = partial(
                 _estimate_nsyn,
-                population=edge_population,
+                edge_population=edge_population,
                 sample_size=sample.get("size", 100),
                 pre=sample.get("pre", None),
                 post=sample.get("post", None),
@@ -109,9 +107,9 @@ class Executor(BaseExecutor):
 
         syn_class_map = _get_syn_class_map(edge_population)
 
-        # TODO: this could be changed to source - target
-        mtypes = get_edge_population_mtypes(edge_population)
-        for pathway in itertools.product(mtypes, mtypes):
+        pre_mtypes = get_node_population_mtypes(edge_population.source)
+        post_mtypes = get_node_population_mtypes(edge_population.target)
+        for pathway in itertools.product(pre_mtypes, post_mtypes):
             yield Task(
                 _execute, pathway, estimate, formulae, syn_class_map, max_value, task_group=__name__
             )
@@ -120,7 +118,7 @@ class Executor(BaseExecutor):
 def _get_syn_class_map(edge_population):
     # TODO: a better way to get mtype -> synapse_class mapping (from the recipe directly?)
     dfs = []
-    properties = [Cell.MTYPE, Cell.SYNAPSE_CLASS]
+    properties = [Properties.MTYPE, Properties.SYNAPSE_CLASS]
 
     for node_population in (edge_population.source, edge_population.target):
         if not set(properties) - node_population.property_names:

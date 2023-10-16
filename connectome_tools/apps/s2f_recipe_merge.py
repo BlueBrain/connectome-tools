@@ -35,7 +35,7 @@ def cli():
     help="Path to the merge config file (YAML)",
     type=EXISTING_FILE_PATH,
 )
-@click.option("--population", required=True, help="Edge population name")
+@click.option("-p", "--edge-population", required=True, help="Edge population name")
 @click.option("-a", "--atlas", "atlas_path", help="Path to circuit atlas directory")
 @click.option(
     "-e",
@@ -71,7 +71,7 @@ def cli():
 @runalone
 def run(
     circuit,
-    population,
+    edge_population,
     atlas_path,
     config,
     executor_config,
@@ -100,7 +100,7 @@ def run(
             main_config=config,
             executor_config=executor_config,
             circuit=Path(circuit).resolve(),
-            edge_population=population,
+            edge_population=edge_population,
             atlas_path=atlas_path,
             workdir=Path(workdir).resolve(),
             output=Path(output).resolve(),

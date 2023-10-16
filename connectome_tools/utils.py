@@ -35,6 +35,27 @@ _help_link = (
 )
 
 
+class Properties:
+    """Properties used throughout the code."""
+
+    MTYPE = "mtype"
+    SYNAPSE_CLASS = "synapse_class"
+
+    PRE_SECTION_ID = "efferent_section_id"
+    PRE_SEGMENT_ID = "efferent_segment_id"
+
+    SECTION_ID = "section_id"
+    SEGMENT_ID = "segment_id"
+
+    SEGMENT_X1 = "x1"
+    SEGMENT_Y1 = "y1"
+    SEGMENT_Z1 = "z1"
+
+    SEGMENT_X2 = "x2"
+    SEGMENT_Y2 = "y2"
+    SEGMENT_Z2 = "z2"
+
+
 def exit_if_not_alone():
     """Exit the program if there are other instances running on the same host."""
     attrs = ["pid", "name", "username", "cmdline"]
@@ -156,19 +177,19 @@ class Task:
 TaskResult = namedtuple("TaskResult", ["id", "group", "value", "elapsed"])
 
 
-def cell_group(mtype, target=None):
+def cell_group(mtype, node_set=None):
     """Return a group that can be used to select cell ids with SNAP.
 
     Args:
         mtype (str): mtype.
-        target (str): target/node_set.
+        node_set (str): node_set.
 
     Returns:
         dict: cell group.
     """
-    result = {"mtype": mtype}
-    if target is not None:
-        result[NODE_SET_KEY] = target
+    result = {Properties.MTYPE: mtype}
+    if node_set is not None:
+        result[NODE_SET_KEY] = node_set
     return result
 
 
@@ -221,7 +242,8 @@ def clean_slurm_env():
 
 def get_node_population_mtypes(population):
     """Get all unique mtypes from node population instance."""
-    mtypes = population.property_values("mtype") if "mtype" in population.property_names else set()
+    prop = Properties.MTYPE
+    mtypes = population.property_values(prop) if prop in population.property_names else set()
     return sorted(mtypes)
 
 
@@ -230,4 +252,4 @@ def get_edge_population_mtypes(population):
     source = get_node_population_mtypes(population.source)
     target = get_node_population_mtypes(population.target)
 
-    return sorted(set(source) | set(target))
+    return sorted(set(source + target))

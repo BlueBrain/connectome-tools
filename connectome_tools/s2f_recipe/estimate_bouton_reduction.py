@@ -66,7 +66,7 @@ def _execute(edge_population, atlas_path, bio_data, sample, n_jobs):
         if sample is None:
             sample = {}
         values = sample_bouton_density(
-            population=edge_population,
+            edge_population=edge_population,
             n=sample.get("size", 100),
             atlas_path=atlas_path,
             group=sample.get("target", None),

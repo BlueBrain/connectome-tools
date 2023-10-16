@@ -44,17 +44,14 @@ def app(seed):
 
 @app.command()
 @click.argument("circuit")
-@click.option("--population", required=True, help="Edge population name")
+@click.option("-p", "--edge-population", required=True, help="Edge population name")
 @click.option("-n", "--sample-size", type=int, default=100, help="Sample size", show_default=True)
 @click.option("--pre", default=None, help="Presynaptic target", show_default=True)
 @click.option("--post", default=None, help="Postsynaptic target", show_default=True)
 @click.option("--short", is_flag=True, default=False, help="Omit sampled values", show_default=True)
-def nsyn_per_connection(
-    circuit, population, sample_size, pre, post, short
-):  # pylint: disable = too-many-locals
+def nsyn_per_connection(circuit, edge_population, sample_size, pre, post, short):
     """Mean connection synapse count per pathway."""
-    circuit = Circuit(circuit)
-    edge_population = circuit.edges[population]
+    edge_population = Circuit(circuit).edges[edge_population]
     pre_mtypes = get_node_population_mtypes(edge_population.source)
     post_mtypes = get_node_population_mtypes(edge_population.target)
 
@@ -64,8 +61,8 @@ def nsyn_per_connection(
         sample = stats.sample_pathway_synapse_count(
             edge_population,
             n=sample_size,
-            pre=cell_group(pre_mtype, target=pre),
-            post=cell_group(post_mtype, target=post),
+            pre=cell_group(pre_mtype, node_set=pre),
+            post=cell_group(post_mtype, node_set=post),
         )
         mean, std, size, values = _format_sample(sample, short)
         click.echo("\t".join([pre_mtype, post_mtype, mean, std, size, values]))
@@ -73,8 +70,10 @@ def nsyn_per_connection(
 
 @app.command()
 @click.argument("circuit")
-@click.option("--population", required=True, help="Edge population name")
-@click.option("-a", "--atlas", "atlas_path", help="Path to circuit atlas directory")
+@click.option("-p", "--edge-population", required=True, help="Edge population name")
+@click.option(
+    "-a", "--atlas", "atlas_path", default=None, help="Circuit atlas path", show_default=True
+)
 @click.option("-n", "--sample-size", type=int, default=100, help="Sample size", show_default=True)
 @click.option("-t", "--sample-target", default=None, help="Sample target", show_default=True)
 @click.option("--mask", default=None, help="Region of interest", show_default=True)
@@ -87,11 +86,17 @@ def nsyn_per_connection(
 )
 @click.option("--short", is_flag=True, default=False, help="Omit sampled values", show_default=True)
 def bouton_density(
-    circuit, population, atlas_path, sample_size, sample_target, mask, assume_syns_bouton, short
+    circuit,
+    edge_population,
+    atlas_path,
+    sample_size,
+    sample_target,
+    mask,
+    assume_syns_bouton,
+    short,
 ):  # pylint: disable = too-many-locals
     """Mean bouton density per mtype."""
-    circuit = Circuit(circuit)
-    edge_population = circuit.edges[population]
+    edge_population = Circuit(circuit).edges[edge_population]
     mtypes = get_node_population_mtypes(edge_population.source)
 
     click.echo("\t".join(["mtype", "mean", "std", "size", "sample"]))
@@ -100,7 +105,7 @@ def bouton_density(
         if mtype == "*":
             group = sample_target
         else:
-            group = cell_group(mtype, target=sample_target)
+            group = cell_group(mtype, node_set=sample_target)
         sample = stats.sample_bouton_density(
             edge_population,
             n=sample_size,

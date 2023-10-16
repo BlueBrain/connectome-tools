@@ -62,7 +62,7 @@ class Executor(BaseExecutor):
             estimate = partial(
                 _estimate_bouton_density,
                 target=sample.get("target", None),
-                population=edge_population,
+                edge_population=edge_population,
                 atlas_path=atlas_path,
                 n=sample.get("size", 100),
                 mask=sample.get("mask", None),
@@ -86,6 +86,6 @@ def _execute(row, estimate):
 
 def _estimate_bouton_density(mtype, target, **kwargs):
     """Return the mean bouton density for the given mtype."""
-    group = cell_group(mtype, target=target)
+    group = cell_group(mtype, node_set=target)
     values = sample_bouton_density(group=group, **kwargs)
     return np.nanmean(values)

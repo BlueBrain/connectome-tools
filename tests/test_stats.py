@@ -7,6 +7,7 @@ from mock import MagicMock, Mock, patch
 from voxcell import ROIMask
 
 import connectome_tools.stats as test_module
+from connectome_tools.utils import Properties
 
 
 def _get_axon_points(data, index_tuples=None):
@@ -15,7 +16,7 @@ def _get_axon_points(data, index_tuples=None):
         columns=[*test_module.SEGMENT_START_COLS, *test_module.SEGMENT_END_COLS],
         index=pd.MultiIndex.from_tuples(
             index_tuples or [(0, i) for i in range(len(data))],
-            names=[test_module.SECTION_ID, test_module.SEGMENT_ID],
+            names=[Properties.SECTION_ID, Properties.SEGMENT_ID],
         ),
     )
 
@@ -66,7 +67,7 @@ def test__load_mask(mock_atlas_open):
 @patch.object(test_module, "_axon_points")
 def test_bouton_density_1_without_mask(mock_axon_points):
     population = MagicMock(EdgePopulation)
-    population.efferent_edges.return_value = [1, 2, 3]  # List of synapse IDs
+    population.iter_connections.return_value = [[None, None, 3]]  # number of connections
     mock_axon_points.return_value = _get_axon_points(
         data=[
             [1.0, 1.0, 1.0, 3.0, 3.0, 3.0],
@@ -89,7 +90,7 @@ def test_bouton_density_1_without_mask(mock_axon_points):
     )
     actual = test_module.bouton_density(population, gid=42, synapses_per_bouton=1.5)
 
-    assert population.efferent_edges.call_count == 1
+    assert population.iter_connections.call_count == 1
     assert mock_axon_points.call_count == 1
     npt.assert_almost_equal(actual, expected)
 
@@ -146,8 +147,8 @@ def test_bouton_density_3_with_mask(mock_axon_points, mock_atlas):
             [11, 1],  # "inner" segment
         ],
         columns=[
-            test_module.PRE_SECTION_ID,
-            test_module.PRE_SEGMENT_ID,
+            Properties.PRE_SECTION_ID,
+            Properties.PRE_SEGMENT_ID,
         ],
     )
     expected = (3 + 1) / sum(  # three synapses on (11, 1); one synapse on (12, 0)

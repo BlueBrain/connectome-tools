@@ -189,7 +189,7 @@ class CreatePartialRecipe:
         )
         s2f_recipe.main(
             circuit=str(self.circuit),
-            population=self.edge_population,
+            edge_population=self.edge_population,
             atlas_path=self.atlas_path,
             strategies=self.strategies,
             output=self.output,
