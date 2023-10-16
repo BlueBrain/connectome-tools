@@ -115,7 +115,7 @@ def test_prepare(
 
 
 def test__get_syn_class_map():
-    df_with_duplicate = pd.DataFrame(
+    df_duplicate_mtype = pd.DataFrame(
         {
             "mtype": ["mtype_a", "mtype_a", "mtype_b"],
             "synapse_class": 3 * ["syn_class_a"],
@@ -127,7 +127,7 @@ def test__get_syn_class_map():
             self.property_names = props or set()
 
         def get(self, **_):
-            return df_with_duplicate
+            return df_duplicate_mtype
 
     edge_pop = MagicMock(
         source=MockNodePopulation({"mtype", "synapse_class"}),

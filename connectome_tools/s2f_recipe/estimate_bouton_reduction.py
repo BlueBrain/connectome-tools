@@ -69,7 +69,7 @@ def _execute(edge_population, atlas_path, bio_data, sample, n_jobs):
             edge_population=edge_population,
             n=sample.get("size", 100),
             atlas_path=atlas_path,
-            group=sample.get("target", None),
+            group=sample.get("node_set", None),
             mask=sample.get("mask", None),
             synapses_per_bouton=sample.get("assume_syns_bouton", 1.0),
             n_jobs=n_jobs,

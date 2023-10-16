@@ -46,8 +46,8 @@ def app(seed):
 @click.argument("circuit")
 @click.option("-p", "--edge-population", required=True, help="Edge population name")
 @click.option("-n", "--sample-size", type=int, default=100, help="Sample size", show_default=True)
-@click.option("--pre", default=None, help="Presynaptic target", show_default=True)
-@click.option("--post", default=None, help="Postsynaptic target", show_default=True)
+@click.option("--pre", default=None, help="Presynaptic node set", show_default=True)
+@click.option("--post", default=None, help="Postsynaptic node set", show_default=True)
 @click.option("--short", is_flag=True, default=False, help="Omit sampled values", show_default=True)
 def nsyn_per_connection(circuit, edge_population, sample_size, pre, post, short):
     """Mean connection synapse count per pathway."""
@@ -75,7 +75,7 @@ def nsyn_per_connection(circuit, edge_population, sample_size, pre, post, short)
     "-a", "--atlas", "atlas_path", default=None, help="Circuit atlas path", show_default=True
 )
 @click.option("-n", "--sample-size", type=int, default=100, help="Sample size", show_default=True)
-@click.option("-t", "--sample-target", default=None, help="Sample target", show_default=True)
+@click.option("-t", "--node-set", default=None, help="Sample node set", show_default=True)
 @click.option("--mask", default=None, help="Region of interest", show_default=True)
 @click.option(
     "--assume-syns-bouton",
@@ -90,7 +90,7 @@ def bouton_density(
     edge_population,
     atlas_path,
     sample_size,
-    sample_target,
+    node_set,
     mask,
     assume_syns_bouton,
     short,
@@ -103,9 +103,9 @@ def bouton_density(
 
     for mtype in itertools.chain(["*"], mtypes):
         if mtype == "*":
-            group = sample_target
+            group = node_set
         else:
-            group = cell_group(mtype, node_set=sample_target)
+            group = cell_group(mtype, node_set=node_set)
         sample = stats.sample_bouton_density(
             edge_population,
             n=sample_size,

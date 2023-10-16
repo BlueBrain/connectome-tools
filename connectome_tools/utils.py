@@ -249,7 +249,7 @@ def get_node_population_mtypes(population):
 
 def get_edge_population_mtypes(population):
     """Get all unique mtypes from edge population instance."""
-    source = get_node_population_mtypes(population.source)
-    target = get_node_population_mtypes(population.target)
+    pre_mtypes = get_node_population_mtypes(population.source)
+    post_mtypes = get_node_population_mtypes(population.target)
 
-    return sorted(set(source + target))
+    return sorted(set(pre_mtypes + post_mtypes))

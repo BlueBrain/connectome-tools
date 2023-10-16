@@ -19,13 +19,13 @@ regions:
       bio_data: 0.2345
       sample:
         size: 100
-        target: SSp-ll
+        node_set: SSp-ll
         assume_syns_bouton: 1.15
   - estimate_individual_bouton_reduction:
       bio_data: 0.2345
       sample:
         size: 100
-        target: SSp-ll
+        node_set: SSp-ll
         assume_syns_bouton: 1.15
   - generalized_cv:
       cv: 0.32
@@ -44,13 +44,13 @@ regions:
       bio_data: 0.2345
       sample:
         size: 100
-        target: SSp-bfd
+        node_set: SSp-bfd
         assume_syns_bouton: 1.15
   - estimate_individual_bouton_reduction:
       bio_data: 0.2345
       sample:
         size: 100
-        target: SSp-bfd
+        node_set: SSp-bfd
         assume_syns_bouton: 1.15
   - generalized_cv:
       cv: 0.32
