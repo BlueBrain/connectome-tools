@@ -9,3 +9,11 @@ include = 'connectome_tools\/.*\.py$|tests\/.*\.py$|doc\/source\/conf\.py$|setup
 [tool.isort]
 profile = "black"
 line_length = 100
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "tests",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning:nptyping",
+]

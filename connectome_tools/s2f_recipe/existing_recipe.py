@@ -2,6 +2,7 @@
 
 This strategy takes parameters from already existing S2F recipe.
 """
+
 import logging
 from collections import Counter
 

@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version 0.6.3
+-------------
+
+Bug Fixes
+~~~~~~~~~
+- Fix tests with pytest 8.
+- Add tests with python 3.11 and 3.12.
+
 Version 0.6.2
 -------------
 
