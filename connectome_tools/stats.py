@@ -31,23 +31,35 @@ def _load_mask(circuit, mask):
         return circuit.atlas.load_data(mask, cls=ROIMask)
 
 
-def _calc_bouton_density(circuit, gid, projection, synapses_per_bouton, mask):
+def _calc_bouton_density(circuit, gid, neurite_type, projection, synapses_per_bouton, mask):
     """Calculate bouton density for a given `gid`."""
     # pylint: disable=too-many-locals
     if projection is None:
         conn_obj = circuit.connectome
     else:
         conn_obj = circuit.projection(projection)
+    neurite_types = {
+        "axon": SectionType.axon,
+        "basal_dendrite": SectionType.basal_dendrite,
+        "apical_dendrite": SectionType.apical_dendrite,
+    }
     if mask is None:
         # count all efferent synapses and total axon length
         synapse_count = len(conn_obj.efferent_synapses(gid))
         # total length of the segments
-        all_pts = circuit.morph.segment_points(gid, transform=False, neurite_type=SectionType.axon)
+        all_pts = circuit.morph.segment_points(
+            gid,
+            transform=False,
+            neurite_type=neurite_types[neurite_type or "axon"],
+        )
         axon_length = _segment_lengths(all_pts).sum()
-
     else:
         # Find all segments which endpoints fall into the region of interest.
-        all_pts = circuit.morph.segment_points(gid, transform=True, neurite_type=SectionType.axon)
+        all_pts = circuit.morph.segment_points(
+            gid,
+            transform=True,
+            neurite_type=neurite_types[neurite_type or "axon"],
+        )
         mask1 = mask.lookup(all_pts[[Segment.X1, Segment.Y1, Segment.Z1]].values, outer_value=False)
         mask2 = mask.lookup(all_pts[[Segment.X2, Segment.Y2, Segment.Z2]].values, outer_value=False)
         filtered = all_pts[mask1 & mask2]
@@ -86,20 +98,31 @@ def _calc_bouton_density(circuit, gid, projection, synapses_per_bouton, mask):
     return (1.0 * synapse_count / synapses_per_bouton) / axon_length
 
 
-def bouton_density(circuit, gid, projection=None, synapses_per_bouton=1.0, mask=None):
+def bouton_density(
+    circuit, gid, neurite_type=None, projection=None, synapses_per_bouton=1.0, mask=None
+):
     """Calculate bouton density for a given `gid`."""
     mask = _load_mask(circuit, mask)
-    return _calc_bouton_density(circuit, gid, projection, synapses_per_bouton, mask)
+    return _calc_bouton_density(circuit, gid, neurite_type, projection, synapses_per_bouton, mask)
 
 
 def sample_bouton_density(
-    circuit, n, group=None, projection=None, synapses_per_bouton=1.0, mask=None, n_jobs=1
+    circuit,
+    n,
+    neurite_type=None,
+    group=None,
+    projection=None,
+    synapses_per_bouton=1.0,
+    mask=None,
+    n_jobs=1,
 ):
     """Sample bouton density.
 
     Args:
         circuit: circuit instance
         n: sample size
+        neurite_type: Type of neurite to parse for button density. It can be axon,
+            basal_dendrite, or apical_dendrite. By default (i.e. None) parses the local axon.
         group: cell group
         projection (str, default=None): Name of a projection. If specified, calculates bouton
             density based on synapses in that projection, and that projection only. By default
@@ -119,15 +142,17 @@ def sample_bouton_density(
         L.warning("No GID matching selection for group '%s'", group)
         return np.empty(0)
     if n_jobs == 1:
-        return _sample_bouton_density_task(circuit, gids, projection, synapses_per_bouton, mask)
+        return _sample_bouton_density_task(
+            circuit, gids, neurite_type, projection, synapses_per_bouton, mask
+        )
     else:
         return _sample_bouton_density_parallel(
-            circuit, gids, projection, synapses_per_bouton, mask, n_jobs=n_jobs
+            circuit, gids, neurite_type, projection, synapses_per_bouton, mask, n_jobs=n_jobs
         )
 
 
 def _sample_bouton_density_task(
-    circuit_or_config, gids, projection=None, synapses_per_bouton=1.0, mask=None
+    circuit_or_config, gids, neurite_type=None, projection=None, synapses_per_bouton=1.0, mask=None
 ):
     """Sample bouton density task."""
     # If executed in a subprocess, a configuration should be passed instead of a circuit instance.
@@ -137,12 +162,15 @@ def _sample_bouton_density_task(
         circuit = Circuit(circuit_or_config)
     mask = _load_mask(circuit, mask)
     return np.array(
-        [_calc_bouton_density(circuit, gid, projection, synapses_per_bouton, mask) for gid in gids]
+        [
+            _calc_bouton_density(circuit, gid, neurite_type, projection, synapses_per_bouton, mask)
+            for gid in gids
+        ]
     )
 
 
 def _sample_bouton_density_parallel(
-    circuit, gids, projection=None, synapses_per_bouton=1.0, mask=None, n_jobs=-1
+    circuit, gids, neurite_type=None, projection=None, synapses_per_bouton=1.0, mask=None, n_jobs=-1
 ):
     """Sample bouton density in parallel."""
     # The gids are split in chunks to reduce the number of tasks submitted to the subprocesses.
@@ -161,6 +189,7 @@ def _sample_bouton_density_parallel(
             _sample_bouton_density_task,
             circuit.config,
             chunk,
+            neurite_type=neurite_type,
             projection=projection,
             synapses_per_bouton=synapses_per_bouton,
             mask=mask,

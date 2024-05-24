@@ -82,6 +82,8 @@ $defs:
                   assume_syns_bouton:
                     type: number
               - type: string
+          neurite_type:
+            type: string
   estimate_individual_bouton_reduction:
     type: object
     minProperties: 1
@@ -112,6 +114,8 @@ $defs:
                   assume_syns_bouton:
                     type: number
               - type: string
+          neurite_type:
+            type: string
   existing_recipe:
     type: object
     minProperties: 1

@@ -83,9 +83,10 @@ def nsyn_per_connection(circuit, sample_size, pre, post, projection, short):
 @click.option("--projection", default=None, help="Projection name", show_default=True)
 @click.option("--short", is_flag=True, default=False, help="Omit sampled values", show_default=True)
 def bouton_density(
-    circuit, sample_size, sample_target, mask, assume_syns_bouton, projection, short
+    circuit, sample_size, neurite_type, sample_target, mask, assume_syns_bouton, projection, short
 ):
     """Mean bouton density per mtype."""
+    # pylint: disable=too-many-locals
     circuit = Circuit(circuit)
     mtypes = sorted(circuit.cells.mtypes)
 
@@ -99,6 +100,7 @@ def bouton_density(
         sample = stats.sample_bouton_density(
             circuit,
             n=sample_size,
+            neurite_type=neurite_type,
             group=group,
             mask=mask,
             synapses_per_bouton=assume_syns_bouton,

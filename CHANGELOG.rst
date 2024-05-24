@@ -1,6 +1,16 @@
 Changelog
 =========
 
+Version 0.6.4
+-------------
+
+New Features
+~~~~~~~~~~~~
+- Add parameter ``neurite_type`` in ``stats._calc_bouton_density`` to allow the parsing of basal
+  dendrites or apical dendrites to compute bouton density. This parameter is added as an optional
+  input to the ``estimate_bouton_reduction`` and ``estimate_individual_bouton_reduction``
+  strategies.
+
 Version 0.6.3
 -------------
 

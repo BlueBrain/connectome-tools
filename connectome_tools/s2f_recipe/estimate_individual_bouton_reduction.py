@@ -29,7 +29,7 @@ class Executor(BaseExecutor):
     # while the function `sample_bouton_density` will make use of subprocesses
     is_parallel = False
 
-    def prepare(self, circuit, bio_data, sample=None):
+    def prepare(self, circuit, bio_data, sample=None, neurite_type=None):
         """Yield tasks that should be executed.
 
         Args:
@@ -38,6 +38,8 @@ class Executor(BaseExecutor):
                 or name of the .tsv file containing bouton density data (str).
             sample: sample configuration (dict)
                 or name of the .tsv file containing bouton density data (str).
+            neurite_type: name of the section that will be parsed (str)
+                if it is None, the default section will be "axon".
 
         Yields:
             (Task) task to be executed.
@@ -63,6 +65,7 @@ class Executor(BaseExecutor):
                 target=sample.get("target", None),
                 circuit=circuit,
                 n=sample.get("size", 100),
+                neurite_type=neurite_type,
                 mask=sample.get("mask", None),
                 synapses_per_bouton=sample.get("assume_syns_bouton", 1.0),
                 n_jobs=self.jobs,
