@@ -1,7 +1,7 @@
 Changelog
 =========
 
-Version 0.6.4
+Version 0.6.3
 -------------
 
 New Features
@@ -10,9 +10,6 @@ New Features
   dendrites or apical dendrites to compute bouton density. This parameter is added as an optional
   input to the ``estimate_bouton_reduction`` and ``estimate_individual_bouton_reduction``
   strategies.
-
-Version 0.6.3
--------------
 
 Bug Fixes
 ~~~~~~~~~
