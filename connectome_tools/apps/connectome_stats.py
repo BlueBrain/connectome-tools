@@ -75,6 +75,13 @@ def nsyn_per_connection(circuit, edge_population, sample_size, pre, post, short)
     "-a", "--atlas", "atlas_path", default=None, help="Circuit atlas path", show_default=True
 )
 @click.option("-n", "--sample-size", type=int, default=100, help="Sample size", show_default=True)
+@click.option(
+    "--neurite-type",
+    type=click.Choice(stats.NEURITE_TYPES),
+    default="axon",
+    help="Neurite type",
+    show_default=True,
+)
 @click.option("-t", "--node-set", default=None, help="Sample node set", show_default=True)
 @click.option("--mask", default=None, help="Region of interest", show_default=True)
 @click.option(
@@ -95,7 +102,7 @@ def bouton_density(
     mask,
     assume_syns_bouton,
     short,
-):  # pylint: disable = too-many-locals
+):  # pylint: disable=too-many-locals,too-many-arguments
     """Mean bouton density per mtype."""
     edge_population = Circuit(circuit).edges[edge_population]
     mtypes = get_node_population_mtypes(edge_population.source)

@@ -16,6 +16,11 @@ L = logging.getLogger(__name__)
 
 SEGMENT_START_COLS = [Properties.SEGMENT_X1, Properties.SEGMENT_Y1, Properties.SEGMENT_Z1]
 SEGMENT_END_COLS = [Properties.SEGMENT_X2, Properties.SEGMENT_Y2, Properties.SEGMENT_Z2]
+NEURITE_TYPES = {
+    "axon": SectionType.axon,
+    "basal_dendrite": SectionType.basal_dendrite,
+    "apical_dendrite": SectionType.apical_dendrite,
+}
 
 
 def _segment_lengths(segments):
@@ -76,11 +81,6 @@ def _load_mask(mask, atlas_path):
 
 def _calc_bouton_density(edge_population, gid, neurite_type, synapses_per_bouton, mask):
     """Calculate bouton density for a given `gid`."""
-    neurite_types = {
-        "axon": SectionType.axon,
-        "basal_dendrite": SectionType.basal_dendrite,
-        "apical_dendrite": SectionType.apical_dendrite,
-    }
     if mask is None:
         # count all efferent synapses and total axon length
         synapse_count = sum(
@@ -89,14 +89,14 @@ def _calc_bouton_density(edge_population, gid, neurite_type, synapses_per_bouton
         # total length of the segments
         all_pts = _axon_points(
             edge_population.source.morph.get(gid, transform=False, extension="h5"),
-            neurite_types[neurite_type or "axon"],
+            NEURITE_TYPES[neurite_type or "axon"],
         )
         axon_length = _segment_lengths(all_pts).sum()
     else:
         # Find all segments which endpoints fall into the region of interest.
         all_pts = _axon_points(
             edge_population.source.morph.get(gid, transform=True, extension="h5"),
-            neurite_types[neurite_type or "axon"],
+            NEURITE_TYPES[neurite_type or "axon"],
         )
         mask1 = mask.lookup(all_pts[SEGMENT_START_COLS].values, outer_value=False)
         mask2 = mask.lookup(all_pts[SEGMENT_END_COLS].values, outer_value=False)
