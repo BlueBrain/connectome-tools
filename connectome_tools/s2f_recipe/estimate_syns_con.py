@@ -5,6 +5,7 @@ connection from the structural number of appositions per connection.
 For the prediction, an algebraic expression using 'n' (mean number of
 appositions) can be specified as a string (see below).
 """
+
 import itertools
 import logging
 from functools import partial

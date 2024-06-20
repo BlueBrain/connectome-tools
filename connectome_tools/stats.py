@@ -25,7 +25,7 @@ def _segment_lengths(segments):
     )
 
 
-def _axon_points(morph):
+def _axon_points(morph, neurite_type):
     """Get axon points for given `morph`.
 
     This code is a modified version of `bluepy.morphology.MorphHelper.segment_points`.
@@ -41,7 +41,7 @@ def _axon_points(morph):
     chunks = []
 
     for sec in morph.iter():
-        if sec.type == SectionType.axon:
+        if sec.type == neurite_type:
             pts = sec.points
             chunk = np.zeros((len(pts) - 1, 6))
             chunk[:, 0:3] = pts[:-1]
@@ -74,8 +74,13 @@ def _load_mask(mask, atlas_path):
     raise ValueError("Missing atlas path: using a mask requires atlas path to be defined")
 
 
-def _calc_bouton_density(edge_population, gid, synapses_per_bouton, mask):
+def _calc_bouton_density(edge_population, gid, neurite_type, synapses_per_bouton, mask):
     """Calculate bouton density for a given `gid`."""
+    neurite_types = {
+        "axon": SectionType.axon,
+        "basal_dendrite": SectionType.basal_dendrite,
+        "apical_dendrite": SectionType.apical_dendrite,
+    }
     if mask is None:
         # count all efferent synapses and total axon length
         synapse_count = sum(
@@ -83,21 +88,24 @@ def _calc_bouton_density(edge_population, gid, synapses_per_bouton, mask):
         )
         # total length of the segments
         all_pts = _axon_points(
-            edge_population.source.morph.get(gid, transform=False, extension="h5")
+            edge_population.source.morph.get(gid, transform=False, extension="h5"),
+            neurite_types[neurite_type or "axon"],
         )
         axon_length = _segment_lengths(all_pts).sum()
-
     else:
         # Find all segments which endpoints fall into the region of interest.
         all_pts = _axon_points(
-            edge_population.source.morph.get(gid, transform=True, extension="h5")
+            edge_population.source.morph.get(gid, transform=True, extension="h5"),
+            neurite_types[neurite_type or "axon"],
         )
         mask1 = mask.lookup(all_pts[SEGMENT_START_COLS].values, outer_value=False)
         mask2 = mask.lookup(all_pts[SEGMENT_END_COLS].values, outer_value=False)
         filtered = all_pts[mask1 & mask2]
 
         if filtered.empty:
-            L.warning("No axon segments found inside region of interest for GID %d", gid)
+            L.warning(
+                "No %s segments found inside region of interest for GID %d", neurite_type, gid
+            )
             return np.nan
 
         # total length for those filtered segments
@@ -127,20 +135,31 @@ def _calc_bouton_density(edge_population, gid, synapses_per_bouton, mask):
     return (1.0 * synapse_count / synapses_per_bouton) / axon_length
 
 
-def bouton_density(edge_population, gid, synapses_per_bouton=1.0, mask=None, atlas_path=None):
+def bouton_density(
+    edge_population, gid, neurite_type=None, synapses_per_bouton=1.0, mask=None, atlas_path=None
+):
     """Calculate bouton density for a given `gid`."""
     mask = _load_mask(mask, atlas_path)
-    return _calc_bouton_density(edge_population, gid, synapses_per_bouton, mask)
+    return _calc_bouton_density(edge_population, gid, neurite_type, synapses_per_bouton, mask)
 
 
 def sample_bouton_density(
-    edge_population, n, group=None, synapses_per_bouton=1.0, mask=None, atlas_path=None, n_jobs=1
+    edge_population,
+    n,
+    neurite_type=None,
+    group=None,
+    synapses_per_bouton=1.0,
+    mask=None,
+    atlas_path=None,
+    n_jobs=1,
 ):
     """Sample bouton density.
 
     Args:
         edge_population: edge population instance
         n: sample size
+        neurite_type: Type of neurite to parse for button density. It can be axon,
+            basal_dendrite, or apical_dendrite. By default (i.e. None) parses the local axon.
         group: cell group
         synapses_per_bouton: assumed number of synapses per bouton
         mask (str): region of interest mask
@@ -159,26 +178,41 @@ def sample_bouton_density(
         return np.empty(0)
     if n_jobs == 1:
         return _sample_bouton_density_task(
-            edge_population, gids, synapses_per_bouton, mask, atlas_path
+            edge_population, gids, neurite_type, synapses_per_bouton, mask, atlas_path
         )
     else:
         return _sample_bouton_density_parallel(
-            edge_population, gids, synapses_per_bouton, mask, atlas_path, n_jobs=n_jobs
+            edge_population,
+            gids,
+            neurite_type,
+            synapses_per_bouton,
+            mask,
+            atlas_path,
+            n_jobs=n_jobs,
         )
 
 
 def _sample_bouton_density_task(
-    edge_population, gids, synapses_per_bouton=1.0, mask=None, atlas_path=None
+    edge_population, gids, neurite_type=None, synapses_per_bouton=1.0, mask=None, atlas_path=None
 ):
     """Sample bouton density task."""
     mask = _load_mask(mask, atlas_path)
     return np.array(
-        [_calc_bouton_density(edge_population, gid, synapses_per_bouton, mask) for gid in gids]
+        [
+            _calc_bouton_density(edge_population, gid, neurite_type, synapses_per_bouton, mask)
+            for gid in gids
+        ]
     )
 
 
 def _sample_bouton_density_parallel(
-    edge_population, gids, synapses_per_bouton=1.0, mask=None, atlas_path=None, n_jobs=-1
+    edge_population,
+    gids,
+    neurite_type=None,
+    synapses_per_bouton=1.0,
+    mask=None,
+    atlas_path=None,
+    n_jobs=-1,
 ):
     """Sample bouton density in parallel."""
     # The gids are split in chunks to reduce the number of tasks submitted to the subprocesses.
@@ -197,6 +231,7 @@ def _sample_bouton_density_parallel(
             _sample_bouton_density_task,
             edge_population,
             chunk,
+            neurite_type=neurite_type,
             synapses_per_bouton=synapses_per_bouton,
             mask=mask,
             atlas_path=atlas_path,

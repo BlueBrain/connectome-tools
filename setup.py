@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # pylint: disable=missing-docstring
 import importlib.util
-import sys
 
 from setuptools import find_packages, setup
 
@@ -34,6 +33,8 @@ setup(
     install_requires=[
         "click>=7.0,<9.0",
         "equation>=1.2",
+        "importlib-metadata",
+        "importlib-resources",
         "joblib>=1.0.1",
         "jsonschema>=3.2.0,<5.0.0",
         "lxml>=3.3",
@@ -45,6 +46,8 @@ setup(
         "bluepysnap<2.0",
         "morphio>=3.0.1,<4.0.0",
         "voxcell>=3.0,<4.0",
+        # setuptools needed because of https://github.com/facebookincubator/submitit/issues/1765
+        'setuptools;python_version>="3.12"',
     ],
     packages=find_packages(),
     include_package_data=True,
@@ -59,6 +62,8 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Topic :: Scientific/Engineering :: Bio-Informatics",
     ],
     entry_points={

@@ -1,4 +1,5 @@
 """Common utilities."""
+
 import logging
 import os
 import sys
@@ -10,9 +11,9 @@ from pathlib import Path
 from urllib.request import urlopen
 
 import click
+import importlib_resources
 import jsonschema
 import numpy as np
-import pkg_resources
 import psutil
 import yaml
 from bluepysnap.query import NODE_SET_KEY
@@ -215,15 +216,15 @@ def validate_config(config, schema_name):
         config (object): configuration to be validated.
         schema_name (str): name of the schema file without .yaml extension.
     """
-    resource_name = str(SCHEMA_PATH / f"{schema_name}.yaml")
-    schema_path = Path(pkg_resources.resource_filename(__name__, resource_name)).resolve()
-    # Define a custom resolver to resolve any local reference, and
-    # a custom handler to load any reference in yaml format instead of json.
-    resolver = jsonschema.RefResolver(
-        base_uri=f"file://{schema_path.parent}/", referrer=None, handlers={"file": load_yaml_url}
-    )
-    # Raise a ValidationError if the validation is not successful.
-    jsonschema.validate(instance=config, schema=load_yaml(schema_path), resolver=resolver)
+    ref = importlib_resources.files(__package__) / SCHEMA_PATH / f"{schema_name}.yaml"
+    with importlib_resources.as_file(ref) as path:
+        # Define a custom resolver to resolve any local reference, and
+        # a custom handler to load any reference in yaml format instead of json.
+        resolver = jsonschema.RefResolver(
+            base_uri=f"file://{path.parent}/", referrer=None, handlers={"file": load_yaml_url}
+        )
+        # Raise a ValidationError if the validation is not successful.
+        jsonschema.validate(instance=config, schema=load_yaml(path), resolver=resolver)
 
 
 def clean_slurm_env():

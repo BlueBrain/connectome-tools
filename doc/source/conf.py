@@ -3,6 +3,7 @@
 # This file only contains a selection of the most common options. For a full
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
+import importlib_metadata
 
 # -- Path setup --------------------------------------------------------------
 
@@ -14,15 +15,13 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-from pkg_resources import get_distribution
-
 
 # -- Project information -----------------------------------------------------
 
-project = 'connectome-tools'
+project = "connectome-tools"
 
 # The short X.Y version
-version = get_distribution('connectome_tools').version
+version = importlib_metadata.version("connectome_tools")
 
 # The full version, including alpha/beta/rc tags
 release = version
@@ -33,8 +32,7 @@ release = version
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = [
-]
+extensions = []
 
 # Add any paths that contain templates here, relative to this directory.
 # templates_path = ['_templates']
@@ -50,7 +48,7 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx-bluebrain-theme'
+html_theme = "sphinx-bluebrain-theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -58,10 +56,10 @@ html_theme = 'sphinx-bluebrain-theme'
 # html_static_path = ['_static']
 
 html_theme_options = {
-    'metadata_distribution': 'connectome_tools',
+    "metadata_distribution": "connectome_tools",
 }
 
-html_title = u'connectome-tools'
+html_title = "connectome-tools"
 
 # If true, links to the reST sources are added to the pages.
 html_show_sourcelink = False

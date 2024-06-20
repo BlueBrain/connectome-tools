@@ -90,6 +90,7 @@ def bouton_density(
     edge_population,
     atlas_path,
     sample_size,
+    neurite_type,
     node_set,
     mask,
     assume_syns_bouton,
@@ -109,6 +110,7 @@ def bouton_density(
         sample = stats.sample_bouton_density(
             edge_population,
             n=sample_size,
+            neurite_type=neurite_type,
             group=group,
             synapses_per_bouton=assume_syns_bouton,
             mask=mask,

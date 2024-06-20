@@ -16,6 +16,21 @@ Breaking Changes
 - ``atlas-path`` needs to be passed as a commandline argument if mask is used
 - ``edge-population`` needs to be defined as a commandline argument
 
+Version 0.6.3
+-------------
+
+New Features
+~~~~~~~~~~~~
+- Add parameter ``neurite_type`` in ``stats._calc_bouton_density`` to allow the parsing of basal
+  dendrites or apical dendrites to compute bouton density. This parameter is added as an optional
+  input to the ``estimate_bouton_reduction`` and ``estimate_individual_bouton_reduction``
+  strategies.
+
+Bug Fixes
+~~~~~~~~~
+- Fix tests with pytest 8.
+- Add tests with python 3.11 and 3.12.
+
 Version 0.6.2
 -------------
 

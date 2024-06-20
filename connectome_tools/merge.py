@@ -1,4 +1,5 @@
 """Tasks to calculate partial recipes and merge them in a single final recipe."""
+
 import dataclasses
 import hashlib
 import json
@@ -14,8 +15,8 @@ from pathlib import Path
 from typing import Dict, List
 from urllib.parse import quote_plus
 
+import importlib_resources
 import lxml.etree as ET
-import pkg_resources
 import submitit
 import yaml
 
@@ -68,9 +69,9 @@ def _write_xml_tree(path, tree):
 
 def _default_executor_params():
     """Return the default parameters to be used when launching slurm jobs."""
-    resource_name = str(DEFAULT_CONFIG_PATH / "executor_config.yaml")
-    path = Path(pkg_resources.resource_filename(__name__, resource_name)).resolve()
-    executor_config = load_yaml(path)
+    ref = importlib_resources.files(__package__) / DEFAULT_CONFIG_PATH / "executor_config.yaml"
+    with importlib_resources.as_file(ref) as path:
+        executor_config = load_yaml(path)
     validate_config(executor_config, schema_name="executor_config")
     return executor_config["executor"]
 

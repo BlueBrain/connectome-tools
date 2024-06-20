@@ -1,4 +1,5 @@
 """Calculate partial recipes and merge them in a single final recipe."""
+
 import logging
 from pathlib import Path
 
