@@ -1,3 +1,4 @@
+import morphio
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
@@ -31,7 +32,7 @@ def test__axon_points():
     types = rng.integers(1, 5, 10)
     sections = [_section(i, t) for i, t in enumerate(types)]
     mock_morph = Mock(iter=Mock(return_value=sections))
-    res = test_module._axon_points(mock_morph)
+    res = test_module._axon_points(mock_morph, morphio.SectionType.axon)
 
     seg_id = np.where(types == 2)[0] + 1  # +1 for the soma-shift (soma = 0)
     idx = [(i, j) for i in seg_id for j in range(3)]
