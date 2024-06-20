@@ -11,7 +11,7 @@ import connectome_tools.stats as test_module
 from connectome_tools.utils import Properties
 
 
-def _get_axon_points(data, index_tuples=None):
+def _get_segment_points(data, index_tuples=None):
     return pd.DataFrame(
         data=data,
         columns=[*test_module.SEGMENT_START_COLS, *test_module.SEGMENT_END_COLS],
@@ -22,7 +22,7 @@ def _get_axon_points(data, index_tuples=None):
     )
 
 
-def test__axon_points():
+def test__segment_points():
     rng = np.random.default_rng(42)
 
     def _section(id_, type_):
@@ -32,7 +32,7 @@ def test__axon_points():
     types = rng.integers(1, 5, 10)
     sections = [_section(i, t) for i, t in enumerate(types)]
     mock_morph = Mock(iter=Mock(return_value=sections))
-    res = test_module._axon_points(mock_morph, morphio.SectionType.axon)
+    res = test_module._segment_points(mock_morph, morphio.SectionType.axon)
 
     seg_id = np.where(types == 2)[0] + 1  # +1 for the soma-shift (soma = 0)
     idx = [(i, j) for i in seg_id for j in range(3)]
@@ -65,11 +65,11 @@ def test__load_mask(mock_atlas_open):
         test_module._load_mask("Foo", None)
 
 
-@patch.object(test_module, "_axon_points")
-def test_bouton_density_1_without_mask(mock_axon_points):
+@patch.object(test_module, "_segment_points")
+def test_bouton_density_1_without_mask(mock_segment_points):
     population = MagicMock(EdgePopulation)
     population.iter_connections.return_value = [[None, None, 3]]  # number of connections
-    mock_axon_points.return_value = _get_axon_points(
+    mock_segment_points.return_value = _get_segment_points(
         data=[
             [1.0, 1.0, 1.0, 3.0, 3.0, 3.0],
             [1.0, 1.0, 1.0, 4.0, 4.0, 4.0],
@@ -92,17 +92,17 @@ def test_bouton_density_1_without_mask(mock_axon_points):
     actual = test_module.bouton_density(population, gid=42, synapses_per_bouton=1.5)
 
     assert population.iter_connections.call_count == 1
-    assert mock_axon_points.call_count == 1
+    assert mock_segment_points.call_count == 1
     npt.assert_almost_equal(actual, expected)
 
 
 @patch.object(test_module, "Atlas")
-@patch.object(test_module, "_axon_points")
-def test_bouton_density_2_with_empty_mask(mock_axon_points, mock_atlas):
+@patch.object(test_module, "_segment_points")
+def test_bouton_density_2_with_empty_mask(mock_segment_points, mock_atlas):
     mock_mask = Mock()
     mock_mask.lookup.return_value = np.array([False])
     mock_atlas.load_data.return_value = mock_mask
-    mock_axon_points.return_value = _get_axon_points(
+    mock_segment_points.return_value = _get_segment_points(
         data=[
             [0.0, 1.0, 1.0, 0.0, 2.0, 2.0],  # both endpoints out of ROI
         ]
@@ -113,15 +113,15 @@ def test_bouton_density_2_with_empty_mask(mock_axon_points, mock_atlas):
 
 
 @patch.object(test_module, "Atlas")
-@patch.object(test_module, "_axon_points")
-def test_bouton_density_3_with_mask(mock_axon_points, mock_atlas):
+@patch.object(test_module, "_segment_points")
+def test_bouton_density_3_with_mask(mock_segment_points, mock_atlas):
     def _mock_lookup(points, outer_value):
         return np.all(points > 0, axis=-1)
 
     mock_mask = Mock()
     mock_mask.lookup.side_effect = _mock_lookup
     mock_atlas.open.return_value = Mock(load_data=Mock(return_value=mock_mask))
-    mock_axon_points.return_value = _get_axon_points(
+    mock_segment_points.return_value = _get_segment_points(
         data=[
             [0.0, 0.0, 0.0, 1.0, 1.0, 1.0],  # first endpoint out of ROI
             [1.0, 1.0, 1.0, 3.0, 3.0, 3.0],  # both endpoints within ROI

@@ -30,13 +30,14 @@ def _segment_lengths(segments):
     )
 
 
-def _axon_points(morph, neurite_type):
-    """Get axon points for given `morph`.
+def _segment_points(morph, neurite_type):
+    """Get segment points for given `morph`.
 
     This code is a modified version of `bluepy.morphology.MorphHelper.segment_points`.
 
     Args:
-        morph: morph of interest
+        morph (morphio.Morphology): morphology of interest
+        neurite_type (morphio.SectionType): neurite type
 
     Returns:
         pandas DataFrame multi-indexed by (Properties.SECTION_ID, Properties.SEGMENT_ID);
@@ -82,19 +83,19 @@ def _load_mask(mask, atlas_path):
 def _calc_bouton_density(edge_population, gid, neurite_type, synapses_per_bouton, mask):
     """Calculate bouton density for a given `gid`."""
     if mask is None:
-        # count all efferent synapses and total axon length
+        # count all efferent synapses and total segment length
         synapse_count = sum(
             n for *_, n in edge_population.iter_connections(source=gid, return_edge_count=True)
         )
         # total length of the segments
-        all_pts = _axon_points(
+        all_pts = _segment_points(
             edge_population.source.morph.get(gid, transform=False, extension="h5"),
             NEURITE_TYPES[neurite_type or "axon"],
         )
-        axon_length = _segment_lengths(all_pts).sum()
+        segment_length = _segment_lengths(all_pts).sum()
     else:
         # Find all segments which endpoints fall into the region of interest.
-        all_pts = _axon_points(
+        all_pts = _segment_points(
             edge_population.source.morph.get(gid, transform=True, extension="h5"),
             NEURITE_TYPES[neurite_type or "axon"],
         )
@@ -109,7 +110,7 @@ def _calc_bouton_density(edge_population, gid, neurite_type, synapses_per_bouton
             return np.nan
 
         # total length for those filtered segments
-        axon_length = _segment_lengths(filtered).sum()
+        segment_length = _segment_lengths(filtered).sum()
 
         # Find axon segments with synapses; count synapses per each such segment.
         cols = [Properties.PRE_SECTION_ID, Properties.PRE_SEGMENT_ID]
@@ -132,7 +133,7 @@ def _calc_bouton_density(edge_population, gid, neurite_type, synapses_per_bouton
         # count synapses on filtered segments
         synapse_count = syn_per_segment.loc[syn_per_segment.index.intersection(index)].sum()
 
-    return (1.0 * synapse_count / synapses_per_bouton) / axon_length
+    return (1.0 * synapse_count / synapses_per_bouton) / segment_length
 
 
 def bouton_density(
