@@ -1,10 +1,12 @@
+from pathlib import Path
+
 import morphio
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pytest
 from bluepysnap.edges import EdgePopulation
-from mock import MagicMock, Mock, patch
+from mock import MagicMock, Mock, call, patch
 from voxcell import ROIMask
 
 import connectome_tools.stats as test_module
@@ -63,6 +65,31 @@ def test__load_mask(mock_atlas_open):
 
     with pytest.raises(ValueError, match="Missing atlas path"):
         test_module._load_mask("Foo", None)
+
+
+def test__get_morph():
+    mock_morph = Mock(get_filepath=MagicMock(), get=Mock())
+    node_population = Mock(morph=mock_morph)
+    test_module._get_morph(node_population, 1, True)
+    mock_morph.get.assert_called_once_with(1, extension="h5", transform=True)
+
+    def _nonexistent_path(*_, **__):
+        return Path("./does_not_exist")
+
+    mock_morph = Mock(get_filepath=Mock(side_effect=_nonexistent_path), get=Mock())
+    node_population = Mock(morph=mock_morph)
+
+    with pytest.raises(RuntimeError, match="Couldn't find morphology for node"):
+        test_module._get_morph(node_population, 1, True)
+
+    mock_morph.get_filepath.assert_has_calls(
+        (
+            call(1, extension="h5"),
+            call(1, extension="asc"),
+            call(1, extension="swc"),
+        )
+    )
+    mock_morph.get.assert_not_called()
 
 
 @patch.object(test_module, "_segment_points")

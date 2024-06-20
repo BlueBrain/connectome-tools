@@ -6,6 +6,7 @@ import os
 
 import numpy as np
 import pandas as pd
+from bluepysnap import BluepySnapError
 from morphio import SectionType
 from voxcell import ROIMask
 from voxcell.nexus.voxelbrain import Atlas
@@ -80,6 +81,18 @@ def _load_mask(mask, atlas_path):
     raise ValueError("Missing atlas path: using a mask requires atlas path to be defined")
 
 
+def _get_morph(node_population, gid, transform):
+    """Helper function to get morphology from node population."""
+    for ext in ("h5", "asc", "swc"):
+        try:
+            if node_population.morph.get_filepath(gid, extension=ext).is_file():
+                return node_population.morph.get(gid, transform=transform, extension=ext)
+        except BluepySnapError:  # raised, if morph dir not defined for extension in circuit config
+            continue
+
+    raise RuntimeError(f"Couldn't find morphology for node ({node_population.name}, {gid})")
+
+
 def _calc_bouton_density(edge_population, gid, neurite_type, synapses_per_bouton, mask):
     """Calculate bouton density for a given `gid`."""
     if mask is None:
@@ -89,14 +102,14 @@ def _calc_bouton_density(edge_population, gid, neurite_type, synapses_per_bouton
         )
         # total length of the segments
         all_pts = _segment_points(
-            edge_population.source.morph.get(gid, transform=False, extension="h5"),
+            _get_morph(edge_population.source, gid, transform=False),
             NEURITE_TYPES[neurite_type or "axon"],
         )
         segment_length = _segment_lengths(all_pts).sum()
     else:
         # Find all segments which endpoints fall into the region of interest.
         all_pts = _segment_points(
-            edge_population.source.morph.get(gid, transform=True, extension="h5"),
+            _get_morph(edge_population.source, gid, transform=True),
             NEURITE_TYPES[neurite_type or "axon"],
         )
         mask1 = mask.lookup(all_pts[SEGMENT_START_COLS].values, outer_value=False)
