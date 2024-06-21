@@ -108,8 +108,8 @@ def test_create_full_recipe_run(execute_pending_tasks_mock):
         tmp_path = Path(tmp_dir)
         workdir = tmp_path / WORKDIR
         recipe_path = tmp_path / "builderConnectivityRecipeAllPathways.xml"
-        circuit = tmp_path / "CircuitConfig"
-        circuit.touch()  # CircuitConfig must exist
+        circuit = tmp_path / "circuit_config.json"
+        circuit.touch()  # circuit config must exist
 
         def _execute_pending_tasks(pending_tasks, *args, **kwargs):
             for n, task in enumerate(pending_tasks, 1):

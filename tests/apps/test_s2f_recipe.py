@@ -208,7 +208,7 @@ def test_app(
                 jobs,
                 "-p",
                 "Foo",
-                "CircuitConfig",
+                "circuit_config.json",
             ],
             catch_exceptions=False,
         )
