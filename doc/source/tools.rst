@@ -37,15 +37,16 @@ Options:
     -p, --edge-population TEXT  Edge population name  [required]
     -a, --atlas TEXT            Circuit atlas path [default: ``None``]
     -n, --sample-size INTEGER   Sample size  [default: ``100``]
+    --neurite-type              Neurite type [default: ``axon``]
     -t, --node-set TEXT         Sample node set [default: ``None``]
     --mask TEXT                 Region of interest [default: ``None``]
     --assume-syns-bouton FLOAT  Synapse count per bouton  [default: ``1.0``]
     --short                     Omit sampled values from the output [default: ``False``]
 
-Optional ``--mask`` parameter references atlas dataset with volumetric mask defining axon region of interest.
-If provided, only axonal segments within this region would be considered for each sampled cell (otherwise whole axon is considered, without any filtering). Please note that this parameter does *not* affect cell sampling (i.e., the choice of cell somata is affected only by ``--node-set``).
+Optional ``--mask`` parameter references atlas dataset with volumetric mask defining region of interest.
+If provided, only segments within this region would be considered for each sampled cell (otherwise whole neurite is considered, without any filtering). Please note that this parameter does *not* affect cell sampling (i.e., the choice of cell somata is affected only by ``--node-set``).
 
-Circuit model source atlas defined in CircuitConfig is used for filtering segments. If VoxelBrain URL is provided there, current working directory is used as atlas cache directory for storing data fetched from VoxelBrain.
+Atlas provided as a commandline argument is used for filtering segments. If VoxelBrain URL is provided there, current working directory is used as atlas cache directory for storing data fetched from VoxelBrain.
 
 Please note also that using region filtering might affect the performance.
 
@@ -193,7 +194,7 @@ If **sample** is a set of parameters for sampling, it can include any of the fol
 
 **mask**
     | Region of interest [default: ``None``].
-    | If provided, only axonal segments within this region would be considered.
+    | If provided, only segments within this region would be considered.
 
 **assume_syns_bouton**
     Assumed synapse count per bouton [default: ``1.0``]
