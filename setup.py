@@ -32,7 +32,6 @@ setup(
     license="BBP-internal-confidential",
     install_requires=[
         "click>=7.0,<9.0",
-        "equation>=1.2",
         "importlib-metadata",
         "importlib-resources",
         "joblib>=1.0.1",
@@ -48,6 +47,9 @@ setup(
         "voxcell>=3.0,<4.0",
         # setuptools needed because of https://github.com/facebookincubator/submitit/issues/1765
         'setuptools;python_version>="3.12"',
+
+        #"bluepy>=2.3,<3.0",
+        #"equation>=1.2",
     ],
     packages=find_packages(),
     include_package_data=True,
