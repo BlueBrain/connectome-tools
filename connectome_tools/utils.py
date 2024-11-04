@@ -5,6 +5,7 @@ import os
 import sys
 import time
 from collections import namedtuple
+from collections.abc import Iterable
 from contextlib import contextmanager
 from functools import partial, wraps
 from pathlib import Path
@@ -254,3 +255,16 @@ def get_edge_population_mtypes(population):
     post_mtypes = get_node_population_mtypes(population.target)
 
     return sorted(set(pre_mtypes + post_mtypes))
+
+
+def is_iterable(v):
+    """Return True if `v` is any iterable (strings are considered scalar)."""
+    return isinstance(v, Iterable) and not isinstance(v, str)
+
+
+def ensure_list(v):
+    """Convert iterable / wrap scalar into list (strings are considered scalar)."""
+    if is_iterable(v):
+        return list(v)
+    else:
+        return [v]
