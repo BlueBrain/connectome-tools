@@ -2,7 +2,9 @@ import os
 from itertools import chain
 
 import numpy as np
-from bluepy import Circuit
+import pandas as pd
+import pytest
+from bluepysnap.edges import EdgePopulation
 from mock import MagicMock, patch
 from parameterized import param, parameterized
 from pytest import approx
@@ -88,18 +90,55 @@ import connectome_tools.s2f_recipe.estimate_syns_con as test_module
         ),
     ]
 )
-@patch(test_module.__name__ + ".sample_pathway_synapse_count")
-def test_prepare(mock_synapse_count, _, mtypes, synapse_count, kwargs, expected):
+@patch.object(test_module, "sample_pathway_synapse_count")
+@patch.object(test_module, "_get_syn_class_map")
+@patch.object(test_module, "get_node_population_mtypes")
+def test_prepare(
+    mock_get_mtypes, mock_syn_class, mock_synapse_count, _, mtypes, synapse_count, kwargs, expected
+):
     mock_synapse_count.return_value = np.array(synapse_count)
-    circuit = MagicMock(Circuit)
-    circuit.config = {}
-    circuit.cells.mtypes = mtypes
-    circuit.cells.get.return_value.drop_duplicates.return_value.values = np.array(
-        [["L6_TPC:C", "EXC"], ["L4_CHC", "INH"], ["SLM_PPA", "EXC"], ["SP_AA", "INH"]]
-    )
+    population = MagicMock(EdgePopulation)
+    mock_get_mtypes.return_value = mtypes
 
-    task_generator = test_module.Executor().prepare(circuit, **kwargs)
+    mock_syn_class.return_value = {
+        "L6_TPC:C": "EXC",
+        "L4_CHC": "INH",
+        "SLM_PPA": "EXC",
+        "SP_AA": "INH",
+    }
+
+    task_generator = test_module.Executor().prepare(population, **kwargs)
     result_generator = (task() for task in task_generator)
     actual = dict(chain.from_iterable(item.value for item in result_generator))
 
     assert actual == expected
+
+
+def test__get_syn_class_map():
+    df_duplicate_mtype = pd.DataFrame(
+        {
+            "mtype": ["mtype_a", "mtype_a", "mtype_b"],
+            "synapse_class": 3 * ["syn_class_a"],
+        }
+    )
+
+    class MockNodePopulation:
+        def __init__(self, props):
+            self.property_names = props or set()
+
+        def get(self, **_):
+            return df_duplicate_mtype
+
+    edge_pop = MagicMock(
+        source=MockNodePopulation({"mtype", "synapse_class"}),
+        target=MockNodePopulation(None),
+    )
+    res = test_module._get_syn_class_map(edge_pop)
+    assert res == {"mtype_a": "syn_class_a", "mtype_b": "syn_class_a"}
+
+    # Check that error is raised if 'mtype' and 'synapse_class' are missing from nodes
+    edge_pop = MagicMock(source=MockNodePopulation(None), target=MockNodePopulation(None))
+    with pytest.raises(
+        ValueError, match="Edge population source and target nodes are missing properties"
+    ):
+        res = test_module._get_syn_class_map(edge_pop)

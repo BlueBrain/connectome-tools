@@ -24,11 +24,13 @@ def test_run(run_mock):
         tmp_path = Path(tmp_dir)
         workdir = tmp_path / WORKDIR
         recipe_path = tmp_path / "builderConnectivityRecipeAllPathways.xml"
-        circuit = tmp_path / "CircuitConfig"
-        circuit.touch()  # CircuitConfig must exist
+        circuit = tmp_path / "circuit_config.json"
+        circuit.touch()  # circuit config must exist
         result = runner.invoke(
             test_module.run,
             [
+                "--edge-population",
+                "Foo",
                 "--config",
                 str(merge_config_path),
                 "--executor-config",

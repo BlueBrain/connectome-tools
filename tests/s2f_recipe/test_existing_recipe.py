@@ -2,7 +2,7 @@ import os
 from itertools import chain
 
 import pytest
-from bluepy import Circuit
+from bluepysnap.edges import EdgePopulation
 from mock import MagicMock
 from parameterized import param, parameterized
 from utils import TEST_DATA_DIR
@@ -17,7 +17,7 @@ import connectome_tools.s2f_recipe.existing_recipe as test_module
     ]
 )
 def test_prepare(recipe_name):
-    circuit = MagicMock(Circuit)
+    population = MagicMock(EdgePopulation)
     recipe_path = os.path.join(TEST_DATA_DIR, recipe_name)
     expected = {
         ("L6_CHC", "L6_BTC"): {
@@ -37,7 +37,7 @@ def test_prepare(recipe_name):
         },
     }
 
-    task_generator = test_module.Executor().prepare(circuit, recipe_path=recipe_path)
+    task_generator = test_module.Executor().prepare(population, recipe_path=recipe_path)
     result_generator = (task() for task in task_generator)
     actual = dict(chain.from_iterable(item.value for item in result_generator))
 
@@ -46,10 +46,10 @@ def test_prepare(recipe_name):
 
 def test_duplicate_pathways():
     recipe_name = "s2f_recipe_3_duplicate_pathways.xml"
-    circuit = MagicMock(Circuit)
+    population = MagicMock(EdgePopulation)
     recipe_path = os.path.join(TEST_DATA_DIR, recipe_name)
 
-    task_generator = test_module.Executor().prepare(circuit, recipe_path=recipe_path)
+    task_generator = test_module.Executor().prepare(population, recipe_path=recipe_path)
     result_generator = (task() for task in task_generator)
     with pytest.raises(ValueError, match="Rules using the same pathway cannot be imported"):
         dict(chain.from_iterable(item.value for item in result_generator))
@@ -57,10 +57,10 @@ def test_duplicate_pathways():
 
 def test_mixed_formats():
     recipe_name = "s2f_recipe_4_mixed_formats.xml"
-    circuit = MagicMock(Circuit)
+    population = MagicMock(EdgePopulation)
     recipe_path = os.path.join(TEST_DATA_DIR, recipe_name)
 
-    task_generator = test_module.Executor().prepare(circuit, recipe_path=recipe_path)
+    task_generator = test_module.Executor().prepare(population, recipe_path=recipe_path)
     result_generator = (task() for task in task_generator)
     with pytest.raises(
         ValueError, match="Rules in different formats in the same file cannot be imported"
@@ -70,7 +70,7 @@ def test_mixed_formats():
 
 def test_selection_attributes():
     recipe_name = "s2f_recipe_5_with_region_constraint.xml"
-    circuit = MagicMock(Circuit)
+    population = MagicMock(EdgePopulation)
     recipe_path = os.path.join(TEST_DATA_DIR, recipe_name)
     expected = {
         ("SLM_PPA", "SLM_PPA"): {
@@ -81,7 +81,7 @@ def test_selection_attributes():
         },
     }
 
-    task_generator = test_module.Executor().prepare(circuit, recipe_path=recipe_path)
+    task_generator = test_module.Executor().prepare(population, recipe_path=recipe_path)
     result_generator = (task() for task in task_generator)
     actual = dict(chain.from_iterable(item.value for item in result_generator))
 

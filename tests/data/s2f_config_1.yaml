@@ -10,14 +10,14 @@
     bio_data: dummy/bouton_density.tsv
     sample:
       size: 100
-      target: mc2_Column
+      node_set: mc2_Column
       mask: mc2_Column
       assume_syns_bouton: 1.2
 - estimate_individual_bouton_reduction:
     bio_data: dummy/bouton_density.tsv
     sample:
       size: 100
-      target: mc2_Column
+      node_set: mc2_Column
       mask: mc2_Column
       assume_syns_bouton: 1.2
 - generalized_cv:

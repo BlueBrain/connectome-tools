@@ -6,79 +6,130 @@ import os
 
 import numpy as np
 import pandas as pd
-from bluepy import Circuit, Section, Segment, Synapse
+from bluepysnap import BluepySnapError
 from morphio import SectionType
 from voxcell import ROIMask
+from voxcell.nexus.voxelbrain import Atlas
 
-from connectome_tools.utils import Task, run_parallel
+from connectome_tools.utils import Properties, Task, run_parallel
 
 L = logging.getLogger(__name__)
+
+SEGMENT_START_COLS = [Properties.SEGMENT_X1, Properties.SEGMENT_Y1, Properties.SEGMENT_Z1]
+SEGMENT_END_COLS = [Properties.SEGMENT_X2, Properties.SEGMENT_Y2, Properties.SEGMENT_Z2]
+NEURITE_TYPES = {
+    "axon": SectionType.axon,
+    "basal_dendrite": SectionType.basal_dendrite,
+    "apical_dendrite": SectionType.apical_dendrite,
+}
 
 
 def _segment_lengths(segments):
     """Find segment lengths given a DataFrame returned by morph.spatial_index() query."""
     return np.linalg.norm(
-        segments[[Segment.X1, Segment.Y1, Segment.Z1]].values
-        - segments[[Segment.X2, Segment.Y2, Segment.Z2]].values,
-        axis=1,
+        segments[SEGMENT_START_COLS].values - segments[SEGMENT_END_COLS].values, axis=1
     )
 
 
-def _load_mask(circuit, mask):
+def _segment_points(morph, neurite_type):
+    """Get segment points for given `morph`.
+
+    This code is a modified version of `bluepy.morphology.MorphHelper.segment_points`.
+
+    Args:
+        morph (morphio.Morphology): morphology of interest
+        neurite_type (morphio.SectionType): neurite type
+
+    Returns:
+        pandas DataFrame multi-indexed by (Properties.SECTION_ID, Properties.SEGMENT_ID);
+        and SEGMENT_START_COLS + SEGMENT_END_COLS as columns.
+    """
+    index = []
+    chunks = []
+
+    for sec in morph.iter():
+        if sec.type == neurite_type:
+            pts = sec.points
+            chunk = np.zeros((len(pts) - 1, 6))
+            chunk[:, 0:3] = pts[:-1]
+            chunk[:, 3:6] = pts[1:]
+            chunks.append(chunk)
+
+            # MorphIO doesn't consider the soma a section; makes sure we match the
+            # section ids from the edge file
+            index.extend((sec.id + 1, seg_id) for seg_id in range(len(pts) - 1))
+
+    if index:
+        return pd.DataFrame(
+            data=np.concatenate(chunks),
+            index=pd.MultiIndex.from_tuples(
+                index, names=[Properties.SECTION_ID, Properties.SEGMENT_ID]
+            ),
+            columns=[*SEGMENT_START_COLS, *SEGMENT_END_COLS],
+        )
+
+    return pd.DataFrame()
+
+
+def _load_mask(mask, atlas_path):
     if mask is None:
         return None
-    else:
-        return circuit.atlas.load_data(mask, cls=ROIMask)
+    elif atlas_path:
+        atlas = Atlas.open(atlas_path)
+        return atlas.load_data(mask, cls=ROIMask)
+
+    raise ValueError("Missing atlas path: using a mask requires atlas path to be defined")
 
 
-def _calc_bouton_density(circuit, gid, neurite_type, projection, synapses_per_bouton, mask):
+def _get_morph(node_population, gid, transform):
+    """Helper function to get morphology from node population."""
+    for ext in ("h5", "asc", "swc"):
+        try:
+            if node_population.morph.get_filepath(gid, extension=ext).is_file():
+                return node_population.morph.get(gid, transform=transform, extension=ext)
+        except BluepySnapError:  # raised, if morph dir not defined for extension in circuit config
+            continue
+
+    raise RuntimeError(f"Couldn't find morphology for node ({node_population.name}, {gid})")
+
+
+def _calc_bouton_density(edge_population, gid, neurite_type, synapses_per_bouton, mask):
     """Calculate bouton density for a given `gid`."""
-    # pylint: disable=too-many-locals
-    if projection is None:
-        conn_obj = circuit.connectome
-    else:
-        conn_obj = circuit.projection(projection)
-    neurite_types = {
-        "axon": SectionType.axon,
-        "basal_dendrite": SectionType.basal_dendrite,
-        "apical_dendrite": SectionType.apical_dendrite,
-    }
     if mask is None:
-        # count all efferent synapses and total axon length
-        synapse_count = len(conn_obj.efferent_synapses(gid))
-        # total length of the segments
-        all_pts = circuit.morph.segment_points(
-            gid,
-            transform=False,
-            neurite_type=neurite_types[neurite_type or "axon"],
+        # count all efferent synapses and total segment length
+        synapse_count = sum(
+            n for *_, n in edge_population.iter_connections(source=gid, return_edge_count=True)
         )
-        axon_length = _segment_lengths(all_pts).sum()
+        # total length of the segments
+        all_pts = _segment_points(
+            _get_morph(edge_population.source, gid, transform=False),
+            NEURITE_TYPES[neurite_type or "axon"],
+        )
+        segment_length = _segment_lengths(all_pts).sum()
     else:
         # Find all segments which endpoints fall into the region of interest.
-        all_pts = circuit.morph.segment_points(
-            gid,
-            transform=True,
-            neurite_type=neurite_types[neurite_type or "axon"],
+        all_pts = _segment_points(
+            _get_morph(edge_population.source, gid, transform=True),
+            NEURITE_TYPES[neurite_type or "axon"],
         )
-        mask1 = mask.lookup(all_pts[[Segment.X1, Segment.Y1, Segment.Z1]].values, outer_value=False)
-        mask2 = mask.lookup(all_pts[[Segment.X2, Segment.Y2, Segment.Z2]].values, outer_value=False)
+        mask1 = mask.lookup(all_pts[SEGMENT_START_COLS].values, outer_value=False)
+        mask2 = mask.lookup(all_pts[SEGMENT_END_COLS].values, outer_value=False)
         filtered = all_pts[mask1 & mask2]
 
         if filtered.empty:
-            L.warning("No axon segments found inside region of interest for GID %d", gid)
+            L.warning(
+                "No %s segments found inside region of interest for GID %d", neurite_type, gid
+            )
             return np.nan
 
         # total length for those filtered segments
-        axon_length = _segment_lengths(filtered).sum()
+        segment_length = _segment_lengths(filtered).sum()
 
         # Find axon segments with synapses; count synapses per each such segment.
-        INDEX_COLS = [Synapse.PRE_SECTION_ID, Synapse.PRE_SEGMENT_ID]
-        syn_per_segment = (
-            conn_obj.efferent_synapses(gid, properties=INDEX_COLS).groupby(INDEX_COLS).size()
-        )
+        cols = [Properties.PRE_SECTION_ID, Properties.PRE_SEGMENT_ID]
+        syn_per_segment = edge_population.efferent_edges(gid, properties=cols).groupby(cols).size()
 
-        # Starting from Bluepy 2.3.0, MorphIO is used in place of NeuroM, and the section ids
-        # of the MultiIndex in the DataFrame returned by ``circuit.morph.segment_points``
+        # The section ids of the MultiIndex in the DataFrame returned by ``_segment_points``
         # are returned in the same order they are read from file, but skipping the soma
         # because MorphIO never considers the soma as a section.
         #
@@ -86,56 +137,54 @@ def _calc_bouton_density(circuit, gid, neurite_type, projection, synapses_per_bo
         # the resulting section ids of all the other sections is 1 less than the ones in the file.
         #
         # As a consequence, the section ids of the filtered points need to be incremented
-        # to be consistent with the values returned by ``circuit.connectome.efferent_synapses``,
+        # to be consistent with the values returned by ``edge_population.efferent_edges``,
         # that are loaded using libsonata.
         df = filtered.index.to_frame(index=False)
-        df[Section.ID] += 1
+        df[Properties.SECTION_ID] += 1
         index = pd.MultiIndex.from_frame(df)
 
         # count synapses on filtered segments
         synapse_count = syn_per_segment.loc[syn_per_segment.index.intersection(index)].sum()
 
-    return (1.0 * synapse_count / synapses_per_bouton) / axon_length
+    return (1.0 * synapse_count / synapses_per_bouton) / segment_length
 
 
 def bouton_density(
-    circuit, gid, neurite_type=None, projection=None, synapses_per_bouton=1.0, mask=None
+    edge_population, gid, neurite_type=None, synapses_per_bouton=1.0, mask=None, atlas_path=None
 ):
     """Calculate bouton density for a given `gid`."""
-    mask = _load_mask(circuit, mask)
-    return _calc_bouton_density(circuit, gid, neurite_type, projection, synapses_per_bouton, mask)
+    mask = _load_mask(mask, atlas_path)
+    return _calc_bouton_density(edge_population, gid, neurite_type, synapses_per_bouton, mask)
 
 
 def sample_bouton_density(
-    circuit,
+    edge_population,
     n,
     neurite_type=None,
     group=None,
-    projection=None,
     synapses_per_bouton=1.0,
     mask=None,
+    atlas_path=None,
     n_jobs=1,
 ):
     """Sample bouton density.
 
     Args:
-        circuit: circuit instance
+        edge_population: edge population instance
         n: sample size
         neurite_type: Type of neurite to parse for button density. It can be axon,
             basal_dendrite, or apical_dendrite. By default (i.e. None) parses the local axon.
         group: cell group
-        projection (str, default=None): Name of a projection. If specified, calculates bouton
-            density based on synapses in that projection, and that projection only. By default
-            (i.e. None) uses the local connectivity only.
         synapses_per_bouton: assumed number of synapses per bouton
         mask (str): region of interest mask
+        atlas_path (str): Path to the atlas directory
         n_jobs (int): number of parallel jobs (1 for single process, -1 to use all the cpus)
 
     Returns:
         numpy array of length min(n, N) with bouton density per cell,
         where N is the total number cells in the specified cell group.
     """
-    gids = circuit.cells.ids(group)
+    gids = edge_population.source.ids(group)
     if len(gids) > n:
         gids = np.random.choice(gids, size=n, replace=False)
     elif len(gids) == 0:
@@ -143,34 +192,41 @@ def sample_bouton_density(
         return np.empty(0)
     if n_jobs == 1:
         return _sample_bouton_density_task(
-            circuit, gids, neurite_type, projection, synapses_per_bouton, mask
+            edge_population, gids, neurite_type, synapses_per_bouton, mask, atlas_path
         )
     else:
         return _sample_bouton_density_parallel(
-            circuit, gids, neurite_type, projection, synapses_per_bouton, mask, n_jobs=n_jobs
+            edge_population,
+            gids,
+            neurite_type,
+            synapses_per_bouton,
+            mask,
+            atlas_path,
+            n_jobs=n_jobs,
         )
 
 
 def _sample_bouton_density_task(
-    circuit_or_config, gids, neurite_type=None, projection=None, synapses_per_bouton=1.0, mask=None
+    edge_population, gids, neurite_type=None, synapses_per_bouton=1.0, mask=None, atlas_path=None
 ):
     """Sample bouton density task."""
-    # If executed in a subprocess, a configuration should be passed instead of a circuit instance.
-    if isinstance(circuit_or_config, Circuit):
-        circuit = circuit_or_config
-    else:
-        circuit = Circuit(circuit_or_config)
-    mask = _load_mask(circuit, mask)
+    mask = _load_mask(mask, atlas_path)
     return np.array(
         [
-            _calc_bouton_density(circuit, gid, neurite_type, projection, synapses_per_bouton, mask)
+            _calc_bouton_density(edge_population, gid, neurite_type, synapses_per_bouton, mask)
             for gid in gids
         ]
     )
 
 
 def _sample_bouton_density_parallel(
-    circuit, gids, neurite_type=None, projection=None, synapses_per_bouton=1.0, mask=None, n_jobs=-1
+    edge_population,
+    gids,
+    neurite_type=None,
+    synapses_per_bouton=1.0,
+    mask=None,
+    atlas_path=None,
+    n_jobs=-1,
 ):
     """Sample bouton density in parallel."""
     # The gids are split in chunks to reduce the number of tasks submitted to the subprocesses.
@@ -187,12 +243,12 @@ def _sample_bouton_density_parallel(
     tasks = [
         Task(
             _sample_bouton_density_task,
-            circuit.config,
+            edge_population,
             chunk,
             neurite_type=neurite_type,
-            projection=projection,
             synapses_per_bouton=synapses_per_bouton,
             mask=mask,
+            atlas_path=atlas_path,
             task_group="sample_bouton_density",
         )
         for chunk in np.array_split(gids, n_chunks)
@@ -202,29 +258,21 @@ def _sample_bouton_density_parallel(
     return np.concatenate([result.value for result in results])
 
 
-def sample_pathway_synapse_count(
-    circuit, n, pre=None, post=None, projection=None, unique_gids=False
-):
+def sample_pathway_synapse_count(edge_population, n, pre=None, post=None, unique_gids=False):
     """Sample synapse count for pathway connections.
 
     Args:
-        circuit: circuit instance
+        edge_population: edge population instance
         n: sample size
         pre: presynaptic cell group
         post: postsynaptic cell group
-        projection (str, default=None): Name of a projection. If specified, uses synapses in
-            that projection only instead of the local connectivity.
         unique_gids(bool): don't use one GID more than once
 
     Returns:
         numpy array of length min(n, N) with synapse number per connection,
         where N is the total number of connections satisfying the constraints.
     """
-    if projection is None:
-        conn_obj = circuit.connectome
-    else:
-        conn_obj = circuit.projection(projection)
-    it = conn_obj.iter_connections(
-        pre, post, shuffle=True, unique_gids=unique_gids, return_synapse_count=True
+    it = edge_population.iter_connections(
+        pre, post, shuffle=True, unique_node_ids=unique_gids, return_edge_count=True
     )
     return np.array([p[2] for p in itertools.islice(it, n)])

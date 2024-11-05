@@ -4,6 +4,20 @@ Changelog
 Version 0.7.0
 -------------
 
+New Features
+~~~~~~~~~~~~
+- Support for bluepysnap
+- Analysis can be run for any edge population connecting ``biophysical`` neurons
+
+Breaking Changes
+~~~~~~~~~~~~~~~~
+- BluePy no longer supported
+- ``target`` was renamed to ``node_set`` as per SONATA naming convention
+- ``atlas-path`` needs to be passed as a commandline argument if mask is used
+- ``edge-population`` needs to be defined as a commandline argument
+
+Improvements
+~~~~~~~~~~~~
 - Replace Equation.
 
 Version 0.6.3

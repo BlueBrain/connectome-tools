@@ -8,13 +8,13 @@
     bio_data: /gpfs/bbp.cscs.ch/project/proj42/CircuitRelease/r2017.06/rat/CA1/bionames/bouton_density_20161102.csv
     sample:
         size: 100
-        target: cylinder
+        node_set: cylinder
         assume_syns_bouton: 1.15
 - estimate_individual_bouton_reduction:
     bio_data: /gpfs/bbp.cscs.ch/project/proj42/CircuitRelease/r2017.06/rat/CA1/bionames/bouton_density_20161102.csv
     sample:
         size: 100
-        target: cylinder
+        node_set: cylinder
         assume_syns_bouton: 1.15
 - generalized_cv:
     cv: 0.348

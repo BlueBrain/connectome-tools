@@ -5,10 +5,10 @@ import logging
 
 import click
 import numpy as np
-from bluepy import Circuit
+from bluepysnap import Circuit
 
 from connectome_tools import stats
-from connectome_tools.utils import cell_group, runalone
+from connectome_tools.utils import cell_group, get_node_population_mtypes, runalone
 
 L = logging.getLogger(__name__)
 
@@ -44,25 +44,25 @@ def app(seed):
 
 @app.command()
 @click.argument("circuit")
+@click.option("-p", "--edge-population", required=True, help="Edge population name")
 @click.option("-n", "--sample-size", type=int, default=100, help="Sample size", show_default=True)
-@click.option("--pre", default=None, help="Presynaptic target", show_default=True)
-@click.option("--post", default=None, help="Postsynaptic target", show_default=True)
-@click.option("--projection", default=None, help="Projection name", show_default=True)
+@click.option("--pre", default=None, help="Presynaptic node set", show_default=True)
+@click.option("--post", default=None, help="Postsynaptic node set", show_default=True)
 @click.option("--short", is_flag=True, default=False, help="Omit sampled values", show_default=True)
-def nsyn_per_connection(circuit, sample_size, pre, post, projection, short):
+def nsyn_per_connection(circuit, edge_population, sample_size, pre, post, short):
     """Mean connection synapse count per pathway."""
-    circuit = Circuit(circuit)
-    mtypes = sorted(circuit.cells.mtypes)
+    edge_population = Circuit(circuit).edges[edge_population]
+    pre_mtypes = get_node_population_mtypes(edge_population.source)
+    post_mtypes = get_node_population_mtypes(edge_population.target)
 
     click.echo("\t".join(["from", "to", "mean", "std", "size", "sample"]))
 
-    for pre_mtype, post_mtype in itertools.product(mtypes, mtypes):
+    for pre_mtype, post_mtype in itertools.product(pre_mtypes, post_mtypes):
         sample = stats.sample_pathway_synapse_count(
-            circuit,
+            edge_population,
             n=sample_size,
-            pre=cell_group(pre_mtype, target=pre),
-            post=cell_group(post_mtype, target=post),
-            projection=projection,
+            pre=cell_group(pre_mtype, node_set=pre),
+            post=cell_group(post_mtype, node_set=post),
         )
         mean, std, size, values = _format_sample(sample, short)
         click.echo("\t".join([pre_mtype, post_mtype, mean, std, size, values]))
@@ -70,8 +70,19 @@ def nsyn_per_connection(circuit, sample_size, pre, post, projection, short):
 
 @app.command()
 @click.argument("circuit")
+@click.option("-p", "--edge-population", required=True, help="Edge population name")
+@click.option(
+    "-a", "--atlas", "atlas_path", default=None, help="Circuit atlas path", show_default=True
+)
 @click.option("-n", "--sample-size", type=int, default=100, help="Sample size", show_default=True)
-@click.option("-t", "--sample-target", default=None, help="Sample target", show_default=True)
+@click.option(
+    "--neurite-type",
+    type=click.Choice(stats.NEURITE_TYPES),
+    default="axon",
+    help="Neurite type",
+    show_default=True,
+)
+@click.option("-t", "--node-set", default=None, help="Sample node set", show_default=True)
 @click.option("--mask", default=None, help="Region of interest", show_default=True)
 @click.option(
     "--assume-syns-bouton",
@@ -80,31 +91,37 @@ def nsyn_per_connection(circuit, sample_size, pre, post, projection, short):
     help="Synapse count per bouton",
     show_default=True,
 )
-@click.option("--projection", default=None, help="Projection name", show_default=True)
 @click.option("--short", is_flag=True, default=False, help="Omit sampled values", show_default=True)
 def bouton_density(
-    circuit, sample_size, neurite_type, sample_target, mask, assume_syns_bouton, projection, short
-):
+    circuit,
+    edge_population,
+    atlas_path,
+    sample_size,
+    neurite_type,
+    node_set,
+    mask,
+    assume_syns_bouton,
+    short,
+):  # pylint: disable=too-many-locals,too-many-arguments
     """Mean bouton density per mtype."""
-    # pylint: disable=too-many-locals
-    circuit = Circuit(circuit)
-    mtypes = sorted(circuit.cells.mtypes)
+    edge_population = Circuit(circuit).edges[edge_population]
+    mtypes = get_node_population_mtypes(edge_population.source)
 
     click.echo("\t".join(["mtype", "mean", "std", "size", "sample"]))
 
     for mtype in itertools.chain(["*"], mtypes):
         if mtype == "*":
-            group = sample_target
+            group = node_set
         else:
-            group = cell_group(mtype, target=sample_target)
+            group = cell_group(mtype, node_set=node_set)
         sample = stats.sample_bouton_density(
-            circuit,
+            edge_population,
             n=sample_size,
             neurite_type=neurite_type,
             group=group,
-            mask=mask,
             synapses_per_bouton=assume_syns_bouton,
-            projection=projection,
+            mask=mask,
+            atlas_path=atlas_path,
         )
         mean, std, size, values = _format_sample(sample, short)
         click.echo("\t".join([mtype, mean, std, size, values]))

@@ -14,7 +14,7 @@ Introduction
 
 ``connectome-tools`` package is a collection of tools for specifying and analysing circuit connectivity.
 
-It relies on `BluePy <https://bbpteam.epfl.ch/documentation/projects/bluepy/latest/>`_ for accessing circuit data.
+It relies on `bluepysnap <https://bluebrainsnap.readthedocs.io/en/stable/>`_ for accessing circuit data.
 
 At the moment these tools are provided:
 
