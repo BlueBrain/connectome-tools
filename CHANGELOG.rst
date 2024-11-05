@@ -8,6 +8,7 @@ New Features
 ~~~~~~~~~~~~
 - Support for bluepysnap
 - Analysis can be run for any edge population connecting ``biophysical`` neurons
+- Allow to define a list of patterns in the rule ``override_mtype``.
 
 Breaking Changes
 ~~~~~~~~~~~~~~~~
