@@ -1,7 +1,7 @@
 Changelog
 =========
 
-Version 1.0.0
+Version 0.7.0
 -------------
 
 New Features
@@ -15,6 +15,10 @@ Breaking Changes
 - ``target`` was renamed to ``node_set`` as per SONATA naming convention
 - ``atlas-path`` needs to be passed as a commandline argument if mask is used
 - ``edge-population`` needs to be defined as a commandline argument
+
+Improvements
+~~~~~~~~~~~~
+- Replace Equation.
 
 Version 0.6.3
 -------------

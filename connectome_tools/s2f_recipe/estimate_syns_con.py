@@ -12,8 +12,8 @@ from functools import partial
 
 import numpy as np
 import pandas as pd
-from Equation import Expression
 
+from connectome_tools import equation
 from connectome_tools.dataset import read_nsyn
 from connectome_tools.s2f_recipe import MEAN_SYNS_CONNECTION
 from connectome_tools.s2f_recipe.utils import BaseExecutor
@@ -26,10 +26,7 @@ L = logging.getLogger(__name__)
 def _choose_formula(formulae, pathway, syn_class_map):
     """Choose formula based on pre- and post- synapse class (EXC | INH)."""
     custom = (syn_class_map[pathway[0]], syn_class_map[pathway[1]])
-    if custom in formulae:
-        return formulae[custom]
-    else:
-        return formulae[("*", "*")]
+    return formulae[custom] or formulae[("*", "*")]
 
 
 def _estimate_nsyn(edge_population, pathway, sample_size, pre, post):
@@ -78,16 +75,13 @@ class Executor(BaseExecutor):
             (Task) task to be executed.
         """
         # pylint: disable=arguments-differ, too-many-arguments
-        formulae = {}
-        formulae[("*", "*")] = Expression(formula)
-        if formula_ee is not None:
-            formulae[("EXC", "EXC")] = Expression(formula_ee)
-        if formula_ei is not None:
-            formulae[("EXC", "INH")] = Expression(formula_ei)
-        if formula_ie is not None:
-            formulae[("INH", "EXC")] = Expression(formula_ie)
-        if formula_ii is not None:
-            formulae[("INH", "INH")] = Expression(formula_ii)
+        formulae = {
+            ("*", "*"): formula,
+            ("EXC", "EXC"): formula_ee,
+            ("EXC", "INH"): formula_ei,
+            ("INH", "EXC"): formula_ie,
+            ("INH", "INH"): formula_ii,
+        }
 
         if isinstance(sample, str):
             dset = read_nsyn(sample).set_index(["from", "to"])
@@ -139,7 +133,8 @@ def _execute(pathway, estimate, formulae, syn_class_map, max_value):
         L.warning("Could not estimate '%s' nsyn, skipping", pathway)
         return []
     L.info("nsyn estimate for pathway %s: %.3g", pathway, value)
-    value = _choose_formula(formulae, pathway, syn_class_map)(value)
+    expression = _choose_formula(formulae, pathway, syn_class_map)
+    value = equation.evaluate(expression, context={"n": value})
     # NSETM-1137 consider nan as 1.0
     if value < 1.0 or np.isnan(value):
         value = 1.0

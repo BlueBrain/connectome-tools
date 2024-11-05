@@ -21,14 +21,11 @@ Installation
 pip install
 -----------
 
-Note the; package depends on  `Equation <https://pypi.org/project/Equation/>`_, however this must be installed manually since one should examine the license.
-
 ``connectome-tools`` is also distributed as a Python package:
 
 .. code-block:: console
 
     $ git clone https://github.com/BlueBrain/connectome-tools
-    $ pip install "equation>=1.2"
     $ pip install -e connectome-tools
 
 
