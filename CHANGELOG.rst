@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Version 0.7.0
+-------------
+
+- Replace Equation.
+
 Version 0.6.3
 -------------
 

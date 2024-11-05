@@ -48,7 +48,6 @@ setup(
         'setuptools;python_version>="3.12"',
 
         #"bluepy>=2.3,<3.0",
-        #"equation>=1.2",
     ],
     packages=find_packages(),
     include_package_data=True,
