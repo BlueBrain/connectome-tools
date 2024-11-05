@@ -1,3 +1,3 @@
 """Connectome tools."""
 
-from connectome_tools.version import __version__
+from connectome_tools._version import __version__  # noqa
