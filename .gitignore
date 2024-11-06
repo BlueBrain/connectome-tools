@@ -12,3 +12,4 @@ dist
 htmlcov
 dask-worker-space
 venv
+_version.py
