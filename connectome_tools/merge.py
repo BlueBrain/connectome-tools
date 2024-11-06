@@ -20,9 +20,9 @@ import lxml.etree as ET
 import submitit
 import yaml
 
+from connectome_tools import __version__
 from connectome_tools.apps import s2f_recipe
 from connectome_tools.utils import DEFAULT_CONFIG_PATH, load_yaml, setup_logging, validate_config
-from connectome_tools.version import __version__
 
 L = logging.getLogger(__name__)
 
