@@ -134,7 +134,8 @@ def _execute(pathway, estimate, formulae, syn_class_map, max_value):
         return []
     L.info("nsyn estimate for pathway %s: %.3g", pathway, value)
     expression = _choose_formula(formulae, pathway, syn_class_map)
-    value = equation.evaluate(expression, context={"n": value})
+    # ensure that n is np.float64, to get consistent results
+    value = equation.evaluate(expression, context={"n": np.float64(value)})
     # NSETM-1137 consider nan as 1.0
     if value < 1.0 or np.isnan(value):
         value = 1.0
