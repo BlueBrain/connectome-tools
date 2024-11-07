@@ -26,10 +26,7 @@ dependencies = [
     "morphio>=3.0.1,<4.0.0",
     "voxcell>=3.0,<4.0",
     # setuptools needed because of https://github.com/facebookincubator/submitit/issues/1765
-    "setuptools",
-    # pynrrd>=1.1.0 needed because of https://github.com/mhe/pynrrd/issues/152
-    # this dependency can be removed after pynrrd 1.1.0 is released
-    "pynrrd @ git+https://github.com/mhe/pynrrd.git@e92a82dd12b6fa99405dc655c4374415367cb778",
+    "setuptools>=64",
 ]
 license = {text = "Apache-2.0"}
 classifiers=[
