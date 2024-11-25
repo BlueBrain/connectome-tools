@@ -6,9 +6,9 @@ from mock import Mock, patch
 from utils import TEST_DATA_DIR, canonicalize_xml, tmp_cwd, xml_to_regular_dict
 
 import connectome_tools.merge as test_module
+from connectome_tools import __version__
 from connectome_tools.merge import RECIPES_DIR, SLURM_DIR, WORKDIR
 from connectome_tools.utils import load_yaml
-from connectome_tools.version import __version__
 
 
 def test_execute_pending_tasks_success():

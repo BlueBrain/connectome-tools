@@ -17,10 +17,10 @@ from connectome_tools.dataset import _remove_duplicates, read_bouton_density, re
             mtypes=None,
             expected=pd.DataFrame(
                 [
-                    ["*", 42.0, np.NaN, np.NaN, np.NaN],
-                    ["L1_DAC", 10.0, 0.0, 1.0, np.NaN],
-                    ["L23_MC", 30.0, 0.0, 1.0, np.NaN],
-                    ["SO_OLM", 50.0, 0.0, 1.0, np.NaN],
+                    ["*", 42.0, np.nan, np.nan, np.nan],
+                    ["L1_DAC", 10.0, 0.0, 1.0, np.nan],
+                    ["L23_MC", 30.0, 0.0, 1.0, np.nan],
+                    ["SO_OLM", 50.0, 0.0, 1.0, np.nan],
                 ],
                 columns=["mtype", "mean", "std", "size", "sample"],
             ),
@@ -29,7 +29,7 @@ from connectome_tools.dataset import _remove_duplicates, read_bouton_density, re
             _="filter_mtypes",
             mtypes={"L1_DAC"},
             expected=pd.DataFrame(
-                [["L1_DAC", 10.0, 0.0, 1.0, np.NaN]],
+                [["L1_DAC", 10.0, 0.0, 1.0, np.nan]],
                 columns=["mtype", "mean", "std", "size", "sample"],
             ),
         ),
@@ -51,7 +51,7 @@ def test_read_bouton_density(_, mtypes, expected):
             expected=pd.DataFrame(
                 [
                     ["SLM_PPA", "SLM_PPA", 16.2, 8.77, 5.0, "1,16,16,20,28"],
-                    ["SLM_PPA", "SO_BP", np.NaN, np.NaN, np.NaN, np.NaN],
+                    ["SLM_PPA", "SO_BP", np.nan, np.nan, np.nan, np.nan],
                     ["SLM_PPA", "SP_AA", 3.0, 1.63, 3.0, "1,3,5"],
                 ],
                 columns=["from", "to", "mean", "std", "size", "sample"],

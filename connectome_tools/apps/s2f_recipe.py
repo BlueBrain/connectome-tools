@@ -10,6 +10,7 @@ import numpy as np
 import yaml
 from bluepysnap import Circuit
 
+from connectome_tools import __version__
 from connectome_tools.s2f_recipe import (
     BOUTON_REDUCTION_FACTOR,
     CV_SYNS_CONNECTION,
@@ -33,7 +34,6 @@ from connectome_tools.utils import (
     timed,
     validate_config,
 )
-from connectome_tools.version import __version__
 
 L = logging.getLogger("s2f-recipe")
 
