@@ -42,6 +42,22 @@ import connectome_tools.s2f_recipe.override_mtype as test_module
             },
         ),
         param(
+            _="params_3",
+            kwargs={
+                "mtype_pattern": ["INVALID", "L.*CHC"],
+                "bouton_reduction_factor": 1.0,
+                "p_A": 1.0,
+                "pMu_A": 0.0,
+            },
+            expected={
+                ("L4_CHC", "*"): {
+                    "bouton_reduction_factor": 1.0,
+                    "p_A": 1.0,
+                    "pMu_A": 0.0,
+                },
+            },
+        ),
+        param(
             _="invalid_mtype",
             kwargs={
                 "mtype_pattern": "INVALID",

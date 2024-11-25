@@ -335,12 +335,13 @@ Parameters:
 override_mtype
 ~~~~~~~~~~~~~~
 
-Set parameters for a subset of *to* mtypes.
+Overrides parameters for specific efferent mtypes.
+This strategy is to be used last.
 
 Parameters:
 
 **mtype_pattern**
-    Substring to look for in mtype.
+    Pattern, or list of patterns, used to match the mtype.
 
 **bouton_reduction_factor**
     ``bouton_reduction_factor`` value to use.

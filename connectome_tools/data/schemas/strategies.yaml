@@ -172,7 +172,12 @@ $defs:
           - additionalProperties: false
             properties:
               mtype_pattern:
-                type: string
+                oneOf:
+                  - type: string
+                  - type: array
+                    uniqueItems: true
+                    minItems: 1
+                    items: string
               bouton_reduction_factor:
                 type: number
               mean_syns_connection:
@@ -182,7 +187,12 @@ $defs:
           - additionalProperties: false
             properties:
               mtype_pattern:
-                type: string
+                oneOf:
+                  - type: string
+                  - type: array
+                    uniqueItems: true
+                    minItems: 1
+                    items: string
               bouton_reduction_factor:
                 type: number
               p_A:
