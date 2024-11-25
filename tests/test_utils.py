@@ -2,6 +2,8 @@ import os
 import re
 
 import pytest
+from bluepysnap.edges import EdgePopulation
+from bluepysnap.nodes import NodePopulation
 from jsonschema import ValidationError
 from mock import Mock, patch
 from psutil import Process
@@ -155,3 +157,27 @@ def test_clean_slurm_env():
             SLURM_JOB_PARTITION="interactive",
             SLURM_JOB_ACCOUNT="proj30",
         )
+
+
+def test_get_node_population_mtypes():
+    population = Mock(NodePopulation)
+    population.property_names = ["mtype"]
+    population.property_values.return_value = list("BCA")
+
+    assert test_module.get_node_population_mtypes(population) == list("ABC")
+
+    population.property_names = ["not_mtype"]
+    assert test_module.get_node_population_mtypes(population) == []
+
+
+@patch.object(test_module, "get_node_population_mtypes", new=sorted)
+def test_get_edge_population_mtypes():
+    population = Mock(EdgePopulation)
+    population.source = list("AC")
+    population.target = list("DC")
+
+    assert test_module.get_edge_population_mtypes(population) == list("ACD")
+
+    population.source = []
+    population.target = []
+    assert test_module.get_edge_population_mtypes(population) == []

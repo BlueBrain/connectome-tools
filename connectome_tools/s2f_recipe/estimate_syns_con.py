@@ -11,14 +11,14 @@ import logging
 from functools import partial
 
 import numpy as np
-from bluepy import Cell, Circuit
+import pandas as pd
 
 from connectome_tools import equation
 from connectome_tools.dataset import read_nsyn
 from connectome_tools.s2f_recipe import MEAN_SYNS_CONNECTION
 from connectome_tools.s2f_recipe.utils import BaseExecutor
 from connectome_tools.stats import sample_pathway_synapse_count
-from connectome_tools.utils import Task, cell_group
+from connectome_tools.utils import Properties, Task, cell_group, get_node_population_mtypes
 
 L = logging.getLogger(__name__)
 
@@ -29,15 +29,14 @@ def _choose_formula(formulae, pathway, syn_class_map):
     return formulae[custom] or formulae[("*", "*")]
 
 
-def _estimate_nsyn(circuit_config, pathway, sample_size, pre, post):
+def _estimate_nsyn(edge_population, pathway, sample_size, pre, post):
     """Mean nsyn for given mtype."""
     pre_mtype, post_mtype = pathway
-    circuit = Circuit(circuit_config)
     values = sample_pathway_synapse_count(
-        circuit,
+        edge_population,
         n=sample_size,
-        pre=cell_group(pre_mtype, target=pre),
-        post=cell_group(post_mtype, target=post),
+        pre=cell_group(pre_mtype, node_set=pre),
+        post=cell_group(post_mtype, node_set=post),
     )
     # avoid RuntimeWarning: Mean of empty slice.
     return values.mean() if values.size else np.nan
@@ -50,7 +49,7 @@ class Executor(BaseExecutor):
 
     def prepare(
         self,
-        circuit,
+        edge_population,
         formula,
         formula_ee=None,
         formula_ei=None,
@@ -58,11 +57,11 @@ class Executor(BaseExecutor):
         formula_ii=None,
         max_value=None,
         sample=None,
-    ):
+    ):  # pylint: disable=too-many-locals
         """Yield tasks that should be executed.
 
         Args:
-            circuit (bluepy.Circuit): circuit instance.
+            edge_population (bluepysnap.EdgePopulation): edge population instance.
             formula (str): default formula.
             formula_ee (str): formula for EXC-EXC pathways, it can be None to use the default.
             formula_ei (str): formula for EXC-INH pathways, it can be None to use the default.
@@ -84,8 +83,6 @@ class Executor(BaseExecutor):
             ("INH", "INH"): formula_ii,
         }
 
-        mtypes = sorted(circuit.cells.mtypes)
-
         if isinstance(sample, str):
             dset = read_nsyn(sample).set_index(["from", "to"])
 
@@ -97,21 +94,37 @@ class Executor(BaseExecutor):
                 sample = {}
             estimate = partial(
                 _estimate_nsyn,
-                circuit_config=circuit.config,
+                edge_population=edge_population,
                 sample_size=sample.get("size", 100),
                 pre=sample.get("pre", None),
                 post=sample.get("post", None),
             )
 
-        # TODO: a better way to get mtype -> synapse_class mapping (from the recipe directly?)
-        syn_class_map = dict(
-            circuit.cells.get(properties=[Cell.MTYPE, Cell.SYNAPSE_CLASS]).drop_duplicates().values
-        )
+        syn_class_map = _get_syn_class_map(edge_population)
 
-        for pathway in itertools.product(mtypes, mtypes):
+        pre_mtypes = get_node_population_mtypes(edge_population.source)
+        post_mtypes = get_node_population_mtypes(edge_population.target)
+        for pathway in itertools.product(pre_mtypes, post_mtypes):
             yield Task(
                 _execute, pathway, estimate, formulae, syn_class_map, max_value, task_group=__name__
             )
+
+
+def _get_syn_class_map(edge_population):
+    # TODO: a better way to get mtype -> synapse_class mapping (from the recipe directly?)
+    dfs = []
+    properties = [Properties.MTYPE, Properties.SYNAPSE_CLASS]
+
+    for node_population in (edge_population.source, edge_population.target):
+        if not set(properties) - node_population.property_names:
+            dfs.append(node_population.get(properties=properties))
+
+    if len(dfs) > 0:
+        return dict(pd.concat(dfs).drop_duplicates().to_numpy())
+
+    raise ValueError(
+        f"Edge population source and target nodes are missing properties: {''.join(properties)} "
+    )
 
 
 def _execute(pathway, estimate, formulae, syn_class_map, max_value):

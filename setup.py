@@ -42,6 +42,7 @@ setup(
         "psutil>=5.7.2",
         "pyyaml>=5.3.1",
         "submitit>=1.4,<2.0",
+        "bluepysnap<2.0",
         "morphio>=3.0.1,<4.0.0",
         "voxcell>=3.0,<4.0",
         # setuptools needed because of https://github.com/facebookincubator/submitit/issues/1765
